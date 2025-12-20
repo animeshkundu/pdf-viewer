@@ -16,10 +16,12 @@ describe('AnnotationService', () => {
       
       const annotation: Annotation = {
         id: '1',
-        type: 'highlight',
+        type: 'note',
         pageNum: 1,
         position: { x: 100, y: 100 },
         timestamp: Date.now(),
+        content: 'Test',
+        color: '#FFCCCC',
       }
       
       service.addAnnotation(annotation)
@@ -35,10 +37,12 @@ describe('AnnotationService', () => {
     it('should add annotation and return id', () => {
       const annotation: Annotation = {
         id: '1',
-        type: 'highlight',
+        type: 'note',
         pageNum: 1,
         position: { x: 100, y: 100 },
         timestamp: Date.now(),
+        content: 'Test',
+        color: '#FFCCCC',
       }
       
       const id = service.addAnnotation(annotation)
@@ -51,10 +55,11 @@ describe('AnnotationService', () => {
     it('should update existing annotation', () => {
       const annotation: Annotation = {
         id: '1',
-        type: 'highlight',
+        type: 'note',
         pageNum: 1,
         position: { x: 100, y: 100 },
         timestamp: Date.now(),
+        content: 'Test',
         color: '#FF0000',
       }
       
@@ -62,7 +67,10 @@ describe('AnnotationService', () => {
       service.updateAnnotation('1', { color: '#00FF00' })
       
       const updated = service.getAnnotation('1')
-      expect(updated?.color).toBe('#00FF00')
+      expect(updated).toBeDefined()
+      if (updated && updated.type === 'note') {
+        expect(updated.color).toBe('#00FF00')
+      }
     })
 
     it('should not update non-existent annotation', () => {
@@ -75,10 +83,12 @@ describe('AnnotationService', () => {
     it('should delete annotation', () => {
       const annotation: Annotation = {
         id: '1',
-        type: 'highlight',
+        type: 'note',
         pageNum: 1,
         position: { x: 100, y: 100 },
         timestamp: Date.now(),
+        content: 'Test',
+        color: '#FFCCCC',
       }
       
       service.addAnnotation(annotation)
@@ -93,17 +103,21 @@ describe('AnnotationService', () => {
     beforeEach(() => {
       service.addAnnotation({
         id: '1',
-        type: 'highlight',
+        type: 'note',
         pageNum: 1,
         position: { x: 100, y: 100 },
         timestamp: Date.now(),
+        content: 'Note 1',
+        color: '#FFCCCC',
       })
       service.addAnnotation({
         id: '2',
-        type: 'text',
+        type: 'note',
         pageNum: 2,
         position: { x: 200, y: 200 },
         timestamp: Date.now(),
+        content: 'Note 2',
+        color: '#FFCCCC',
       })
     })
 
@@ -127,10 +141,12 @@ describe('AnnotationService', () => {
     it('should get annotation by id', () => {
       const annotation: Annotation = {
         id: '1',
-        type: 'highlight',
+        type: 'note',
         pageNum: 1,
         position: { x: 100, y: 100 },
         timestamp: Date.now(),
+        content: 'Test',
+        color: '#FFCCCC',
       }
       
       service.addAnnotation(annotation)
@@ -151,8 +167,10 @@ describe('AnnotationService', () => {
         id: '1',
         type: 'highlight',
         pageNum: 1,
-        position: { x: 100, y: 100 },
+        boxes: [{ x: 100, y: 100, width: 50, height: 20 }],
         timestamp: Date.now(),
+        color: '#FFFF00',
+        opacity: 0.3,
       })
       
       expect(service.getAllAnnotations()).toHaveLength(1)
@@ -168,17 +186,21 @@ describe('AnnotationService', () => {
         id: '1',
         type: 'highlight',
         pageNum: 1,
-        position: { x: 100, y: 100 },
+        boxes: [{ x: 100, y: 100, width: 50, height: 20 }],
         timestamp: Date.now(),
+        color: '#FFFF00',
+        opacity: 0.3,
       })
       
       // Add second annotation
       service.addAnnotation({
         id: '2',
-        type: 'text',
+        type: 'note',
         pageNum: 1,
         position: { x: 200, y: 200 },
         timestamp: Date.now(),
+        content: 'Test note',
+        color: '#FFCCCC',
       })
       
       expect(service.getAllAnnotations()).toHaveLength(2)
@@ -211,8 +233,10 @@ describe('AnnotationService', () => {
         id: '1',
         type: 'highlight',
         pageNum: 1,
-        position: { x: 100, y: 100 },
+        boxes: [{ x: 100, y: 100, width: 50, height: 20 }],
         timestamp: Date.now(),
+        color: '#FFFF00',
+        opacity: 0.3,
       })
       
       const exported = service.exportAnnotations()
@@ -224,8 +248,10 @@ describe('AnnotationService', () => {
         id: '1',
         type: 'highlight',
         pageNum: 1,
-        position: { x: 100, y: 100 },
+        boxes: [{ x: 100, y: 100, width: 50, height: 20 }],
         timestamp: Date.now(),
+        color: '#FFFF00',
+        opacity: 0.3,
       }])
       
       const result = service.importAnnotations(data)
