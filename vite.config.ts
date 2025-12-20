@@ -6,8 +6,21 @@ import { resolve } from 'path'
 
 const projectRoot = process.env.PROJECT_ROOT || import.meta.dirname
 
+// Determine base path based on branch name for GitHub Pages deployment
+// Default to '/' for development and main/master branches
+// Use '/test-{branch-name}/' for other branches
+const getBasePath = () => {
+  const branchName = process.env.GITHUB_REF_NAME || process.env.BRANCH_NAME || 'main'
+  if (branchName === 'main' || branchName === 'master' || process.env.NODE_ENV === 'development') {
+    return '/'
+  }
+  const safeBranch = branchName.replace(/[^a-zA-Z0-9-]/g, '-')
+  return `/test-${safeBranch}/`
+}
+
 // https://vite.dev/config/
 export default defineConfig({
+  base: getBasePath(),
   plugins: [
     react(),
     tailwindcss(),
