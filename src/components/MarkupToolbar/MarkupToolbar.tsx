@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import { useAnnotations } from '@/hooks/useAnnotations'
+import { usePDF } from '@/hooks/usePDF'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -19,6 +21,7 @@ import {
   Trash,
 } from '@phosphor-icons/react'
 import { ToolType, HIGHLIGHT_COLORS, PEN_COLORS, PEN_THICKNESSES } from '@/types/annotation.types'
+import { SignatureManager } from '@/components/SignatureManager/SignatureManager'
 import { cn } from '@/lib/utils'
 
 interface MarkupToolbarProps {
@@ -27,6 +30,8 @@ interface MarkupToolbarProps {
 }
 
 export function MarkupToolbar({ isOpen, onClose }: MarkupToolbarProps) {
+  const [isSignatureManagerOpen, setIsSignatureManagerOpen] = useState(false)
+  const { currentPage } = usePDF()
   const {
     activeTool,
     setActiveTool,
@@ -38,9 +43,23 @@ export function MarkupToolbar({ isOpen, onClose }: MarkupToolbarProps) {
     canRedo,
     deleteSelectedAnnotation,
     selectedAnnotationId,
+    addAnnotation,
   } = useAnnotations()
 
   if (!isOpen) return null
+
+  const handleSignatureSelected = (imageData: string, width: number, height: number) => {
+    addAnnotation({
+      id: crypto.randomUUID(),
+      type: 'signature',
+      pageNum: currentPage,
+      timestamp: Date.now(),
+      position: { x: 100, y: 100 },
+      imageData,
+      width,
+      height,
+    })
+  }
 
   const ToolButton = ({
     tool,
@@ -190,7 +209,20 @@ export function MarkupToolbar({ isOpen, onClose }: MarkupToolbarProps) {
 
           <ToolButton tool="text" icon={TextAa} label="Text Box" />
           <ToolButton tool="note" icon={Note} label="Sticky Note" />
-          <ToolButton tool="signature" icon={Signature} label="Signature" />
+          
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsSignatureManagerOpen(true)}
+                className="h-9 w-9 p-0"
+              >
+                <Signature className="h-5 w-5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Manage Signatures</TooltipContent>
+          </Tooltip>
         </div>
 
         <div className="ml-auto flex items-center gap-1">
@@ -253,6 +285,12 @@ export function MarkupToolbar({ isOpen, onClose }: MarkupToolbarProps) {
           </Tooltip>
         </div>
       </div>
+      
+      <SignatureManager
+        isOpen={isSignatureManagerOpen}
+        onClose={() => setIsSignatureManagerOpen(false)}
+        onSignatureSelected={handleSignatureSelected}
+      />
     </TooltipProvider>
   )
 }

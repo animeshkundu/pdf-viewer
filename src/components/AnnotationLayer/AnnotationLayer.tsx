@@ -10,6 +10,7 @@ import {
   SignatureAnnotation,
 } from '@/types/annotation.types'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { DraggableSignature } from './DraggableSignature'
 
 interface AnnotationLayerProps {
   pageNum: number
@@ -40,7 +41,7 @@ export function AnnotationLayer({ pageNum, width, height, scale }: AnnotationLay
       case 'note':
         return <NoteRenderer key={annotation.id} annotation={annotation as NoteAnnotation} isSelected={isSelected} onClick={() => setSelectedAnnotation(annotation.id)} />
       case 'signature':
-        return <SignatureRenderer key={annotation.id} annotation={annotation as SignatureAnnotation} isSelected={isSelected} onClick={() => setSelectedAnnotation(annotation.id)} />
+        return <DraggableSignature key={annotation.id} annotation={annotation as SignatureAnnotation} isSelected={isSelected} onClick={() => setSelectedAnnotation(annotation.id)} scale={scale} />
       default:
         return null
     }
@@ -355,31 +356,5 @@ function NoteRenderer({ annotation, isSelected, onClick }: RendererProps<NoteAnn
         <p className="text-sm whitespace-pre-wrap">{annotation.content}</p>
       </PopoverContent>
     </Popover>
-  )
-}
-
-function SignatureRenderer({ annotation, isSelected, onClick }: RendererProps<SignatureAnnotation>) {
-  return (
-    <g onClick={onClick} className="cursor-pointer">
-      {isSelected && (
-        <rect
-          x={annotation.position.x - 2}
-          y={annotation.position.y - 2}
-          width={annotation.width + 4}
-          height={annotation.height + 4}
-          fill="none"
-          stroke="oklch(0.55 0.18 240)"
-          strokeWidth={2}
-          strokeDasharray="4 2"
-        />
-      )}
-      <image
-        x={annotation.position.x}
-        y={annotation.position.y}
-        width={annotation.width}
-        height={annotation.height}
-        href={annotation.imageData}
-      />
-    </g>
   )
 }
