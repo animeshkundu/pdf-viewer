@@ -1,8 +1,11 @@
 {
-    "name": "spark-template",
+    "name": "pdf-viewer-editor",
     "private": true,
-    "version": "0.0.0",
+    "version": "1.0.0",
     "type": "module",
+    "description": "A client-side web application for viewing, annotating, and editing PDF documents",
+    "author": "",
+    "license": "MIT",
     "scripts": {
         "dev": "vite",
         "kill": "fuser -k 5000/tcp",
