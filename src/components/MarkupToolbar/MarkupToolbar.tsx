@@ -27,7 +27,7 @@ import { ToolType, HIGHLIGHT_COLORS, PEN_COLORS, PEN_THICKNESSES } from '@/types
 import { SignatureManager } from '@/components/SignatureManager/SignatureManager'
 import { RedactionWarningDialog } from '@/components/RedactionWarningDialog'
 import { cn } from '@/lib/utils'
-import { useKV } from '@github/spark/hooks'
+import { useLocalStorage } from '@/hooks/useLocalStorage'
 
 interface MarkupToolbarProps {
   isOpen: boolean
@@ -37,7 +37,7 @@ interface MarkupToolbarProps {
 export function MarkupToolbar({ isOpen, onClose }: MarkupToolbarProps) {
   const [isSignatureManagerOpen, setIsSignatureManagerOpen] = useState(false)
   const [showRedactionWarning, setShowRedactionWarning] = useState(false)
-  const [warningDismissed] = useKV<boolean>('redaction-warning-dismissed', false)
+  const [warningDismissed] = useLocalStorage<boolean>('redaction-warning-dismissed', false)
   const { currentPage } = usePDF()
   const {
     activeTool,

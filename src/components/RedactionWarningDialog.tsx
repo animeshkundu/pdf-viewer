@@ -8,7 +8,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { useKV } from '@github/spark/hooks'
+import { useLocalStorage } from '@/hooks/useLocalStorage'
 import { Warning, Eye, EyeSlash, FileText } from '@phosphor-icons/react'
 
 interface RedactionWarningDialogProps {
@@ -22,7 +22,7 @@ export function RedactionWarningDialog({
   onConfirm,
   onCancel,
 }: RedactionWarningDialogProps) {
-  const [dontShowAgain, setDontShowAgain] = useKV<boolean>('redaction-warning-dismissed', false)
+  const [dontShowAgain, setDontShowAgain] = useLocalStorage<boolean>('redaction-warning-dismissed', false)
 
   const handleConfirm = () => {
     onConfirm()
