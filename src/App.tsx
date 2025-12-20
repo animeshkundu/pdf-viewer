@@ -233,10 +233,10 @@ function AppContentInner() {
   }
 
   return (
-    <div className="flex flex-col h-screen">
+    <div className="flex flex-col h-screen bg-background">
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-lg focus:shadow-xl"
       >
         Skip to main content
       </a>
@@ -292,17 +292,20 @@ function AppContentInner() {
                   onClose={() => setIsSidebarOpen(false)}
                 />
               </ResizablePanel>
-              <ResizableHandle withHandle />
+              <ResizableHandle withHandle className="bg-border/40 hover:bg-border transition-colors" />
             </>
           )}
           
           <ResizablePanel defaultSize={80}>
             <main id="main-content" className="flex-1 flex flex-col h-full" role="main" aria-label="PDF viewer">
               {isLoading && (
-                <div className="flex-1 flex items-center justify-center" role="status" aria-live="polite">
-                  <div className="text-center space-y-4">
-                    <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" aria-hidden="true"></div>
-                    <p className="text-muted-foreground">Loading PDF...</p>
+                <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-background to-muted/20" role="status" aria-live="polite">
+                  <div className="text-center space-y-6">
+                    <div className="relative w-16 h-16 mx-auto">
+                      <div className="absolute inset-0 border-4 border-primary/20 rounded-full"></div>
+                      <div className="absolute inset-0 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                    </div>
+                    <p className="text-muted-foreground font-medium">Loading PDF...</p>
                   </div>
                 </div>
               )}

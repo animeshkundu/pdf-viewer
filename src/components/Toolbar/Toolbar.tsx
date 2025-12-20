@@ -100,21 +100,21 @@ export function Toolbar({
 
   return (
     <TooltipProvider>
-      <div className="flex items-center justify-between border-b border-border bg-canvas-gray px-2 md:px-3 py-2 md:py-3 gap-2 md:gap-4" role="toolbar" aria-label="Document toolbar">
-        <div className="flex items-center gap-1 md:gap-2">
+      <div className="flex items-center justify-between border-b border-border/60 bg-white/80 backdrop-blur-xl px-3 md:px-4 py-3 gap-3 md:gap-6 shadow-sm" role="toolbar" aria-label="Document toolbar">
+        <div className="flex items-center gap-1.5 md:gap-2">
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
                 variant="default"
                 size="default"
                 onClick={handleOpenClick}
-                className="gap-2 button-press hover:shadow-md transition-all"
+                className="gap-2 button-press hover:shadow-lg transition-all duration-200 bg-gradient-to-r from-primary to-accent border-0"
                 aria-label="Open PDF file (Ctrl/Cmd+O)"
               >
-                <FolderOpen size={20} aria-hidden="true" />
-                <span className="hidden sm:inline">Open File</span>
+                <FolderOpen size={18} weight="bold" aria-hidden="true" />
+                <span className="hidden sm:inline font-medium">Open File</span>
                 {hasUnsavedChanges && (
-                  <span className="ml-1 w-2 h-2 rounded-full bg-destructive" aria-label="Unsaved changes" />
+                  <span className="ml-1 w-2 h-2 rounded-full bg-white animate-pulse" aria-label="Unsaved changes" />
                 )}
               </Button>
             </TooltipTrigger>
@@ -132,6 +132,8 @@ export function Toolbar({
           
           {document && onToggleSidebar && (
             <>
+              <div className="w-px h-6 bg-border/50 mx-1 hidden md:block" aria-hidden="true" />
+              
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -140,9 +142,12 @@ export function Toolbar({
                     onClick={onToggleSidebar}
                     aria-label={isSidebarOpen ? 'Hide sidebar' : 'Show sidebar'}
                     aria-pressed={isSidebarOpen}
-                    className="button-press"
+                    className={cn(
+                      "button-press transition-all duration-200",
+                      isSidebarOpen && "bg-muted text-primary"
+                    )}
                   >
-                    <Sidebar size={20} aria-hidden="true" />
+                    <Sidebar size={20} weight={isSidebarOpen ? "fill" : "regular"} aria-hidden="true" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>{isSidebarOpen ? 'Hide sidebar' : 'Show sidebar'}</TooltipContent>
@@ -156,7 +161,7 @@ export function Toolbar({
                       size="icon"
                       onClick={onSearchClick}
                       aria-label="Search document (Ctrl/Cmd+F)"
-                      className="button-press"
+                      className="button-press hover:bg-muted transition-all duration-200"
                     >
                       <MagnifyingGlass size={20} aria-hidden="true" />
                     </Button>
@@ -164,6 +169,8 @@ export function Toolbar({
                   <TooltipContent>Search (Ctrl/Cmd+F)</TooltipContent>
                 </Tooltip>
               )}
+
+              <div className="w-px h-6 bg-border/50 mx-1 hidden md:block" aria-hidden="true" />
               
               {onMarkupClick && (
                 <Tooltip>
@@ -174,10 +181,13 @@ export function Toolbar({
                       onClick={onMarkupClick}
                       aria-label="Toggle markup toolbar (Ctrl/Cmd+Shift+A)"
                       aria-pressed={isMarkupOpen}
-                      className={cn('gap-2 button-press transition-all', isMarkupOpen && 'bg-primary text-primary-foreground shadow-md')}
+                      className={cn(
+                        'gap-2 button-press transition-all duration-200',
+                        isMarkupOpen && 'bg-primary text-primary-foreground shadow-md hover:shadow-lg'
+                      )}
                     >
-                      <PencilLine size={20} weight={isMarkupOpen ? 'fill' : 'regular'} aria-hidden="true" />
-                      <span className="hidden sm:inline">Markup</span>
+                      <PencilLine size={18} weight={isMarkupOpen ? 'fill' : 'regular'} aria-hidden="true" />
+                      <span className="hidden sm:inline font-medium">Markup</span>
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>Markup (Ctrl/Cmd+Shift+A)</TooltipContent>
@@ -193,10 +203,13 @@ export function Toolbar({
                       onClick={onFormClick}
                       aria-label="Toggle form filling (F)"
                       aria-pressed={isFormOpen}
-                      className={cn('gap-2 button-press transition-all', isFormOpen && 'bg-ocean-blue text-white shadow-md')}
+                      className={cn(
+                        'gap-2 button-press transition-all duration-200',
+                        isFormOpen && 'bg-accent text-accent-foreground shadow-md hover:shadow-lg'
+                      )}
                     >
-                      <TextT size={20} weight={isFormOpen ? 'fill' : 'regular'} aria-hidden="true" />
-                      <span className="hidden sm:inline">Forms</span>
+                      <TextT size={18} weight={isFormOpen ? 'fill' : 'regular'} aria-hidden="true" />
+                      <span className="hidden sm:inline font-medium">Forms</span>
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>Forms (F)</TooltipContent>
@@ -211,10 +224,10 @@ export function Toolbar({
                       size="default"
                       onClick={onExportClick}
                       aria-label="Export PDF (Ctrl/Cmd+S)"
-                      className="gap-2 button-press"
+                      className="gap-2 button-press hover:bg-muted transition-all duration-200"
                     >
-                      <Download size={20} aria-hidden="true" />
-                      <span className="hidden sm:inline">Export</span>
+                      <Download size={18} weight="bold" aria-hidden="true" />
+                      <span className="hidden sm:inline font-medium">Export</span>
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>Export (Ctrl/Cmd+S)</TooltipContent>
@@ -229,7 +242,7 @@ export function Toolbar({
                       size="icon"
                       onClick={onKeyboardShortcutsClick}
                       aria-label="Keyboard shortcuts (?)"
-                      className="button-press hidden md:flex"
+                      className="button-press hidden md:flex hover:bg-muted transition-all duration-200"
                     >
                       <Question size={20} aria-hidden="true" />
                     </Button>
@@ -242,8 +255,8 @@ export function Toolbar({
         </div>
 
         {document && (
-          <div className="flex items-center gap-2 md:gap-4">
-            <div className="flex items-center gap-1 md:gap-2" role="group" aria-label="Page navigation">
+          <div className="flex items-center gap-3 md:gap-4">
+            <div className="flex items-center gap-1.5 bg-muted/50 rounded-lg p-1" role="group" aria-label="Page navigation">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -252,15 +265,15 @@ export function Toolbar({
                     onClick={handlePrevPage}
                     disabled={currentPage <= 1}
                     aria-label="Previous page"
-                    className="button-press"
+                    className="button-press h-8 w-8 hover:bg-background/80"
                   >
-                    <CaretLeft size={20} aria-hidden="true" />
+                    <CaretLeft size={18} aria-hidden="true" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>Previous page (↑/k)</TooltipContent>
               </Tooltip>
 
-              <form onSubmit={handlePageInputSubmit} className="flex items-center gap-1">
+              <form onSubmit={handlePageInputSubmit} className="flex items-center gap-1.5 px-1">
                 <Input
                   type="text"
                   value={pageInputValue || currentPage}
@@ -270,11 +283,11 @@ export function Toolbar({
                     e.target.select()
                   }}
                   onBlur={() => setPageInputValue('')}
-                  className="w-12 md:w-14 h-8 text-center text-sm smooth-transition"
+                  className="w-12 md:w-14 h-7 text-center text-sm font-medium border-0 bg-background/80 focus:ring-2 focus:ring-primary/20 transition-all"
                   aria-label={`Current page ${currentPage} of ${document.numPages}`}
                 />
-                <span className="text-xs md:text-sm text-muted-foreground whitespace-nowrap" aria-hidden="true">
-                  of {document.numPages}
+                <span className="text-xs text-muted-foreground whitespace-nowrap font-mono" aria-hidden="true">
+                  / {document.numPages}
                 </span>
               </form>
 
@@ -286,18 +299,18 @@ export function Toolbar({
                     onClick={handleNextPage}
                     disabled={currentPage >= document.numPages}
                     aria-label="Next page"
-                    className="button-press"
+                    className="button-press h-8 w-8 hover:bg-background/80"
                   >
-                    <CaretRight size={20} aria-hidden="true" />
+                    <CaretRight size={18} aria-hidden="true" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>Next page (↓/j)</TooltipContent>
               </Tooltip>
             </div>
 
-            <div className="h-5 w-px bg-border hidden md:block" aria-hidden="true" />
+            <div className="w-px h-6 bg-border/50 hidden md:block" aria-hidden="true" />
 
-            <div className="flex items-center gap-1 md:gap-2" role="group" aria-label="Zoom controls">
+            <div className="flex items-center gap-1.5 bg-muted/50 rounded-lg p-1 hidden sm:flex" role="group" aria-label="Zoom controls">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -306,16 +319,16 @@ export function Toolbar({
                     onClick={handleZoomOut}
                     disabled={zoom <= 0.5}
                     aria-label="Zoom out"
-                    className="button-press hidden sm:flex"
+                    className="button-press h-8 w-8 hover:bg-background/80"
                   >
-                    <MagnifyingGlassMinus size={20} aria-hidden="true" />
+                    <MagnifyingGlassMinus size={18} aria-hidden="true" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>Zoom out (-)</TooltipContent>
               </Tooltip>
 
               <Select value={currentZoomLabel} onValueChange={handleZoomChange}>
-                <SelectTrigger className="w-24 md:w-32 smooth-transition" aria-label={`Zoom level: ${currentZoomLabel}`}>
+                <SelectTrigger className="w-28 h-8 border-0 bg-background/80 text-sm font-medium transition-all hover:bg-background" aria-label={`Zoom level: ${currentZoomLabel}`}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -335,9 +348,9 @@ export function Toolbar({
                     onClick={handleZoomIn}
                     disabled={zoom >= 4.0}
                     aria-label="Zoom in"
-                    className="button-press hidden sm:flex"
+                    className="button-press h-8 w-8 hover:bg-background/80"
                   >
-                    <MagnifyingGlassPlus size={20} aria-hidden="true" />
+                    <MagnifyingGlassPlus size={18} aria-hidden="true" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>Zoom in (+/=)</TooltipContent>

@@ -194,9 +194,16 @@ export function PDFViewer() {
   return (
     <div 
       ref={containerRef}
-      className="flex-1 overflow-auto bg-slate-gray/20 scroll-smooth"
+      className="flex-1 overflow-auto bg-gradient-to-br from-muted/20 via-background to-muted/30 scroll-smooth relative"
     >
-      <div className="flex flex-col items-center py-8 gap-6">
+      <div 
+        className="absolute inset-0 opacity-[0.015] pointer-events-none"
+        style={{
+          backgroundImage: `radial-gradient(circle at 2px 2px, currentColor 1px, transparent 0)`,
+          backgroundSize: '24px 24px'
+        }}
+      />
+      <div className="flex flex-col items-center py-8 gap-8 relative">
         {pageOrder.map((pageNum) => {
           if (isDeleted(pageNum)) return null
           
@@ -211,7 +218,7 @@ export function PDFViewer() {
               key={pageNum}
               ref={(el) => setPageRef(pageNum, el)}
               data-page-number={pageNum}
-              className="relative"
+              className="relative shadow-2xl rounded-lg overflow-hidden transition-shadow duration-300 hover:shadow-3xl"
             >
               {isVisible ? (
                 <PDFCanvas
@@ -221,7 +228,7 @@ export function PDFViewer() {
                 />
               ) : (
                 <div 
-                  className="bg-white shadow-lg"
+                  className="bg-white shadow-xl"
                   style={{
                     width: page.getViewport({ scale: effectiveZoom, rotation }).width,
                     height: page.getViewport({ scale: effectiveZoom, rotation }).height,

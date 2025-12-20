@@ -109,24 +109,27 @@ function Thumbnail({
         onDrop={() => onDrop(pageNumber)}
         onClick={handleClick}
         className={cn(
-          'relative flex flex-col items-center gap-2 p-2 rounded-md transition-all cursor-pointer group w-full',
-          'hover:bg-muted',
-          isCurrentPage && 'bg-accent/20 ring-2 ring-accent',
-          isSelected && 'ring-2 ring-primary'
+          'relative flex flex-col items-center gap-2.5 p-3 rounded-xl transition-all cursor-pointer group w-full',
+          'hover:bg-muted/60 hover:shadow-md',
+          isCurrentPage && 'bg-primary/5 ring-2 ring-primary shadow-lg',
+          isSelected && 'ring-2 ring-accent shadow-md'
         )}
       >
         <div 
           ref={containerRef}
-          className="relative bg-white shadow-sm w-full flex items-center justify-center overflow-hidden"
+          className="relative bg-white shadow-md rounded-lg w-full flex items-center justify-center overflow-hidden ring-1 ring-border/20"
           style={{
             transform: `rotate(${rotation}deg)`,
             transformOrigin: 'center center',
-            transition: 'transform 200ms ease-out'
+            transition: 'transform 200ms ease-out, shadow 200ms ease-out'
           }}
         >
           <canvas ref={canvasRef} className="w-full h-auto" />
+          {!isRendered && (
+            <div className="absolute inset-0 bg-muted/50 animate-pulse" />
+          )}
         </div>
-        <span className="text-xs font-medium text-muted-foreground">
+        <span className="text-xs font-semibold text-muted-foreground group-hover:text-foreground transition-colors">
           {pageNumber}
         </span>
       </button>
@@ -250,10 +253,10 @@ export function ThumbnailSidebar({ isOpen, onClose }: ThumbnailSidebarProps) {
   }
 
   return (
-    <div className="border-r border-border bg-canvas-gray flex flex-col h-full w-full">
-      <div className="flex items-center justify-between px-3 py-3 border-b border-border">
-        <h2 className="text-sm font-semibold text-foreground">
-          Pages ({visiblePageCount})
+    <div className="border-r border-border/60 bg-gradient-to-b from-muted/30 to-muted/10 flex flex-col h-full w-full backdrop-blur-sm">
+      <div className="flex items-center justify-between px-4 py-4 border-b border-border/60 bg-white/50">
+        <h2 className="text-sm font-bold text-foreground tracking-wide uppercase">
+          Pages <span className="text-xs font-normal text-muted-foreground ml-1">({visiblePageCount})</span>
         </h2>
         <div className="flex items-center gap-1">
           {selectedPages.size > 0 && (
@@ -261,17 +264,17 @@ export function ThumbnailSidebar({ isOpen, onClose }: ThumbnailSidebarProps) {
               variant="ghost"
               size="icon"
               onClick={handleDeleteSelected}
-              className="h-6 w-6 text-destructive hover:text-destructive"
+              className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10 transition-all"
               title={`Delete ${selectedPages.size} page${selectedPages.size > 1 ? 's' : ''}`}
             >
-              <Trash size={16} />
+              <Trash size={16} weight="bold" />
             </Button>
           )}
           <Button
             variant="ghost"
             size="icon"
             onClick={onClose}
-            className="h-6 w-6"
+            className="h-7 w-7 hover:bg-muted transition-all"
           >
             <X size={16} />
           </Button>
@@ -279,7 +282,7 @@ export function ThumbnailSidebar({ isOpen, onClose }: ThumbnailSidebarProps) {
       </div>
 
       <ScrollArea className="flex-1 h-0">
-        <div className="p-3 space-y-3">
+        <div className="p-4 space-y-3">
           {pageOrder.map((pageNum) => {
             const page = pages[pageNum - 1]
             if (!page || isDeleted(pageNum)) return null
