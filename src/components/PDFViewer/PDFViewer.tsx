@@ -2,11 +2,12 @@ import { useEffect, useState, useRef, useCallback } from 'react'
 import type { PDFPageProxy } from 'pdfjs-dist'
 import { usePDF } from '@/hooks/usePDF.tsx'
 import { usePageManagement } from '@/hooks/usePageManagement'
+import { useGestures } from '@/hooks/useGestures'
 import { PDFCanvas } from './PDFCanvas'
 import { pdfService } from '@/services/pdf.service'
 
 export function PDFViewer() {
-  const { document, zoom, currentPage, setCurrentPage } = usePDF()
+  const { document, zoom, currentPage, setCurrentPage, setZoom } = usePDF()
   const { pageOrder, isDeleted, getRotation } = usePageManagement()
   const [pages, setPages] = useState<PDFPageProxy[]>([])
   const [visiblePages, setVisiblePages] = useState<Set<number>>(new Set())
@@ -15,6 +16,24 @@ export function PDFViewer() {
   const observerRef = useRef<IntersectionObserver | null>(null)
   const isUserScrollingRef = useRef(true)
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const initialPinchZoomRef = useRef(zoom)
+
+  useGestures(containerRef, {
+    onPinchStart: () => {
+      initialPinchZoomRef.current = zoom
+    },
+    onPinch: (scale) => {
+      const newZoom = Math.max(0.5, Math.min(4.0, initialPinchZoomRef.current * scale))
+      setZoom(newZoom)
+    },
+    onSwipe: (direction) => {
+      if (direction === 'left' && currentPage < pages.length) {
+        setCurrentPage(currentPage + 1)
+      } else if (direction === 'right' && currentPage > 1) {
+        setCurrentPage(currentPage - 1)
+      }
+    }
+  }, !!document)
 
   useEffect(() => {
     const loadPages = async () => {

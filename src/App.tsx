@@ -12,6 +12,8 @@ import { EmptyState } from './components/EmptyState'
 import { SearchBar } from './components/SearchBar/SearchBar'
 import { ExportDialog } from './components/ExportDialog'
 import { KeyboardShortcutsDialog } from './components/KeyboardShortcutsDialog'
+import { InstallPrompt } from './components/InstallPrompt'
+import { OfflineIndicator } from './components/OfflineIndicator'
 import { useState, useEffect, useRef } from 'react'
 
 function AppContentInner() {
@@ -295,6 +297,8 @@ function App() {
         <AnnotationProvider>
           <AppContent />
           <Toaster position="top-right" />
+          <InstallPrompt />
+          <OfflineIndicator />
         </AnnotationProvider>
       </SearchProvider>
     </PDFProvider>
