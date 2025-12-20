@@ -19,7 +19,7 @@ Complete documentation is available in the `docs/` directory:
 ### Essential Reading
 
 - **[docs/AGENT.md](docs/AGENT.md)** - **START HERE** for development workflow, testing, and standards
-- **[PRD.md](PRD.md)** - Product requirements and feature specifications
+- **[docs/PRD.md](docs/PRD.md)** - Product requirements and feature specifications
 - **[docs/README.md](docs/README.md)** - Documentation index and quick reference
 
 ### Architecture & Design
