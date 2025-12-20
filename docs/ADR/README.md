@@ -33,6 +33,8 @@ Create an ADR when:
 | [0006](0006-testing-strategy.md) | Testing Framework and Strategy | Accepted | 2025-01-XX |
 | [0007](007-keyboard-navigation.md) | Keyboard Navigation Implementation | Accepted | 2025-01-27 |
 | [0008](008-document-search.md) | Document-Wide Search with Result Highlighting | Accepted | 2025-01-27 |
+| [0009](0009-high-dpi-rendering-fix.md) | High-DPI Canvas Rendering Fix | Accepted | 2025-01-27 |
+| [0010](0010-interactive-annotation-editors.md) | Interactive Annotation Editors | Accepted | 2025-01-27 |
 
 ## ADR Template
 

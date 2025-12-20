@@ -5,8 +5,12 @@ import {
   HighlightAnnotation,
   PenAnnotation,
   ShapeAnnotation,
+  SignatureAnnotation,
   BoundingBox,
 } from '@/types/annotation.types'
+import { TextBoxEditor } from './TextBoxEditor'
+import { NoteEditor } from './NoteEditor'
+import { SignatureCreator } from './SignatureCreator'
 
 interface AnnotationDrawingProps {
   pageNum: number
@@ -22,6 +26,10 @@ export function AnnotationDrawing({ pageNum, width, height, scale }: AnnotationD
   const [startPoint, setStartPoint] = useState<Point | null>(null)
   const [currentPoint, setCurrentPoint] = useState<Point | null>(null)
   const [penPoints, setPenPoints] = useState<Point[]>([])
+  const [showTextEditor, setShowTextEditor] = useState(false)
+  const [showNoteEditor, setShowNoteEditor] = useState(false)
+  const [showSignatureCreator, setShowSignatureCreator] = useState(false)
+  const [editorPosition, setEditorPosition] = useState<Point>({ x: 0, y: 0 })
 
   const getMousePosition = (e: React.MouseEvent<SVGSVGElement>): Point => {
     const svg = svgRef.current
@@ -38,6 +46,25 @@ export function AnnotationDrawing({ pageNum, width, height, scale }: AnnotationD
     if (!activeTool || activeTool === 'select' || activeTool === 'highlight') return
 
     const point = getMousePosition(e)
+
+    if (activeTool === 'text') {
+      setEditorPosition(point)
+      setShowTextEditor(true)
+      return
+    }
+
+    if (activeTool === 'note') {
+      setEditorPosition(point)
+      setShowNoteEditor(true)
+      return
+    }
+
+    if (activeTool === 'signature') {
+      setEditorPosition(point)
+      setShowSignatureCreator(true)
+      return
+    }
+
     setIsDrawing(true)
     setStartPoint(point)
     setCurrentPoint(point)
@@ -219,24 +246,92 @@ export function AnnotationDrawing({ pageNum, width, height, scale }: AnnotationD
     return 'crosshair'
   }
 
-  if (!activeTool || activeTool === 'select' || activeTool === 'highlight') return null
+  const handleSignatureSelect = (imageData: string) => {
+    const annotation: SignatureAnnotation = {
+      id: `signature-${Date.now()}`,
+      type: 'signature',
+      pageNum,
+      timestamp: Date.now(),
+      position: editorPosition,
+      imageData,
+      width: 150,
+      height: 75,
+    }
+    addAnnotation(annotation)
+  }
+
+  if (!activeTool || activeTool === 'select' || activeTool === 'highlight') {
+    return (
+      <>
+        {showTextEditor && (
+          <TextBoxEditor
+            pageNum={pageNum}
+            position={editorPosition}
+            onComplete={() => setShowTextEditor(false)}
+            onCancel={() => setShowTextEditor(false)}
+          />
+        )}
+        {showNoteEditor && (
+          <NoteEditor
+            pageNum={pageNum}
+            position={editorPosition}
+            onComplete={() => setShowNoteEditor(false)}
+            onCancel={() => setShowNoteEditor(false)}
+          />
+        )}
+        {showSignatureCreator && (
+          <SignatureCreator
+            isOpen={showSignatureCreator}
+            onClose={() => setShowSignatureCreator(false)}
+            onSelectSignature={handleSignatureSelect}
+          />
+        )}
+      </>
+    )
+  }
 
   return (
-    <svg
-      ref={svgRef}
-      className="absolute inset-0"
-      style={{ width, height, cursor: getCursor() }}
-      viewBox={`0 0 ${width} ${height}`}
-      onMouseDown={handleMouseDown}
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={() => {
-        if (isDrawing) {
-          handleMouseUp()
-        }
-      }}
-    >
-      {renderPreview()}
-    </svg>
+    <>
+      <svg
+        ref={svgRef}
+        className="absolute inset-0"
+        style={{ width, height, cursor: getCursor() }}
+        viewBox={`0 0 ${width} ${height}`}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={() => {
+          if (isDrawing) {
+            handleMouseUp()
+          }
+        }}
+      >
+        {renderPreview()}
+      </svg>
+      
+      {showTextEditor && (
+        <TextBoxEditor
+          pageNum={pageNum}
+          position={editorPosition}
+          onComplete={() => setShowTextEditor(false)}
+          onCancel={() => setShowTextEditor(false)}
+        />
+      )}
+      {showNoteEditor && (
+        <NoteEditor
+          pageNum={pageNum}
+          position={editorPosition}
+          onComplete={() => setShowNoteEditor(false)}
+          onCancel={() => setShowNoteEditor(false)}
+        />
+      )}
+      {showSignatureCreator && (
+        <SignatureCreator
+          isOpen={showSignatureCreator}
+          onClose={() => setShowSignatureCreator(false)}
+          onSelectSignature={handleSignatureSelect}
+        />
+      )}
+    </>
   )
 }

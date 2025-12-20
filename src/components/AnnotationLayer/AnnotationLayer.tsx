@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useAnnotations } from '@/hooks/useAnnotations'
 import {
   Annotation,
@@ -8,6 +9,7 @@ import {
   NoteAnnotation,
   SignatureAnnotation,
 } from '@/types/annotation.types'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 
 interface AnnotationLayerProps {
   pageNum: number
@@ -307,29 +309,52 @@ function TextRenderer({ annotation, isSelected, onClick }: RendererProps<TextAnn
 }
 
 function NoteRenderer({ annotation, isSelected, onClick }: RendererProps<NoteAnnotation>) {
+  const [isOpen, setIsOpen] = useState(false)
+
   return (
-    <g onClick={onClick} className="cursor-pointer">
-      <rect
-        x={annotation.position.x}
-        y={annotation.position.y}
-        width={24}
-        height={24}
-        fill={annotation.color}
-        stroke={isSelected ? 'oklch(0.55 0.18 240)' : 'oklch(0.85 0.008 270)'}
-        strokeWidth={isSelected ? 2 : 1}
-        rx={2}
-      />
-      <text
-        x={annotation.position.x + 12}
-        y={annotation.position.y + 16}
-        textAnchor="middle"
-        fill="oklch(0.28 0.01 270)"
-        fontSize={14}
-        fontWeight="bold"
+    <Popover open={isOpen} onOpenChange={setIsOpen}>
+      <PopoverTrigger asChild>
+        <g 
+          onClick={(e) => {
+            e.stopPropagation()
+            onClick()
+            setIsOpen(true)
+          }} 
+          className="cursor-pointer"
+        >
+          <rect
+            x={annotation.position.x}
+            y={annotation.position.y}
+            width={24}
+            height={24}
+            fill={annotation.color}
+            stroke={isSelected ? 'oklch(0.55 0.18 240)' : 'oklch(0.85 0.008 270)'}
+            strokeWidth={isSelected ? 2 : 1}
+            rx={2}
+          />
+          <text
+            x={annotation.position.x + 12}
+            y={annotation.position.y + 16}
+            textAnchor="middle"
+            fill="oklch(0.28 0.01 270)"
+            fontSize={14}
+            fontWeight="bold"
+          >
+            ?
+          </text>
+        </g>
+      </PopoverTrigger>
+      <PopoverContent 
+        className="w-64 p-3"
+        style={{
+          position: 'absolute',
+          left: `${annotation.position.x + 30}px`,
+          top: `${annotation.position.y}px`,
+        }}
       >
-        ?
-      </text>
-    </g>
+        <p className="text-sm whitespace-pre-wrap">{annotation.content}</p>
+      </PopoverContent>
+    </Popover>
   )
 }
 

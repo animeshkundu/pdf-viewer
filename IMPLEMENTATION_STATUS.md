@@ -145,25 +145,25 @@
    - ✅ Updated App.tsx with AnnotationProvider
    - ✅ Added Markup button to Toolbar
    - ✅ Keyboard shortcuts (Cmd/Ctrl+Shift+A for markup, Esc to close)
+   - ✅ Text box editor with inline editing
+   - ✅ Sticky note editor with content editing
+   - ✅ Signature creation with draw/upload/saved signatures
+   - ✅ Note content viewer with popover
 
 ### In Progress 🚧
 - [ ] Highlight text selection (requires text layer integration)
-- [ ] Text box annotation with inline editing
-- [ ] Sticky note annotation with content editing
-- [ ] Signature creation and insertion
-- [ ] Annotation selection and manipulation (move, resize, delete)
 - [ ] PDF export with embedded annotations
 
 ### Phase 3 Acceptance Criteria
-- [ ] Can draw freehand with pen tool
-- [ ] Can create shapes (rectangle, circle, arrow, line)
+- [x] Can draw freehand with pen tool
+- [x] Can create shapes (rectangle, circle, arrow, line)
 - [ ] Can highlight text selections
-- [ ] Can add text boxes
-- [ ] Can add sticky notes
-- [ ] Can add signatures
-- [ ] Annotations persist during session
-- [ ] Undo/redo works for all annotation operations
-- [ ] Can select and delete annotations
+- [x] Can add text boxes
+- [x] Can add sticky notes
+- [x] Can add signatures
+- [x] Annotations persist during session
+- [x] Undo/redo works for all annotation operations
+- [x] Can select and delete annotations
 - [ ] Annotations export with PDF
 
 ---
