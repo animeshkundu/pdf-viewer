@@ -15,8 +15,8 @@ test.describe('PDF Viewer Comprehensive E2E Tests', () => {
   test('has file upload capability', async ({ page }) => {
     await page.goto('/')
     
-    // Look for file input
-    const fileInput = page.locator('input[type="file"]')
+    // Look for file input - use first() to avoid strict mode violation
+    const fileInput = page.locator('input[type="file"]').first()
     await expect(fileInput).toBeAttached()
   })
 
@@ -114,9 +114,9 @@ test.describe('PDF Viewer Comprehensive E2E Tests', () => {
     await page.goto('/')
     await page.waitForLoadState('networkidle')
     
-    // Check for main landmarks
-    const main = page.locator('main, [role="main"], #root')
-    await expect(main).toBeAttached()
+    // Check for root element specifically
+    const root = page.locator('#root')
+    await expect(root).toBeAttached()
   })
 
   test('page performance is acceptable', async ({ page }) => {
