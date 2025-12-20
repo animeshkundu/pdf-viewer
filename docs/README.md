@@ -81,7 +81,8 @@ This directory contains comprehensive architecture and design documentation for 
 - [ADR-0003](./ADR/0003-virtualized-rendering.md): Virtualized Page Rendering Strategy
 - [ADR-0004](./ADR/0004-annotation-storage.md): Annotation Data Structure and Storage
 - [ADR-0005](./ADR/0005-state-management.md): React Context for State Management
-- [ADR-0006](./ADR/0006-testing-strategy.md): Testing Framework and Strategy
+- [ADR-0006](./ADR/006-virtualized-rendering.md): ✅ Virtualized PDF Rendering with Intersection Observer (Phase 1)
+- [ADR-0007](./ADR/007-keyboard-navigation.md): ✅ Keyboard Navigation Implementation (Phase 1)
 
 #### [history/](./history/)
 **Deprecated Features** - Historical record of removed/deprecated features
