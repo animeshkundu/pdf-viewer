@@ -284,7 +284,7 @@ function AppContentInner() {
         <SearchBar isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
         
         <ResizablePanelGroup direction="horizontal" className="h-full">
-          {isSidebarOpen && (
+          {isSidebarOpen && document && (
             <>
               <ResizablePanel defaultSize={20} minSize={12} maxSize={40}>
                 <ThumbnailSidebar 
