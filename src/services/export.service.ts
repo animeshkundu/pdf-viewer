@@ -1,7 +1,9 @@
 import { PDFDocument, rgb, PDFPage, degrees, StandardFonts } from 'pdf-lib'
 import type { Annotation, HighlightAnnotation, PenAnnotation, ShapeAnnotation, TextAnnotation, SignatureAnnotation, RedactionAnnotation } from '@/types/annotation.types'
 import type { PageTransformation, BlankPage } from '@/types/page-management.types'
+import type { Watermark } from '@/types/watermark.types'
 import { formService } from './form.service'
+import { watermarkService } from './watermark.service'
 
 export interface ExportOptions {
   filename?: string
@@ -12,7 +14,7 @@ export interface ExportOptions {
 }
 
 export interface ExportProgress {
-  stage: 'loading' | 'processing' | 'forms' | 'annotations' | 'finalizing' | 'complete'
+  stage: 'loading' | 'processing' | 'watermark' | 'forms' | 'annotations' | 'finalizing' | 'complete'
   progress: number
   message: string
 }
@@ -36,6 +38,7 @@ export class ExportService {
     transformations: Map<number, PageTransformation>,
     pageOrder: number[],
     blankPages: BlankPage[],
+    watermark: Watermark | null,
     options: ExportOptions = {}
   ): Promise<Blob> {
     const { includeAnnotations = true, includeFormData = true, flattenForms = false } = options
@@ -52,8 +55,13 @@ export class ExportService {
         await this.insertBlankPages(pdfDoc, blankPages)
       }
 
+      if (watermark) {
+        this.updateProgress('watermark', 35, 'Applying watermark...')
+        await watermarkService.applyWatermarksToPDF(pdfDoc, watermark)
+      }
+
       if (includeFormData && formService.hasFields()) {
-        this.updateProgress('forms', 35, 'Filling form fields...')
+        this.updateProgress('forms', 50, 'Filling form fields...')
         try {
           await formService.applyFieldValues(pdfDoc)
           
@@ -66,7 +74,7 @@ export class ExportService {
       }
 
       if (includeAnnotations && annotations.length > 0) {
-        this.updateProgress('annotations', 60, 'Embedding annotations...')
+        this.updateProgress('annotations', 70, 'Embedding annotations...')
         await this.embedAnnotations(pdfDoc, annotations, transformations, pageOrder)
       }
 

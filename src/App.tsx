@@ -4,6 +4,7 @@ import { SearchProvider } from './hooks/useSearch.tsx'
 import { AnnotationProvider, useAnnotations } from './hooks/useAnnotations.tsx'
 import { PageManagementProvider, usePageManagement } from './hooks/usePageManagement'
 import { FormProvider, useForm } from './hooks/useForm'
+import { WatermarkProvider, useWatermark } from './hooks/useWatermark'
 import { useUnsavedChanges } from './hooks/useUnsavedChanges'
 import { Toolbar } from './components/Toolbar/Toolbar'
 import { MarkupToolbar } from './components/MarkupToolbar/MarkupToolbar'
@@ -14,6 +15,7 @@ import { EmptyState } from './components/EmptyState'
 import { SearchBar } from './components/SearchBar/SearchBar'
 import { ExportDialog } from './components/ExportDialog'
 import { KeyboardShortcutsDialog } from './components/KeyboardShortcutsDialog'
+import { WatermarkDialog } from './components/WatermarkDialog'
 import { InstallPrompt } from './components/InstallPrompt'
 import { OfflineIndicator } from './components/OfflineIndicator'
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from './components/ui/resizable'
@@ -25,12 +27,14 @@ function AppContentInner() {
   const { transformations, pageOrder, blankPages } = usePageManagement()
   const { hasUnsavedChanges, markAsModified, markAsSaved } = useUnsavedChanges()
   const { hasForm, isFormMode, setIsFormMode } = useForm()
+  const { watermark } = useWatermark()
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [isMarkupOpen, setIsMarkupOpen] = useState(false)
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [isExportOpen, setIsExportOpen] = useState(false)
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false)
+  const [isWatermarkOpen, setIsWatermarkOpen] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -221,10 +225,10 @@ function AppContentInner() {
   }, [document, currentPage, setCurrentPage, isMarkupOpen, isFormOpen, hasForm, isFormMode, zoom, setZoom, canUndo, canRedo, undo, redo, setActiveTool, deleteSelectedAnnotation, setIsFormMode])
 
   useEffect(() => {
-    if (annotations.length > 0 || transformations.size > 0 || pageOrder.length > 0 || blankPages.length > 0) {
+    if (annotations.length > 0 || transformations.size > 0 || pageOrder.length > 0 || blankPages.length > 0 || watermark !== null) {
       markAsModified()
     }
-  }, [annotations, transformations, pageOrder, blankPages, markAsModified])
+  }, [annotations, transformations, pageOrder, blankPages, watermark, markAsModified])
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -272,6 +276,7 @@ function AppContentInner() {
         }}
         isFormOpen={isFormOpen}
         hasForm={hasForm}
+        onWatermarkClick={() => setIsWatermarkOpen(true)}
         onExportClick={() => setIsExportOpen(true)}
         hasUnsavedChanges={hasUnsavedChanges}
         onKeyboardShortcutsClick={() => setIsShortcutsOpen(true)}
@@ -337,6 +342,12 @@ function AppContentInner() {
         transformations={transformations}
         pageOrder={pageOrder}
         blankPages={blankPages}
+        watermark={watermark}
+      />
+
+      <WatermarkDialog
+        isOpen={isWatermarkOpen}
+        onClose={() => setIsWatermarkOpen(false)}
       />
 
       <KeyboardShortcutsDialog
@@ -353,7 +364,9 @@ function AppContent() {
   return (
     <PageManagementProvider numPages={document?.numPages ?? 0}>
       <FormProvider>
-        <AppContentInner />
+        <WatermarkProvider>
+          <AppContentInner />
+        </WatermarkProvider>
       </FormProvider>
     </PageManagementProvider>
   )

@@ -5,11 +5,12 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Progress } from '@/components/ui/progress'
-import { Download, FileText, CheckCircle, Warning } from '@phosphor-icons/react'
+import { Download, FileText, CheckCircle, Warning, Stamp } from '@phosphor-icons/react'
 import { exportService, ExportProgress } from '@/services/export.service'
 import { formService } from '@/services/form.service'
 import { toast } from 'sonner'
 import type { BlankPage } from '@/types/page-management.types'
+import type { Watermark } from '@/types/watermark.types'
 
 interface ExportDialogProps {
   isOpen: boolean
@@ -20,6 +21,7 @@ interface ExportDialogProps {
   transformations: Map<number, any>
   pageOrder: number[]
   blankPages: BlankPage[]
+  watermark: Watermark | null
 }
 
 export function ExportDialog({
@@ -31,6 +33,7 @@ export function ExportDialog({
   transformations,
   pageOrder,
   blankPages,
+  watermark,
 }: ExportDialogProps) {
   const [filename, setFilename] = useState(() => 
     exportService.generateFilename(originalFilename)
@@ -62,6 +65,7 @@ export function ExportDialog({
         transformations,
         pageOrder,
         blankPages,
+        watermark,
         { 
           filename, 
           includeAnnotations,
@@ -151,6 +155,12 @@ export function ExportDialog({
                 <div className="flex items-center gap-2">
                   <FileText className="w-4 h-4" />
                   <span>{blankPageCount} blank page{blankPageCount !== 1 ? 's' : ''} to insert</span>
+                </div>
+              )}
+              {watermark && (
+                <div className="flex items-center gap-2">
+                  <Stamp className="w-4 h-4" />
+                  <span>Watermark: "{watermark.text}"</span>
                 </div>
               )}
               {hasFormFields && (

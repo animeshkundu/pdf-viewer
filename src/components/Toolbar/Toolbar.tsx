@@ -1,4 +1,4 @@
-import { FolderOpen, MagnifyingGlassPlus, MagnifyingGlassMinus, Sidebar, CaretLeft, CaretRight, MagnifyingGlass, PencilLine, Download, Question, TextT } from '@phosphor-icons/react'
+import { FolderOpen, MagnifyingGlassPlus, MagnifyingGlassMinus, Sidebar, CaretLeft, CaretRight, MagnifyingGlass, PencilLine, Download, Question, TextT, Stamp } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
@@ -7,6 +7,7 @@ import { usePDF } from '@/hooks/usePDF.tsx'
 import { ZOOM_LEVELS } from '@/types/pdf.types'
 import { useRef, useState } from 'react'
 import { cn } from '@/lib/utils'
+import { useWatermark } from '@/hooks/useWatermark'
 
 interface ToolbarProps {
   onToggleSidebar?: () => void
@@ -20,6 +21,7 @@ interface ToolbarProps {
   onExportClick?: () => void
   hasUnsavedChanges?: boolean
   onKeyboardShortcutsClick?: () => void
+  onWatermarkClick?: () => void
 }
 
 export function Toolbar({ 
@@ -33,9 +35,11 @@ export function Toolbar({
   hasForm,
   onExportClick, 
   hasUnsavedChanges, 
-  onKeyboardShortcutsClick 
+  onKeyboardShortcutsClick,
+  onWatermarkClick 
 }: ToolbarProps) {
   const { zoom, setZoom, document, loadDocument, currentPage, setCurrentPage } = usePDF()
+  const { hasWatermark } = useWatermark()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [pageInputValue, setPageInputValue] = useState('')
 
@@ -215,6 +219,28 @@ export function Toolbar({
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>Forms (F)</TooltipContent>
+                </Tooltip>
+              )}
+
+              {onWatermarkClick && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant={hasWatermark ? 'default' : 'ghost'}
+                      size="default"
+                      onClick={onWatermarkClick}
+                      aria-label="Add watermark"
+                      aria-pressed={hasWatermark}
+                      className={cn(
+                        'gap-2 button-press transition-all duration-200',
+                        hasWatermark && 'bg-secondary text-secondary-foreground shadow-sm'
+                      )}
+                    >
+                      <Stamp size={18} weight={hasWatermark ? 'fill' : 'regular'} aria-hidden="true" />
+                      <span className="hidden sm:inline font-medium">Watermark</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Add Watermark</TooltipContent>
                 </Tooltip>
               )}
               
