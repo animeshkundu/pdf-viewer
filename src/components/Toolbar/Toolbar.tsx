@@ -102,24 +102,26 @@ export function Toolbar({
     <TooltipProvider>
       <div className="flex items-center justify-between border-b border-border/60 bg-white/80 backdrop-blur-xl px-3 md:px-4 py-3 gap-3 md:gap-6 shadow-sm" role="toolbar" aria-label="Document toolbar">
         <div className="flex items-center gap-1.5 md:gap-2">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="default"
-                size="default"
-                onClick={handleOpenClick}
-                className="gap-2 button-press hover:shadow-lg transition-all duration-200 bg-gradient-to-r from-primary to-accent border-0"
-                aria-label="Open PDF file (Ctrl/Cmd+O)"
-              >
-                <FolderOpen size={18} weight="bold" aria-hidden="true" />
-                <span className="hidden sm:inline font-medium">Open File</span>
-                {hasUnsavedChanges && (
-                  <span className="ml-1 w-2 h-2 rounded-full bg-white animate-pulse" aria-label="Unsaved changes" />
-                )}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Open PDF file (Ctrl/Cmd+O)</TooltipContent>
-          </Tooltip>
+          {document && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="default"
+                  size="default"
+                  onClick={handleOpenClick}
+                  className="gap-2 button-press hover:shadow-lg transition-all duration-200 bg-gradient-to-r from-primary to-accent border-0"
+                  aria-label="Open PDF file (Ctrl/Cmd+O)"
+                >
+                  <FolderOpen size={18} weight="bold" aria-hidden="true" />
+                  <span className="hidden sm:inline font-medium">Open File</span>
+                  {hasUnsavedChanges && (
+                    <span className="ml-1 w-2 h-2 rounded-full bg-white animate-pulse" aria-label="Unsaved changes" />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Open PDF file (Ctrl/Cmd+O)</TooltipContent>
+            </Tooltip>
+          )}
 
           <input
             ref={fileInputRef}

@@ -100,10 +100,8 @@ export function EmptyState() {
             <span>Open PDF File</span>
           </button>
           
-          <div className="flex items-center gap-3 text-sm text-muted-foreground">
-            <div className="flex-1 h-px bg-border" />
-            <span>or drag and drop</span>
-            <div className="flex-1 h-px bg-border" />
+          <div className="text-sm text-muted-foreground text-center">
+            or drag and drop
           </div>
         </div>
 
