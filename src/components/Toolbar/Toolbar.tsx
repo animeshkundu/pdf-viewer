@@ -85,19 +85,19 @@ export function Toolbar({ onToggleSidebar, isSidebarOpen, onSearchClick, onMarku
 
   return (
     <TooltipProvider>
-      <div className="flex items-center justify-between border-b border-border bg-canvas-gray px-3 py-3 gap-4" role="toolbar" aria-label="Document toolbar">
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between border-b border-border bg-canvas-gray px-2 md:px-3 py-2 md:py-3 gap-2 md:gap-4" role="toolbar" aria-label="Document toolbar">
+        <div className="flex items-center gap-1 md:gap-2">
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
                 variant="default"
                 size="default"
                 onClick={handleOpenClick}
-                className="gap-2"
+                className="gap-2 button-press hover:shadow-md transition-all"
                 aria-label="Open PDF file (Ctrl/Cmd+O)"
               >
                 <FolderOpen size={20} aria-hidden="true" />
-                Open File
+                <span className="hidden sm:inline">Open File</span>
                 {hasUnsavedChanges && (
                   <span className="ml-1 w-2 h-2 rounded-full bg-destructive" aria-label="Unsaved changes" />
                 )}
@@ -125,6 +125,7 @@ export function Toolbar({ onToggleSidebar, isSidebarOpen, onSearchClick, onMarku
                     onClick={onToggleSidebar}
                     aria-label={isSidebarOpen ? 'Hide sidebar' : 'Show sidebar'}
                     aria-pressed={isSidebarOpen}
+                    className="button-press"
                   >
                     <Sidebar size={20} aria-hidden="true" />
                   </Button>
@@ -140,6 +141,7 @@ export function Toolbar({ onToggleSidebar, isSidebarOpen, onSearchClick, onMarku
                       size="icon"
                       onClick={onSearchClick}
                       aria-label="Search document (Ctrl/Cmd+F)"
+                      className="button-press"
                     >
                       <MagnifyingGlass size={20} aria-hidden="true" />
                     </Button>
@@ -157,10 +159,10 @@ export function Toolbar({ onToggleSidebar, isSidebarOpen, onSearchClick, onMarku
                       onClick={onMarkupClick}
                       aria-label="Toggle markup toolbar (Ctrl/Cmd+Shift+A)"
                       aria-pressed={isMarkupOpen}
-                      className={cn('gap-2', isMarkupOpen && 'bg-primary text-primary-foreground')}
+                      className={cn('gap-2 button-press transition-all', isMarkupOpen && 'bg-primary text-primary-foreground shadow-md')}
                     >
                       <PencilLine size={20} weight={isMarkupOpen ? 'fill' : 'regular'} aria-hidden="true" />
-                      Markup
+                      <span className="hidden sm:inline">Markup</span>
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>Markup (Ctrl/Cmd+Shift+A)</TooltipContent>
@@ -175,10 +177,10 @@ export function Toolbar({ onToggleSidebar, isSidebarOpen, onSearchClick, onMarku
                       size="default"
                       onClick={onExportClick}
                       aria-label="Export PDF (Ctrl/Cmd+S)"
-                      className="gap-2"
+                      className="gap-2 button-press"
                     >
                       <Download size={20} aria-hidden="true" />
-                      Export
+                      <span className="hidden sm:inline">Export</span>
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>Export (Ctrl/Cmd+S)</TooltipContent>
@@ -193,6 +195,7 @@ export function Toolbar({ onToggleSidebar, isSidebarOpen, onSearchClick, onMarku
                       size="icon"
                       onClick={onKeyboardShortcutsClick}
                       aria-label="Keyboard shortcuts (?)"
+                      className="button-press hidden md:flex"
                     >
                       <Question size={20} aria-hidden="true" />
                     </Button>
@@ -205,8 +208,8 @@ export function Toolbar({ onToggleSidebar, isSidebarOpen, onSearchClick, onMarku
         </div>
 
         {document && (
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2" role="group" aria-label="Page navigation">
+          <div className="flex items-center gap-2 md:gap-4">
+            <div className="flex items-center gap-1 md:gap-2" role="group" aria-label="Page navigation">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -215,6 +218,7 @@ export function Toolbar({ onToggleSidebar, isSidebarOpen, onSearchClick, onMarku
                     onClick={handlePrevPage}
                     disabled={currentPage <= 1}
                     aria-label="Previous page"
+                    className="button-press"
                   >
                     <CaretLeft size={20} aria-hidden="true" />
                   </Button>
@@ -232,10 +236,10 @@ export function Toolbar({ onToggleSidebar, isSidebarOpen, onSearchClick, onMarku
                     e.target.select()
                   }}
                   onBlur={() => setPageInputValue('')}
-                  className="w-14 h-8 text-center text-sm"
+                  className="w-12 md:w-14 h-8 text-center text-sm smooth-transition"
                   aria-label={`Current page ${currentPage} of ${document.numPages}`}
                 />
-                <span className="text-sm text-muted-foreground whitespace-nowrap" aria-hidden="true">
+                <span className="text-xs md:text-sm text-muted-foreground whitespace-nowrap" aria-hidden="true">
                   of {document.numPages}
                 </span>
               </form>
@@ -248,6 +252,7 @@ export function Toolbar({ onToggleSidebar, isSidebarOpen, onSearchClick, onMarku
                     onClick={handleNextPage}
                     disabled={currentPage >= document.numPages}
                     aria-label="Next page"
+                    className="button-press"
                   >
                     <CaretRight size={20} aria-hidden="true" />
                   </Button>
@@ -256,9 +261,9 @@ export function Toolbar({ onToggleSidebar, isSidebarOpen, onSearchClick, onMarku
               </Tooltip>
             </div>
 
-            <div className="h-5 w-px bg-border" aria-hidden="true" />
+            <div className="h-5 w-px bg-border hidden md:block" aria-hidden="true" />
 
-            <div className="flex items-center gap-2" role="group" aria-label="Zoom controls">
+            <div className="flex items-center gap-1 md:gap-2" role="group" aria-label="Zoom controls">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -267,6 +272,7 @@ export function Toolbar({ onToggleSidebar, isSidebarOpen, onSearchClick, onMarku
                     onClick={handleZoomOut}
                     disabled={zoom <= 0.5}
                     aria-label="Zoom out"
+                    className="button-press hidden sm:flex"
                   >
                     <MagnifyingGlassMinus size={20} aria-hidden="true" />
                   </Button>
@@ -275,7 +281,7 @@ export function Toolbar({ onToggleSidebar, isSidebarOpen, onSearchClick, onMarku
               </Tooltip>
 
               <Select value={currentZoomLabel} onValueChange={handleZoomChange}>
-                <SelectTrigger className="w-32" aria-label={`Zoom level: ${currentZoomLabel}`}>
+                <SelectTrigger className="w-24 md:w-32 smooth-transition" aria-label={`Zoom level: ${currentZoomLabel}`}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -295,6 +301,7 @@ export function Toolbar({ onToggleSidebar, isSidebarOpen, onSearchClick, onMarku
                     onClick={handleZoomIn}
                     disabled={zoom >= 4.0}
                     aria-label="Zoom in"
+                    className="button-press hidden sm:flex"
                   >
                     <MagnifyingGlassPlus size={20} aria-hidden="true" />
                   </Button>

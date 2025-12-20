@@ -16,6 +16,7 @@ export function PDFCanvas({ page, scale, pageNumber }: PDFCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [isRendering, setIsRendering] = useState(false)
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 })
+  const renderRequestRef = useRef<number | null>(null)
   const { getRotation } = usePageManagement()
   const rotation = getRotation(pageNumber)
 
@@ -23,19 +24,32 @@ export function PDFCanvas({ page, scale, pageNumber }: PDFCanvasProps) {
     const renderPage = async () => {
       if (!canvasRef.current || isRendering) return
 
-      setIsRendering(true)
-      try {
-        const viewport = page.getViewport({ scale, rotation })
-        setDimensions({ width: viewport.width, height: viewport.height })
-        await pdfService.renderPage(page, scale, canvasRef.current, rotation)
-      } catch (error) {
-        console.error('Error rendering page:', error)
-      } finally {
-        setIsRendering(false)
+      if (renderRequestRef.current) {
+        cancelAnimationFrame(renderRequestRef.current)
       }
+
+      renderRequestRef.current = requestAnimationFrame(async () => {
+        setIsRendering(true)
+        try {
+          const viewport = page.getViewport({ scale, rotation })
+          setDimensions({ width: viewport.width, height: viewport.height })
+          await pdfService.renderPage(page, scale, canvasRef.current!, rotation)
+        } catch (error) {
+          console.error('Error rendering page:', error)
+        } finally {
+          setIsRendering(false)
+          renderRequestRef.current = null
+        }
+      })
     }
 
     renderPage()
+
+    return () => {
+      if (renderRequestRef.current) {
+        cancelAnimationFrame(renderRequestRef.current)
+      }
+    }
   }, [page, scale, pageNumber, rotation, isRendering])
 
   return (
