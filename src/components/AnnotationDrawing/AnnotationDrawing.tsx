@@ -43,7 +43,8 @@ export function AnnotationDrawing({ pageNum, width, height, scale }: AnnotationD
   }
 
   const handleMouseDown = (e: React.MouseEvent<SVGSVGElement>) => {
-    if (!activeTool || activeTool === 'select' || activeTool === 'highlight') return
+    if (!activeTool || activeTool === 'select') return
+    if (activeTool === 'highlight') return
 
     const point = getMousePosition(e)
 
@@ -260,7 +261,7 @@ export function AnnotationDrawing({ pageNum, width, height, scale }: AnnotationD
     addAnnotation(annotation)
   }
 
-  if (!activeTool || activeTool === 'select' || activeTool === 'highlight') {
+  if (!activeTool || activeTool === 'select') {
     return (
       <>
         {showTextEditor && (
@@ -295,7 +296,13 @@ export function AnnotationDrawing({ pageNum, width, height, scale }: AnnotationD
       <svg
         ref={svgRef}
         className="absolute inset-0"
-        style={{ width, height, cursor: getCursor() }}
+        style={{ 
+          width, 
+          height, 
+          cursor: getCursor(),
+          pointerEvents: activeTool === 'highlight' ? 'none' : 'auto',
+          zIndex: activeTool && activeTool !== 'highlight' ? 30 : 5
+        }}
         viewBox={`0 0 ${width} ${height}`}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}

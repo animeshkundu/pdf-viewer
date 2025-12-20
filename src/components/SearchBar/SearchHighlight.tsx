@@ -29,7 +29,7 @@ export function SearchHighlight({ pageNumber, scale, pageWidth, pageHeight }: Se
         height: pageHeight,
       }}
     >
-      {pageMatches.map((match, idx) => {
+      {pageMatches.map((match) => {
         const isCurrentMatch = searchResult.matches[searchResult.currentMatchIndex] === match
 
         return match.boundingBoxes.map((box, boxIdx) => (
@@ -42,10 +42,10 @@ export function SearchHighlight({ pageNumber, scale, pageWidth, pageHeight }: Se
                 : 'bg-accent/20'
             )}
             style={{
-              left: box.x * scale,
-              top: pageHeight - (box.y + box.height) * scale,
-              width: box.width * scale,
-              height: box.height * scale,
+              left: `${box.x}px`,
+              top: `${pageHeight - (box.y + box.height)}px`,
+              width: `${box.width}px`,
+              height: `${box.height}px`,
             }}
           />
         ))

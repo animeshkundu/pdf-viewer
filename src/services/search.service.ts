@@ -125,15 +125,29 @@ export class SearchService {
 
     for (const item of pageTextContent.items) {
       const itemLength = item.str.length
+      const itemStart = currentIndex
       const itemEnd = currentIndex + itemLength
+      const matchStart = startIndex
+      const matchEnd = startIndex + length
 
-      if (currentIndex + 1 <= startIndex + length && itemEnd >= startIndex) {
+      if (itemEnd >= matchStart && itemStart < matchEnd) {
+        const overlapStart = Math.max(itemStart, matchStart)
+        const overlapEnd = Math.min(itemEnd, matchEnd)
+        const startCharInItem = overlapStart - itemStart
+        const endCharInItem = overlapEnd - itemStart
+        const charsInItem = endCharInItem - startCharInItem
+
         const [scaleX, , , scaleY, x, y] = item.transform
+        const totalWidth = item.width * Math.abs(scaleX)
+        const charWidth = totalWidth / itemLength
+        
+        const xOffset = charWidth * startCharInItem
+        const boxWidth = charWidth * charsInItem
         
         boxes.push({
-          x,
+          x: x + xOffset,
           y,
-          width: item.width * Math.abs(scaleX),
+          width: boxWidth,
           height: item.height * Math.abs(scaleY),
         })
       }

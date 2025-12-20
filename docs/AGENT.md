@@ -6,6 +6,60 @@ This document provides comprehensive guidance for AI agents (LLMs, Copilot, etc.
 
 ---
 
+## Critical: Recent Fixes and Known Patterns
+
+### Text Layer Implementation (ADR-009)
+**What**: An invisible text layer overlays the PDF canvas to enable text selection and highlighting.
+
+**Key Points**:
+- Text must be selectable for copying and highlighting
+- Layer uses transparent text positioned to overlay canvas rendering
+- Z-index management: Text layer (10/20) < Drawing layer (5/30)
+- Highlight tool works via text selection, not drawing
+- See `src/components/PDFViewer/PDFTextLayer.tsx`
+- See `docs/ADR/ADR-009-text-layer-implementation.md`
+
+**Common Mistakes to Avoid**:
+- ❌ Don't block text selection with pointer-events: none
+- ❌ Don't try to make highlights via SVG drawing (use text selection)
+- ❌ Don't forget to apply proper scaling to text positions
+- ❌ Don't remove or modify the text layer without understanding implications
+
+### Search Highlighting Precision
+**What**: Search highlights individual matched words, not entire text blocks.
+
+**Key Points**:
+- `calculateBoundingBoxes()` computes character-level positions
+- Calculates character width: `totalWidth / textLength`
+- Applies precise offsets and widths for each match
+- See `src/services/search.service.ts`
+
+**Common Mistakes to Avoid**:
+- ❌ Don't return full text item widths (will highlight entire blocks)
+- ❌ Don't forget to apply scale transformations correctly
+- ❌ Don't modify search service without understanding coordinate systems
+
+### Layer Stack and Z-Index
+All overlays on the PDF canvas follow this strict z-index hierarchy:
+```
+Annotation Drawing (z: 30 when drawing, 5 otherwise)
+  ↑
+Text Layer (z: 20 in highlight mode, 10 otherwise)
+  ↑
+Annotation Layer (z: auto)
+  ↑
+Search Highlights (z: auto)
+  ↑
+Canvas (z: 0)
+```
+
+**Common Mistakes to Avoid**:
+- ❌ Don't change z-index without understanding the full stack
+- ❌ Don't block pointer events on text layer (needed for selection)
+- ❌ Don't let drawing layer block text layer when highlighting
+
+---
+
 ## Pre-Work: Read These Documents First
 
 Before starting any work, **ALWAYS** review:
