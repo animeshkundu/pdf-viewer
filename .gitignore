@@ -24,6 +24,17 @@ dist-ssr
 *.sln
 *.sw?
 
+# Test coverage
+coverage/
+.nyc_output/
+
+# Playwright
+playwright-report/
+test-results/
+
+# Build artifacts
+*.tsbuildinfo
+
 .env
 **/agent-eval-report*
 packages
