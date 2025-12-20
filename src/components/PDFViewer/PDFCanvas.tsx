@@ -5,7 +5,9 @@ import { PDFTextLayer } from '@/components/PDFViewer/PDFTextLayer'
 import { AnnotationLayer } from '@/components/AnnotationLayer/AnnotationLayer'
 import { AnnotationDrawing } from '@/components/AnnotationDrawing/AnnotationDrawing'
 import { FormOverlayLayer } from '@/components/FormFieldOverlay/FormOverlayLayer'
+import { WatermarkOverlay } from '@/components/WatermarkOverlay/WatermarkOverlay'
 import { usePageManagement } from '@/hooks/usePageManagement'
+import { usePDF } from '@/hooks/usePDF.tsx'
 
 interface PDFCanvasProps {
   page: PDFPageProxy
@@ -19,6 +21,7 @@ export function PDFCanvas({ page, scale, pageNumber }: PDFCanvasProps) {
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 })
   const renderRequestRef = useRef<number | null>(null)
   const { getRotation } = usePageManagement()
+  const { document } = usePDF()
   const rotation = getRotation(pageNumber)
 
   useEffect(() => {
@@ -80,6 +83,13 @@ export function PDFCanvas({ page, scale, pageNumber }: PDFCanvasProps) {
           width={dimensions.width}
           height={dimensions.height}
           scale={scale}
+        />
+        <WatermarkOverlay
+          pageNumber={pageNumber}
+          width={dimensions.width}
+          height={dimensions.height}
+          scale={scale}
+          totalPages={document?.numPages || 0}
         />
         <FormOverlayLayer
           pageNumber={pageNumber}

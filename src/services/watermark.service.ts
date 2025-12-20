@@ -51,6 +51,8 @@ export class WatermarkService {
       finalY = finalY - (textHeight / 2)
     }
 
+    const rotationAngle = watermark.position === 'diagonal' ? 45 : watermark.rotation
+
     page.drawText(watermark.text, {
       x: finalX,
       y: finalY,
@@ -58,7 +60,7 @@ export class WatermarkService {
       font: font,
       color: color,
       opacity: watermark.opacity,
-      rotate: degrees(watermark.rotation)
+      rotate: degrees(rotationAngle)
     })
   }
 
@@ -153,31 +155,31 @@ export class WatermarkService {
     const match = oklchStr.match(/oklch\(([\d.]+)\s+([\d.]+)\s+([\d.]+)\)/)
     if (!match) return { r: 0.5, g: 0.5, b: 0.5 }
 
-    const l = parseFloat(match[1])
-    const c = parseFloat(match[2])
-    const h = parseFloat(match[3])
+    const L = parseFloat(match[1])
+    const C = parseFloat(match[2])
+    const H = parseFloat(match[3])
 
-    const a = c * Math.cos((h * Math.PI) / 180)
-    const b = c * Math.sin((h * Math.PI) / 180)
+    const a = C * Math.cos((H * Math.PI) / 180)
+    const b = C * Math.sin((H * Math.PI) / 180)
 
-    const fy = (l + 16) / 116
-    const fx = a / 500 + fy
-    const fz = fy - b / 200
+    const l_ = L + 0.3963377774 * a + 0.2158037573 * b
+    const m_ = L - 0.1055613458 * a - 0.0638541728 * b
+    const s_ = L - 0.0894841775 * a - 1.2914855480 * b
 
-    const xr = fx ** 3 > 0.008856 ? fx ** 3 : (116 * fx - 16) / 903.3
-    const yr = l > 8 ? ((l + 16) / 116) ** 3 : l / 903.3
-    const zr = fz ** 3 > 0.008856 ? fz ** 3 : (116 * fz - 16) / 903.3
+    const l = l_ ** 3
+    const m = m_ ** 3
+    const s = s_ ** 3
 
-    const x = xr * 0.95047
-    const y = yr * 1.0
-    const z = zr * 1.08883
-
-    let r = x * 3.2406 + y * -1.5372 + z * -0.4986
-    let g = x * -0.9689 + y * 1.8758 + z * 0.0415
-    let bl = x * 0.0557 + y * -0.204 + z * 1.057
+    let r = +4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s
+    let g = -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s
+    let bl = -0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s
 
     const gammaCorrect = (c: number) => {
-      return c > 0.0031308 ? 1.055 * c ** (1 / 2.4) - 0.055 : 12.92 * c
+      const abs = Math.abs(c)
+      if (abs > 0.0031308) {
+        return Math.sign(c) * (1.055 * (abs ** (1 / 2.4)) - 0.055)
+      }
+      return 12.92 * c
     }
 
     r = Math.max(0, Math.min(1, gammaCorrect(r)))
