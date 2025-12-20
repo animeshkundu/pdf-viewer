@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import type { PDFPageProxy } from 'pdfjs-dist'
 import type { TextItem } from 'pdfjs-dist/types/src/display/api'
 import { useAnnotations } from '@/hooks/useAnnotations'
+import { useSearch } from '@/hooks/useSearch'
 import type { HighlightAnnotation } from '@/types/annotation.types'
 
 interface PDFTextLayerProps {
@@ -15,6 +16,7 @@ interface PDFTextLayerProps {
 export function PDFTextLayer({ page, scale, pageNumber, width, height }: PDFTextLayerProps) {
   const textLayerRef = useRef<HTMLDivElement>(null)
   const { activeTool, addAnnotation, toolSettings } = useAnnotations()
+  const { searchResult } = useSearch()
 
   useEffect(() => {
     const renderTextLayer = async () => {
@@ -26,7 +28,7 @@ export function PDFTextLayer({ page, scale, pageNumber, width, height }: PDFText
         const textContent = await page.getTextContent()
         const viewport = page.getViewport({ scale })
 
-        textContent.items.forEach((item) => {
+        textContent.items.forEach((item, itemIndex) => {
           if (!('str' in item)) return
           const textItem = item as TextItem
 
@@ -45,6 +47,7 @@ export function PDFTextLayer({ page, scale, pageNumber, width, height }: PDFText
           div.style.whiteSpace = 'pre'
           div.style.color = 'transparent'
           div.setAttribute('data-text-layer', 'true')
+          div.setAttribute('data-item-index', itemIndex.toString())
           
           if (activeTool === null || activeTool === 'select') {
             div.style.pointerEvents = 'auto'
@@ -69,6 +72,70 @@ export function PDFTextLayer({ page, scale, pageNumber, width, height }: PDFText
 
     renderTextLayer()
   }, [page, scale, pageNumber, activeTool])
+
+  useEffect(() => {
+    if (!textLayerRef.current || !searchResult || searchResult.matches.length === 0) {
+      const textDivs = textLayerRef.current?.querySelectorAll('[data-text-layer]')
+      textDivs?.forEach(div => {
+        div.removeAttribute('data-search-match')
+        div.removeAttribute('data-current-match')
+      })
+      return
+    }
+
+    const pageMatches = searchResult.matches.filter(m => m.pageNumber === pageNumber)
+    if (pageMatches.length === 0) return
+
+    const textDivs = Array.from(textLayerRef.current.querySelectorAll('[data-text-layer]'))
+    const currentMatchOnPage = searchResult.matches[searchResult.currentMatchIndex]?.pageNumber === pageNumber 
+      ? searchResult.matches[searchResult.currentMatchIndex] 
+      : null
+
+    pageMatches.forEach(match => {
+      const isCurrentMatch = currentMatchOnPage?.matchIndex === match.matchIndex
+
+      match.textItems.forEach(({ itemIndex, charStart, charEnd }) => {
+        const div = textDivs.find(d => d.getAttribute('data-item-index') === itemIndex.toString())
+        if (!div) return
+
+        const text = div.textContent || ''
+        if (charStart >= text.length) return
+
+        const before = text.substring(0, charStart)
+        const matched = text.substring(charStart, Math.min(charEnd, text.length))
+        const after = text.substring(Math.min(charEnd, text.length))
+
+        div.innerHTML = ''
+        
+        if (before) {
+          const beforeSpan = document.createElement('span')
+          beforeSpan.textContent = before
+          beforeSpan.style.background = 'transparent'
+          div.appendChild(beforeSpan)
+        }
+
+        const matchSpan = document.createElement('span')
+        matchSpan.textContent = matched
+        matchSpan.style.background = isCurrentMatch 
+          ? 'oklch(0.55 0.18 240 / 0.6)' 
+          : 'oklch(0.55 0.18 240 / 0.3)'
+        matchSpan.style.borderRadius = '2px'
+        matchSpan.style.transition = 'background 0.2s'
+        if (isCurrentMatch) {
+          matchSpan.style.outline = '2px solid oklch(0.55 0.18 240 / 0.8)'
+          matchSpan.style.outlineOffset = '-1px'
+        }
+        div.appendChild(matchSpan)
+
+        if (after) {
+          const afterSpan = document.createElement('span')
+          afterSpan.textContent = after
+          afterSpan.style.background = 'transparent'
+          div.appendChild(afterSpan)
+        }
+      })
+    })
+  }, [searchResult, pageNumber])
 
   useEffect(() => {
     if (!textLayerRef.current || activeTool !== 'highlight') return

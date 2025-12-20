@@ -72,7 +72,6 @@ export class SearchService {
   ): SearchMatch[] {
     const matches: SearchMatch[] = []
     
-    let currentCharIndex = 0
     let matchIndex = 0
 
     for (let itemIdx = 0; itemIdx < pageTextContent.items.length; itemIdx++) {
@@ -106,13 +105,16 @@ export class SearchService {
             matchIndex,
             text: item.str.substring(charIdx, charIdx + query.length),
             boundingBoxes,
+            textItems: [{
+              itemIndex: itemIdx,
+              charStart: charIdx,
+              charEnd: charIdx + normalizedQuery.length,
+            }],
           })
 
           matchIndex++
         }
       }
-      
-      currentCharIndex += item.str.length + 1
     }
 
     return matches

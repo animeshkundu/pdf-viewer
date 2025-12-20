@@ -8,6 +8,11 @@ export interface SearchMatch {
     width: number
     height: number
   }>
+  textItems: Array<{
+    itemIndex: number
+    charStart: number
+    charEnd: number
+  }>
 }
 
 export interface SearchResult {

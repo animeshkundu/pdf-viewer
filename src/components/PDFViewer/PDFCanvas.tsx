@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { PDFPageProxy } from 'pdfjs-dist'
 import { pdfService } from '@/services/pdf.service'
-import { SearchHighlight } from '@/components/SearchBar/SearchHighlight'
 import { PDFTextLayer } from '@/components/PDFViewer/PDFTextLayer'
 import { AnnotationLayer } from '@/components/AnnotationLayer/AnnotationLayer'
 import { AnnotationDrawing } from '@/components/AnnotationDrawing/AnnotationDrawing'
@@ -66,12 +65,6 @@ export function PDFCanvas({ page, scale, pageNumber }: PDFCanvasProps) {
           pageNumber={pageNumber}
           width={dimensions.width}
           height={dimensions.height}
-        />
-        <SearchHighlight
-          pageNumber={pageNumber}
-          scale={scale}
-          pageWidth={dimensions.width}
-          pageHeight={dimensions.height}
         />
         <AnnotationLayer
           pageNum={pageNumber}
