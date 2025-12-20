@@ -31,7 +31,7 @@ function Thumbnail({ page, pageNumber, isSelected, onClick }: ThumbnailProps) {
     }
 
     renderThumbnail()
-  }, [page, isRendered])
+  }, [page])
 
   return (
     <button
@@ -43,10 +43,7 @@ function Thumbnail({ page, pageNumber, isSelected, onClick }: ThumbnailProps) {
       )}
     >
       <div className="relative bg-white shadow-sm">
-        <canvas
-          ref={canvasRef}
-          className="max-w-full h-auto"
-        />
+        <canvas ref={canvasRef} />
       </div>
       <span className="text-xs font-medium text-muted-foreground">
         {pageNumber}

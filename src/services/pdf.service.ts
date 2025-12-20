@@ -56,7 +56,8 @@ export class PDFService {
     scale: number,
     canvas: HTMLCanvasElement
   ): Promise<void> {
-    const cacheKey = `${page.pageNumber}-${scale}`
+    const devicePixelRatio = window.devicePixelRatio || 1
+    const cacheKey = `${page.pageNumber}-${scale}-${devicePixelRatio}`
     
     const cached = this.pageCache.get(cacheKey)
     if (cached && canvas) {
@@ -64,12 +65,14 @@ export class PDFService {
       if (ctx) {
         canvas.width = cached.width
         canvas.height = cached.height
+        canvas.style.width = `${cached.width / devicePixelRatio}px`
+        canvas.style.height = `${cached.height / devicePixelRatio}px`
         ctx.drawImage(cached, 0, 0)
         return
       }
     }
 
-    const viewport = page.getViewport({ scale })
+    const viewport = page.getViewport({ scale: scale * devicePixelRatio })
     const context = canvas.getContext('2d')
 
     if (!context) {
@@ -78,6 +81,8 @@ export class PDFService {
 
     canvas.width = viewport.width
     canvas.height = viewport.height
+    canvas.style.width = `${viewport.width / devicePixelRatio}px`
+    canvas.style.height = `${viewport.height / devicePixelRatio}px`
 
     const renderTask = page.render({
       canvasContext: context,

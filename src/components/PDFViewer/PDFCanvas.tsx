@@ -33,7 +33,7 @@ export function PDFCanvas({ page, scale, pageNumber }: PDFCanvasProps) {
     }
 
     renderPage()
-  }, [page, scale, pageNumber, isRendering])
+  }, [page, scale, pageNumber])
 
   return (
     <div className="relative flex items-center justify-center p-4">
@@ -41,7 +41,6 @@ export function PDFCanvas({ page, scale, pageNumber }: PDFCanvasProps) {
         <canvas
           ref={canvasRef}
           className="shadow-lg bg-white"
-          style={{ maxWidth: '100%', height: 'auto' }}
         />
         <SearchHighlight
           pageNumber={pageNumber}
