@@ -19,7 +19,7 @@ import {
   ArrowCounterClockwise,
   ArrowClockwise,
   Trash,
-  Cursor,
+  CursorClick,
   TextT,
   ProhibitInset,
 } from '@phosphor-icons/react'
@@ -119,18 +119,35 @@ export function MarkupToolbar({ isOpen, onClose }: MarkupToolbarProps) {
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
-                variant={activeTool === null || activeTool === 'select' ? 'default' : 'ghost'}
+                variant={activeTool === null ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => setActiveTool(null)}
                 className={cn(
                   'h-9 w-9 p-0',
-                  (activeTool === null || activeTool === 'select') && 'bg-primary text-primary-foreground'
+                  activeTool === null && 'bg-primary text-primary-foreground'
                 )}
               >
-                <TextT className="h-5 w-5" weight={(activeTool === null || activeTool === 'select') ? 'fill' : 'regular'} />
+                <TextT className="h-5 w-5" weight={activeTool === null ? 'fill' : 'regular'} />
               </Button>
             </TooltipTrigger>
             <TooltipContent>Select Text (V)</TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={activeTool === 'select' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setActiveTool('select')}
+                className={cn(
+                  'h-9 w-9 p-0',
+                  activeTool === 'select' && 'bg-primary text-primary-foreground'
+                )}
+              >
+                <CursorClick className="h-5 w-5" weight={activeTool === 'select' ? 'fill' : 'regular'} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Select & Move Objects (M)</TooltipContent>
           </Tooltip>
 
           <Separator orientation="vertical" className="h-6 mx-1" />

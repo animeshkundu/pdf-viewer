@@ -168,6 +168,10 @@ function AppContentInner() {
             e.preventDefault()
             setActiveTool(null)
             break
+          case 'm':
+            e.preventDefault()
+            setActiveTool('select')
+            break
           case 'h':
             e.preventDefault()
             setActiveTool('highlight')
