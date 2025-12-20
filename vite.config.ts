@@ -22,4 +22,10 @@ export default defineConfig({
       '@': resolve(projectRoot, 'src')
     }
   },
+  worker: {
+    format: 'es'
+  },
+  optimizeDeps: {
+    exclude: ['pdfjs-dist']
+  }
 });
