@@ -35,6 +35,11 @@ function AppContentInner() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement
+      const isTyping = target.tagName === 'INPUT' || 
+                       target.tagName === 'TEXTAREA' || 
+                       target.isContentEditable
+
       if ((e.metaKey || e.ctrlKey) && e.key === 'o') {
         e.preventDefault()
         if (fileInputRef.current) {
@@ -67,7 +72,7 @@ function AppContentInner() {
         return
       }
 
-      if (e.key === 'f' && !e.metaKey && !e.ctrlKey && document && hasForm) {
+      if (e.key === 'f' && !e.metaKey && !e.ctrlKey && document && hasForm && !isTyping) {
         e.preventDefault()
         setIsFormOpen(!isFormOpen)
         setIsFormMode(!isFormMode)
@@ -91,6 +96,7 @@ function AppContentInner() {
       }
 
       if (e.key === '?') {
+        if (isTyping) return
         e.preventDefault()
         setIsShortcutsOpen(true)
         return
@@ -108,6 +114,8 @@ function AppContentInner() {
       }
 
       if (!document) return
+
+      if (isTyping) return
 
       if (e.key === 'j' || e.key === 'ArrowDown' || e.key === 'PageDown') {
         if (currentPage < document.numPages) {
