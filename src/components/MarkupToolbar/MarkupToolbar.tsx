@@ -21,7 +21,7 @@ import {
   Trash,
   Cursor,
   TextT,
-  Prohibit,
+  ProhibitInset,
 } from '@phosphor-icons/react'
 import { ToolType, HIGHLIGHT_COLORS, PEN_COLORS, PEN_THICKNESSES } from '@/types/annotation.types'
 import { SignatureManager } from '@/components/SignatureManager/SignatureManager'
@@ -266,11 +266,11 @@ export function MarkupToolbar({ isOpen, onClose }: MarkupToolbarProps) {
                   activeTool === 'redaction' && 'bg-destructive text-destructive-foreground hover:bg-destructive/90'
                 )}
               >
-                <Prohibit className="h-5 w-5" weight={activeTool === 'redaction' ? 'fill' : 'regular'} />
+                <ProhibitInset className="h-5 w-5" weight={activeTool === 'redaction' ? 'fill' : 'regular'} />
                 <span className="text-sm">Redact</span>
               </Button>
             </TooltipTrigger>
-            <TooltipContent>Redact Sensitive Information</TooltipContent>
+            <TooltipContent>Redact Sensitive Information (Select text or draw box)</TooltipContent>
           </Tooltip>
           
           <Tooltip>

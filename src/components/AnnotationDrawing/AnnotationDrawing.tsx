@@ -127,6 +127,27 @@ export function AnnotationDrawing({ pageNum, width, height, scale }: AnnotationD
         }
         addAnnotation(annotation)
         break
+
+      case 'redaction':
+        const redactionBox = {
+          x: Math.min(startPoint.x, currentPoint.x),
+          y: Math.min(startPoint.y, currentPoint.y),
+          width: Math.abs(currentPoint.x - startPoint.x),
+          height: Math.abs(currentPoint.y - startPoint.y),
+        }
+        
+        if (redactionBox.width > 5 && redactionBox.height > 5) {
+          const redactionAnnotation = {
+            id: `redaction-${timestamp}`,
+            type: 'redaction' as const,
+            pageNum,
+            timestamp,
+            boxes: [redactionBox],
+            removeText: true,
+          }
+          addAnnotation(redactionAnnotation)
+        }
+        break
     }
 
     setIsDrawing(false)
@@ -169,6 +190,21 @@ export function AnnotationDrawing({ pageNum, width, height, scale }: AnnotationD
             stroke={toolSettings.color}
             strokeWidth={toolSettings.thickness}
             opacity={0.7}
+          />
+        )
+
+      case 'redaction':
+        return (
+          <rect
+            x={Math.min(startPoint.x, currentPoint.x)}
+            y={Math.min(startPoint.y, currentPoint.y)}
+            width={Math.abs(currentPoint.x - startPoint.x)}
+            height={Math.abs(currentPoint.y - startPoint.y)}
+            fill="oklch(0 0 0)"
+            stroke="oklch(0.55 0.22 25)"
+            strokeWidth={3}
+            strokeDasharray="4 2"
+            opacity={0.8}
           />
         )
 
@@ -244,6 +280,7 @@ export function AnnotationDrawing({ pageNum, width, height, scale }: AnnotationD
     if (!activeTool || activeTool === 'select') return 'default'
     if (activeTool === 'pen') return 'crosshair'
     if (activeTool === 'text' || activeTool === 'note' || activeTool === 'signature') return 'pointer'
+    if (activeTool === 'redaction') return 'crosshair'
     return 'crosshair'
   }
 
@@ -261,7 +298,7 @@ export function AnnotationDrawing({ pageNum, width, height, scale }: AnnotationD
     addAnnotation(annotation)
   }
 
-  if (!activeTool || activeTool === 'select') {
+  if (!activeTool || activeTool === 'select' || activeTool === 'redaction') {
     return (
       <>
         {showTextEditor && (
