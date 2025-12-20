@@ -1,11 +1,13 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
 import type { PDFPageProxy } from 'pdfjs-dist'
 import { usePDF } from '@/hooks/usePDF.tsx'
+import { usePageManagement } from '@/hooks/usePageManagement'
 import { PDFCanvas } from './PDFCanvas'
 import { pdfService } from '@/services/pdf.service'
 
 export function PDFViewer() {
   const { document, zoom, currentPage, setCurrentPage } = usePDF()
+  const { pageOrder, isDeleted, getRotation } = usePageManagement()
   const [pages, setPages] = useState<PDFPageProxy[]>([])
   const [visiblePages, setVisiblePages] = useState<Set<number>>(new Set())
   const containerRef = useRef<HTMLDivElement>(null)
@@ -154,29 +156,34 @@ export function PDFViewer() {
       className="flex-1 overflow-auto bg-slate-gray/20 scroll-smooth"
     >
       <div className="flex flex-col items-center py-8 gap-6">
-        {pages.map((page, index) => {
-          const pageNumber = index + 1
-          const isVisible = visiblePages.has(pageNumber)
+        {pageOrder.map((pageNum) => {
+          if (isDeleted(pageNum)) return null
+          
+          const page = pages[pageNum - 1]
+          if (!page) return null
+          
+          const isVisible = visiblePages.has(pageNum)
+          const rotation = getRotation(pageNum)
 
           return (
             <div
-              key={pageNumber}
-              ref={(el) => setPageRef(pageNumber, el)}
-              data-page-number={pageNumber}
+              key={pageNum}
+              ref={(el) => setPageRef(pageNum, el)}
+              data-page-number={pageNum}
               className="relative"
             >
               {isVisible ? (
                 <PDFCanvas
                   page={page}
                   scale={zoom}
-                  pageNumber={pageNumber}
+                  pageNumber={pageNum}
                 />
               ) : (
                 <div 
                   className="bg-white shadow-lg"
                   style={{
-                    width: page.getViewport({ scale: zoom }).width,
-                    height: page.getViewport({ scale: zoom }).height,
+                    width: page.getViewport({ scale: zoom, rotation }).width,
+                    height: page.getViewport({ scale: zoom, rotation }).height,
                   }}
                 />
               )}

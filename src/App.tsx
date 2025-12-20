@@ -2,6 +2,7 @@ import { Toaster } from 'sonner'
 import { PDFProvider, usePDF } from './hooks/usePDF.tsx'
 import { SearchProvider } from './hooks/useSearch.tsx'
 import { AnnotationProvider } from './hooks/useAnnotations.tsx'
+import { PageManagementProvider } from './hooks/usePageManagement'
 import { Toolbar } from './components/Toolbar/Toolbar'
 import { MarkupToolbar } from './components/MarkupToolbar/MarkupToolbar'
 import { PDFViewer } from './components/PDFViewer/PDFViewer'
@@ -83,44 +84,46 @@ function AppContent() {
   }, [document, currentPage, setCurrentPage, isMarkupOpen])
 
   return (
-    <div className="flex flex-col h-screen">
-      <Toolbar 
-        onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
-        isSidebarOpen={isSidebarOpen}
-        onSearchClick={() => setIsSearchOpen(true)}
-        onMarkupClick={() => setIsMarkupOpen(!isMarkupOpen)}
-        isMarkupOpen={isMarkupOpen}
-      />
-      
-      <MarkupToolbar 
-        isOpen={isMarkupOpen}
-        onClose={() => setIsMarkupOpen(false)}
-      />
-      
-      <div className="flex flex-1 overflow-hidden relative">
-        <SearchBar isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
-        
-        <ThumbnailSidebar 
-          isOpen={isSidebarOpen}
-          onClose={() => setIsSidebarOpen(false)}
+    <PageManagementProvider numPages={document?.numPages ?? 0}>
+      <div className="flex flex-col h-screen">
+        <Toolbar 
+          onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+          isSidebarOpen={isSidebarOpen}
+          onSearchClick={() => setIsSearchOpen(true)}
+          onMarkupClick={() => setIsMarkupOpen(!isMarkupOpen)}
+          isMarkupOpen={isMarkupOpen}
         />
         
-        <div className="flex-1 flex flex-col">
-          {isLoading && (
-            <div className="flex-1 flex items-center justify-center">
-              <div className="text-center space-y-4">
-                <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
-                <p className="text-muted-foreground">Loading PDF...</p>
+        <MarkupToolbar 
+          isOpen={isMarkupOpen}
+          onClose={() => setIsMarkupOpen(false)}
+        />
+        
+        <div className="flex flex-1 overflow-hidden relative">
+          <SearchBar isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
+          
+          <ThumbnailSidebar 
+            isOpen={isSidebarOpen}
+            onClose={() => setIsSidebarOpen(false)}
+          />
+          
+          <div className="flex-1 flex flex-col">
+            {isLoading && (
+              <div className="flex-1 flex items-center justify-center">
+                <div className="text-center space-y-4">
+                  <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
+                  <p className="text-muted-foreground">Loading PDF...</p>
+                </div>
               </div>
-            </div>
-          )}
-          
-          {!isLoading && !document && <EmptyState />}
-          
-          {!isLoading && document && <PDFViewer />}
+            )}
+            
+            {!isLoading && !document && <EmptyState />}
+            
+            {!isLoading && document && <PDFViewer />}
+          </div>
         </div>
       </div>
-    </div>
+    </PageManagementProvider>
   )
 }
 

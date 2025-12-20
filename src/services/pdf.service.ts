@@ -54,10 +54,11 @@ export class PDFService {
   async renderPage(
     page: PDFPageProxy,
     scale: number,
-    canvas: HTMLCanvasElement
+    canvas: HTMLCanvasElement,
+    rotation: number = 0
   ): Promise<void> {
     const devicePixelRatio = window.devicePixelRatio || 1
-    const cacheKey = `${page.pageNumber}-${scale}-${devicePixelRatio}`
+    const cacheKey = `${page.pageNumber}-${scale}-${rotation}-${devicePixelRatio}`
     
     const cached = this.pageCache.get(cacheKey)
     if (cached && canvas) {
@@ -72,7 +73,7 @@ export class PDFService {
       }
     }
 
-    const viewport = page.getViewport({ scale: scale * devicePixelRatio })
+    const viewport = page.getViewport({ scale: scale * devicePixelRatio, rotation })
     const context = canvas.getContext('2d')
 
     if (!context) {
