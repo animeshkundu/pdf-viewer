@@ -28,6 +28,12 @@ export class PDFService {
     onProgress?: (progress: number) => void
   ): Promise<PDFDocumentProxy> {
     try {
+      if (this.documentProxy) {
+        await this.documentProxy.destroy()
+        this.documentProxy = null
+      }
+      this.clearCache()
+      
       const arrayBuffer = await file.arrayBuffer()
       this.originalBytes = arrayBuffer
       this.filename = file.name

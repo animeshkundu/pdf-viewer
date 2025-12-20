@@ -1,6 +1,9 @@
 import { createContext, useContext, useState, useCallback, ReactNode } from 'react'
 import type { PDFDocumentProxy } from 'pdfjs-dist'
 import { pdfService } from '@/services/pdf.service'
+import { annotationService } from '@/services/annotation.service'
+import { pageManagementService } from '@/services/page-management.service'
+import { searchService } from '@/services/search.service'
 import { toast } from 'sonner'
 
 interface PDFContextValue {
@@ -37,9 +40,14 @@ export function PDFProvider({ children }: { children: ReactNode }) {
     setLoadProgress(0)
     
     try {
+      annotationService.clearAnnotations()
+      searchService.cleanup()
+      
       const doc = await pdfService.loadDocument(newFile, (progress) => {
         setLoadProgress(progress)
       })
+      
+      pageManagementService.initialize(doc.numPages)
       
       setDocument(doc)
       setFile(newFile)
@@ -60,6 +68,9 @@ export function PDFProvider({ children }: { children: ReactNode }) {
 
   const cleanup = useCallback(() => {
     pdfService.cleanup()
+    annotationService.clearAnnotations()
+    searchService.cleanup()
+    pageManagementService.initialize(0)
     setDocument(null)
     setFile(null)
     setCurrentPage(1)
