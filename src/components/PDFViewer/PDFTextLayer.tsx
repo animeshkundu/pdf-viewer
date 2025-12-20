@@ -3,7 +3,7 @@ import type { PDFPageProxy } from 'pdfjs-dist'
 import type { TextItem } from 'pdfjs-dist/types/src/display/api'
 import { useAnnotations } from '@/hooks/useAnnotations'
 import { useSearch } from '@/hooks/useSearch'
-import type { HighlightAnnotation } from '@/types/annotation.types'
+import type { HighlightAnnotation, RedactionAnnotation } from '@/types/annotation.types'
 
 interface PDFTextLayerProps {
   page: PDFPageProxy
@@ -53,7 +53,7 @@ export function PDFTextLayer({ page, scale, pageNumber, width, height }: PDFText
             div.style.pointerEvents = 'auto'
             div.style.userSelect = 'text'
             div.style.cursor = 'text'
-          } else if (activeTool === 'highlight') {
+          } else if (activeTool === 'highlight' || activeTool === 'redaction') {
             div.style.pointerEvents = 'auto'
             div.style.userSelect = 'text'
             div.style.cursor = 'crosshair'
@@ -138,7 +138,7 @@ export function PDFTextLayer({ page, scale, pageNumber, width, height }: PDFText
   }, [searchResult, pageNumber])
 
   useEffect(() => {
-    if (!textLayerRef.current || activeTool !== 'highlight') return
+    if (!textLayerRef.current || (activeTool !== 'highlight' && activeTool !== 'redaction')) return
 
     const handleMouseUp = () => {
       const selection = window.getSelection()
@@ -158,17 +158,29 @@ export function PDFTextLayer({ page, scale, pageNumber, width, height }: PDFText
         height: rect.height,
       }))
 
-      const annotation: HighlightAnnotation = {
-        id: `highlight-${Date.now()}`,
-        type: 'highlight',
-        pageNum: pageNumber,
-        timestamp: Date.now(),
-        boxes,
-        color: toolSettings.color,
-        opacity: toolSettings.opacity,
+      if (activeTool === 'highlight') {
+        const annotation: HighlightAnnotation = {
+          id: `highlight-${Date.now()}`,
+          type: 'highlight',
+          pageNum: pageNumber,
+          timestamp: Date.now(),
+          boxes,
+          color: toolSettings.color,
+          opacity: toolSettings.opacity,
+        }
+        addAnnotation(annotation)
+      } else if (activeTool === 'redaction') {
+        const annotation: RedactionAnnotation = {
+          id: `redaction-${Date.now()}`,
+          type: 'redaction',
+          pageNum: pageNumber,
+          timestamp: Date.now(),
+          boxes,
+          removeText: true,
+        }
+        addAnnotation(annotation)
       }
-
-      addAnnotation(annotation)
+      
       selection.removeAllRanges()
     }
 
@@ -187,9 +199,9 @@ export function PDFTextLayer({ page, scale, pageNumber, width, height }: PDFText
       style={{
         width,
         height,
-        pointerEvents: (activeTool === null || activeTool === 'select' || activeTool === 'highlight') ? 'auto' : 'none',
+        pointerEvents: (activeTool === null || activeTool === 'select' || activeTool === 'highlight' || activeTool === 'redaction') ? 'auto' : 'none',
         userSelect: (activeTool === null || activeTool === 'select') ? 'text' : 'none',
-        zIndex: activeTool === 'highlight' ? 20 : 10,
+        zIndex: (activeTool === 'highlight' || activeTool === 'redaction') ? 20 : 10,
       }}
     />
   )

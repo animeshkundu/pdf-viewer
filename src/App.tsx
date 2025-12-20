@@ -188,6 +188,10 @@ function AppContentInner() {
             e.preventDefault()
             setActiveTool('rectangle')
             break
+          case 'x':
+            e.preventDefault()
+            setActiveTool('redaction')
+            break
           case 'Delete':
           case 'Backspace':
             e.preventDefault()

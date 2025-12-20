@@ -1,5 +1,5 @@
 import { PDFDocument, rgb, PDFPage, degrees, StandardFonts } from 'pdf-lib'
-import type { Annotation, HighlightAnnotation, PenAnnotation, ShapeAnnotation, TextAnnotation, SignatureAnnotation } from '@/types/annotation.types'
+import type { Annotation, HighlightAnnotation, PenAnnotation, ShapeAnnotation, TextAnnotation, SignatureAnnotation, RedactionAnnotation } from '@/types/annotation.types'
 import type { PageTransformation } from '@/types/page-management.types'
 import { formService } from './form.service'
 
@@ -173,6 +173,9 @@ export class ExportService {
           case 'signature':
             await this.embedSignature(pdfDoc, page, annotation as SignatureAnnotation)
             break
+          case 'redaction':
+            await this.embedRedaction(page, annotation as RedactionAnnotation)
+            break
         }
       } catch (error) {
         console.error(`Failed to embed annotation ${annotation.id}:`, error)
@@ -210,6 +213,21 @@ export class ExportService {
         height: box.height,
         color: rgb(color.r, color.g, color.b),
         opacity: annotation.opacity,
+      })
+    })
+  }
+
+  private async embedRedaction(page: PDFPage, annotation: RedactionAnnotation): Promise<void> {
+    const { height } = page.getSize()
+
+    annotation.boxes.forEach(box => {
+      page.drawRectangle({
+        x: box.x,
+        y: height - box.y - box.height,
+        width: box.width,
+        height: box.height,
+        color: rgb(0, 0, 0),
+        opacity: 1,
       })
     })
   }

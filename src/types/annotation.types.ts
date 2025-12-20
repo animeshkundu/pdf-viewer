@@ -1,4 +1,4 @@
-export type AnnotationType = 'highlight' | 'pen' | 'rectangle' | 'circle' | 'arrow' | 'line' | 'text' | 'note' | 'signature'
+export type AnnotationType = 'highlight' | 'pen' | 'rectangle' | 'circle' | 'arrow' | 'line' | 'text' | 'note' | 'signature' | 'redaction'
 
 export interface Point {
   x: number
@@ -67,6 +67,12 @@ export interface SignatureAnnotation extends BaseAnnotation {
   height: number
 }
 
+export interface RedactionAnnotation extends BaseAnnotation {
+  type: 'redaction'
+  boxes: BoundingBox[]
+  removeText: boolean
+}
+
 export type Annotation =
   | HighlightAnnotation
   | PenAnnotation
@@ -74,6 +80,7 @@ export type Annotation =
   | TextAnnotation
   | NoteAnnotation
   | SignatureAnnotation
+  | RedactionAnnotation
 
 export interface AnnotationState {
   annotations: Annotation[]

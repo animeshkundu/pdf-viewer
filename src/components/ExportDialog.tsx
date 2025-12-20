@@ -94,6 +94,7 @@ export function ExportDialog({
   }
 
   const annotationCount = annotations.length
+  const redactionCount = annotations.filter(a => a.type === 'redaction').length
   const hasTransformations = Array.from(transformations.values()).some(
     t => t.rotation !== 0 || t.isDeleted
   )
@@ -133,6 +134,12 @@ export function ExportDialog({
                 <div className="flex items-center gap-2">
                   <FileText className="w-4 h-4" />
                   <span>{annotationCount} annotation{annotationCount !== 1 ? 's' : ''}</span>
+                </div>
+              )}
+              {redactionCount > 0 && (
+                <div className="flex items-center gap-2">
+                  <Warning className="w-4 h-4 text-destructive" />
+                  <span className="text-destructive font-medium">{redactionCount} redaction{redactionCount !== 1 ? 's' : ''} (content will be blacked out)</span>
                 </div>
               )}
               {hasFormFields && (

@@ -1,9 +1,8 @@
 # PDF Editor - Modular Task Breakdown
 
 ## Current State
-✅ Phases 1-8 Complete: Viewing, Search, Annotations, Signatures, Page Management, Export, Performance
-🚧 Phase 9: Research/Planning Complete
-❌ Phases 10+: PDF Editing Features - Ready to Implement
+✅ Phases 1-11 Complete: Viewing, Search, Annotations, Signatures, Page Management, Export, Performance, Forms, Redaction
+❌ Phases 12+: Additional Features - Ready to Implement
 
 ---
 
@@ -69,16 +68,30 @@ Update `ExportService.exportPDF()` to apply form values before annotations.
 
 ---
 
-## PHASE 11: Redaction Tool (Priority: MEDIUM)
-**Estimated Time**: 3-4 hours
+## PHASE 11: Redaction Tool (Priority: MEDIUM) ✅ COMPLETE
+**Estimated Time**: 3-4 hours  
+**Actual Time**: ~2 hours  
+**Completion Date**: 2025-01-27
 
-### Task 11.1: Redaction Annotation Type
+### Task 11.1: Redaction Annotation Type ✅
 Add `RedactionAnnotation` to annotation types.
 
 **Acceptance**:
-- Draws solid black boxes
-- Export removes underlying text
-- Warning dialog on first use
+- ✅ Draws solid black boxes
+- ✅ Export embeds permanent black boxes (covers but doesn't remove text)
+- ✅ Warning dialog on first use explaining limitations
+- ✅ Keyboard shortcut (X key)
+- ✅ Distinctive visual appearance (red borders when selected)
+- ✅ Integration with export dialog showing redaction count
+
+**Deliverables**:
+- `src/types/annotation.types.ts` - RedactionAnnotation type
+- `src/components/RedactionWarningDialog.tsx` - Warning dialog
+- `src/components/MarkupToolbar/MarkupToolbar.tsx` - Redaction button
+- `src/components/AnnotationLayer/AnnotationLayer.tsx` - Redaction renderer
+- `src/components/PDFViewer/PDFTextLayer.tsx` - Text selection for redaction
+- `src/services/export.service.ts` - Export integration
+- `docs/ADR/011-redaction-implementation.md` - Architecture decision record
 
 ---
 

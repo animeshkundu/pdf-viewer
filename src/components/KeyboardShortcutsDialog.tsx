@@ -34,6 +34,7 @@ const shortcuts: Shortcut[] = [
   { keys: ['s'], description: 'Activate signature tool', category: 'tools' },
   { keys: ['t'], description: 'Activate text box tool', category: 'tools' },
   { keys: ['r'], description: 'Activate rectangle tool', category: 'tools' },
+  { keys: ['x'], description: 'Activate redaction tool', category: 'tools' },
   { keys: ['Delete'], description: 'Delete selected annotation', category: 'tools' },
   { keys: ['Backspace'], description: 'Delete selected annotation', category: 'tools' },
   

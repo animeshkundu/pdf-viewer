@@ -21,10 +21,13 @@ import {
   Trash,
   Cursor,
   TextT,
+  Prohibit,
 } from '@phosphor-icons/react'
 import { ToolType, HIGHLIGHT_COLORS, PEN_COLORS, PEN_THICKNESSES } from '@/types/annotation.types'
 import { SignatureManager } from '@/components/SignatureManager/SignatureManager'
+import { RedactionWarningDialog } from '@/components/RedactionWarningDialog'
 import { cn } from '@/lib/utils'
+import { useKV } from '@github/spark/hooks'
 
 interface MarkupToolbarProps {
   isOpen: boolean
@@ -33,6 +36,8 @@ interface MarkupToolbarProps {
 
 export function MarkupToolbar({ isOpen, onClose }: MarkupToolbarProps) {
   const [isSignatureManagerOpen, setIsSignatureManagerOpen] = useState(false)
+  const [showRedactionWarning, setShowRedactionWarning] = useState(false)
+  const [warningDismissed] = useKV<boolean>('redaction-warning-dismissed', false)
   const { currentPage } = usePDF()
   const {
     activeTool,
@@ -49,6 +54,23 @@ export function MarkupToolbar({ isOpen, onClose }: MarkupToolbarProps) {
   } = useAnnotations()
 
   if (!isOpen) return null
+
+  const handleRedactionClick = () => {
+    if (warningDismissed) {
+      setActiveTool('redaction')
+    } else {
+      setShowRedactionWarning(true)
+    }
+  }
+
+  const handleRedactionWarningConfirm = () => {
+    setShowRedactionWarning(false)
+    setActiveTool('redaction')
+  }
+
+  const handleRedactionWarningCancel = () => {
+    setShowRedactionWarning(false)
+  }
 
   const handleSignatureSelected = (imageData: string, width: number, height: number) => {
     addAnnotation({
@@ -231,6 +253,26 @@ export function MarkupToolbar({ isOpen, onClose }: MarkupToolbarProps) {
           <ToolButton tool="text" icon={TextAa} label="Text Box" />
           <ToolButton tool="note" icon={Note} label="Sticky Note" />
           
+          <Separator orientation="vertical" className="h-6 mx-1" />
+          
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={activeTool === 'redaction' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={handleRedactionClick}
+                className={cn(
+                  'h-9 gap-2',
+                  activeTool === 'redaction' && 'bg-destructive text-destructive-foreground hover:bg-destructive/90'
+                )}
+              >
+                <Prohibit className="h-5 w-5" weight={activeTool === 'redaction' ? 'fill' : 'regular'} />
+                <span className="text-sm">Redact</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Redact Sensitive Information</TooltipContent>
+          </Tooltip>
+          
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
@@ -311,6 +353,12 @@ export function MarkupToolbar({ isOpen, onClose }: MarkupToolbarProps) {
         isOpen={isSignatureManagerOpen}
         onClose={() => setIsSignatureManagerOpen(false)}
         onSignatureSelected={handleSignatureSelected}
+      />
+
+      <RedactionWarningDialog
+        isOpen={showRedactionWarning}
+        onConfirm={handleRedactionWarningConfirm}
+        onCancel={handleRedactionWarningCancel}
       />
     </TooltipProvider>
   )

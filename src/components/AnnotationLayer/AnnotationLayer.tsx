@@ -8,6 +8,7 @@ import {
   TextAnnotation,
   NoteAnnotation,
   SignatureAnnotation,
+  RedactionAnnotation,
 } from '@/types/annotation.types'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { DraggableSignature } from './DraggableSignature'
@@ -42,6 +43,8 @@ export function AnnotationLayer({ pageNum, width, height, scale }: AnnotationLay
         return <NoteRenderer key={annotation.id} annotation={annotation as NoteAnnotation} isSelected={isSelected} onClick={() => setSelectedAnnotation(annotation.id)} />
       case 'signature':
         return <DraggableSignature key={annotation.id} annotation={annotation as SignatureAnnotation} isSelected={isSelected} onClick={() => setSelectedAnnotation(annotation.id)} scale={scale} />
+      case 'redaction':
+        return <RedactionRenderer key={annotation.id} annotation={annotation as RedactionAnnotation} isSelected={isSelected} onClick={() => setSelectedAnnotation(annotation.id)} />
       default:
         return null
     }
@@ -356,5 +359,38 @@ function NoteRenderer({ annotation, isSelected, onClick }: RendererProps<NoteAnn
         <p className="text-sm whitespace-pre-wrap">{annotation.content}</p>
       </PopoverContent>
     </Popover>
+  )
+}
+
+function RedactionRenderer({ annotation, isSelected, onClick }: RendererProps<RedactionAnnotation>) {
+  return (
+    <g onClick={onClick} className="cursor-pointer">
+      {annotation.boxes.map((box, index) => (
+        <rect
+          key={index}
+          x={box.x}
+          y={box.y}
+          width={box.width}
+          height={box.height}
+          fill="oklch(0 0 0)"
+          opacity={1}
+          stroke={isSelected ? 'oklch(0.55 0.22 25)' : 'none'}
+          strokeWidth={isSelected ? 3 : 0}
+          strokeDasharray={isSelected ? '4 2' : '0'}
+        />
+      ))}
+      {isSelected && annotation.boxes.length > 0 && (
+        <text
+          x={annotation.boxes[0].x + annotation.boxes[0].width / 2}
+          y={annotation.boxes[0].y - 8}
+          textAnchor="middle"
+          fill="oklch(0.55 0.22 25)"
+          fontSize={12}
+          fontWeight="bold"
+        >
+          REDACTED
+        </text>
+      )}
+    </g>
   )
 }
