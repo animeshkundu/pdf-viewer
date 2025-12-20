@@ -1,16 +1,19 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import { pageManagementService } from '@/services/page-management.service'
-import type { PageTransformation } from '@/types/page-management.types'
+import type { PageTransformation, BlankPage, PageSize, PageOrientation } from '@/types/page-management.types'
 
 interface PageManagementContextValue {
   transformations: Map<number, PageTransformation>
   pageOrder: number[]
   selectedPages: Set<number>
+  blankPages: BlankPage[]
   rotatePage: (pageNumber: number, direction: 'left' | 'right') => void
   deletePage: (pageNumber: number) => void
   deletePages: (pageNumbers: number[]) => void
   restorePage: (pageNumber: number) => void
   reorderPages: (fromIndex: number, toIndex: number) => void
+  insertBlankPage: (position: number, size?: PageSize, orientation?: PageOrientation) => BlankPage
+  removeBlankPage: (blankPageId: string) => void
   selectPage: (pageNumber: number, mode: 'single' | 'add' | 'range') => void
   clearSelection: () => void
   undo: () => void
@@ -41,6 +44,7 @@ interface PageManagementProviderProps {
 export function PageManagementProvider({ children, numPages = 0 }: PageManagementProviderProps) {
   const [transformations, setTransformations] = useState<Map<number, PageTransformation>>(new Map())
   const [pageOrder, setPageOrder] = useState<number[]>([])
+  const [blankPages, setBlankPages] = useState<BlankPage[]>([])
   const [selectedPages, setSelectedPages] = useState<Set<number>>(new Set())
   const [canUndo, setCanUndo] = useState(false)
   const [canRedo, setCanRedo] = useState(false)
@@ -56,6 +60,7 @@ export function PageManagementProvider({ children, numPages = 0 }: PageManagemen
     const updateState = () => {
       setTransformations(new Map(pageManagementService['transformations']))
       setPageOrder([...pageManagementService.getPageOrder()])
+      setBlankPages(pageManagementService.getBlankPages())
       setCanUndo(pageManagementService.canUndo())
       setCanRedo(pageManagementService.canRedo())
     }
@@ -93,6 +98,14 @@ export function PageManagementProvider({ children, numPages = 0 }: PageManagemen
 
   const reorderPages = (fromIndex: number, toIndex: number) => {
     pageManagementService.reorderPages(fromIndex, toIndex)
+  }
+
+  const insertBlankPage = (position: number, size?: PageSize, orientation?: PageOrientation) => {
+    return pageManagementService.insertBlankPage(position, size, orientation)
+  }
+
+  const removeBlankPage = (blankPageId: string) => {
+    pageManagementService.removeBlankPage(blankPageId)
   }
 
   const selectPage = (pageNumber: number, mode: 'single' | 'add' | 'range' = 'single') => {
@@ -158,11 +171,14 @@ export function PageManagementProvider({ children, numPages = 0 }: PageManagemen
     transformations,
     pageOrder,
     selectedPages,
+    blankPages,
     rotatePage,
     deletePage,
     deletePages,
     restorePage,
     reorderPages,
+    insertBlankPage,
+    removeBlankPage,
     selectPage,
     clearSelection,
     undo,

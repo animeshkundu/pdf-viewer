@@ -1,6 +1,6 @@
 import { PDFDocument, rgb, PDFPage, degrees, StandardFonts } from 'pdf-lib'
 import type { Annotation, HighlightAnnotation, PenAnnotation, ShapeAnnotation, TextAnnotation, SignatureAnnotation, RedactionAnnotation } from '@/types/annotation.types'
-import type { PageTransformation } from '@/types/page-management.types'
+import type { PageTransformation, BlankPage } from '@/types/page-management.types'
 import { formService } from './form.service'
 
 export interface ExportOptions {
@@ -35,6 +35,7 @@ export class ExportService {
     annotations: Annotation[],
     transformations: Map<number, PageTransformation>,
     pageOrder: number[],
+    blankPages: BlankPage[],
     options: ExportOptions = {}
   ): Promise<Blob> {
     const { includeAnnotations = true, includeFormData = true, flattenForms = false } = options
@@ -45,6 +46,11 @@ export class ExportService {
 
       this.updateProgress('processing', 15, 'Applying page transformations...')
       await this.applyPageTransformations(pdfDoc, transformations, pageOrder)
+
+      if (blankPages.length > 0) {
+        this.updateProgress('processing', 25, 'Inserting blank pages...')
+        await this.insertBlankPages(pdfDoc, blankPages)
+      }
 
       if (includeFormData && formService.hasFields()) {
         this.updateProgress('forms', 35, 'Filling form fields...')
@@ -131,6 +137,22 @@ export class ExportService {
       
       const copiedPages = await pdfDoc.copyPages(tempDoc, tempDoc.getPageIndices())
       copiedPages.forEach(page => pdfDoc.addPage(page))
+    }
+  }
+
+  private async insertBlankPages(pdfDoc: PDFDocument, blankPages: BlankPage[]): Promise<void> {
+    const sortedBlankPages = [...blankPages].sort((a, b) => b.position - a.position)
+    
+    for (const blankPage of sortedBlankPages) {
+      const page = pdfDoc.insertPage(blankPage.position, [blankPage.width, blankPage.height])
+      
+      page.drawRectangle({
+        x: 0,
+        y: 0,
+        width: blankPage.width,
+        height: blankPage.height,
+        color: rgb(1, 1, 1),
+      })
     }
   }
 

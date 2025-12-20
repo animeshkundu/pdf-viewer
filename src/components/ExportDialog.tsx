@@ -9,6 +9,7 @@ import { Download, FileText, CheckCircle, Warning } from '@phosphor-icons/react'
 import { exportService, ExportProgress } from '@/services/export.service'
 import { formService } from '@/services/form.service'
 import { toast } from 'sonner'
+import type { BlankPage } from '@/types/page-management.types'
 
 interface ExportDialogProps {
   isOpen: boolean
@@ -18,6 +19,7 @@ interface ExportDialogProps {
   annotations: any[]
   transformations: Map<number, any>
   pageOrder: number[]
+  blankPages: BlankPage[]
 }
 
 export function ExportDialog({
@@ -28,6 +30,7 @@ export function ExportDialog({
   annotations,
   transformations,
   pageOrder,
+  blankPages,
 }: ExportDialogProps) {
   const [filename, setFilename] = useState(() => 
     exportService.generateFilename(originalFilename)
@@ -58,6 +61,7 @@ export function ExportDialog({
         annotations,
         transformations,
         pageOrder,
+        blankPages,
         { 
           filename, 
           includeAnnotations,
@@ -95,6 +99,7 @@ export function ExportDialog({
 
   const annotationCount = annotations.length
   const redactionCount = annotations.filter(a => a.type === 'redaction').length
+  const blankPageCount = blankPages.length
   const hasTransformations = Array.from(transformations.values()).some(
     t => t.rotation !== 0 || t.isDeleted
   )
@@ -142,6 +147,12 @@ export function ExportDialog({
                   <span className="text-destructive font-medium">{redactionCount} redaction{redactionCount !== 1 ? 's' : ''} (content will be blacked out)</span>
                 </div>
               )}
+              {blankPageCount > 0 && (
+                <div className="flex items-center gap-2">
+                  <FileText className="w-4 h-4" />
+                  <span>{blankPageCount} blank page{blankPageCount !== 1 ? 's' : ''} to insert</span>
+                </div>
+              )}
               {hasFormFields && (
                 <div className="flex items-center gap-2">
                   <FileText className="w-4 h-4" />
@@ -160,7 +171,7 @@ export function ExportDialog({
                   <span>Custom page order</span>
                 </div>
               )}
-              {!annotationCount && !hasFormFields && !hasTransformations && !isReordered && (
+              {!annotationCount && !hasFormFields && !hasTransformations && !isReordered && !blankPageCount && (
                 <div className="text-muted-foreground">No changes to apply</div>
               )}
             </div>

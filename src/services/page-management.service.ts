@@ -1,8 +1,15 @@
-import type { PageTransformation, PageOperation } from '@/types/page-management.types'
+import type { PageTransformation, PageOperation, BlankPage, PageSize, PageOrientation } from '@/types/page-management.types'
+
+const PAGE_SIZES = {
+  letter: { width: 612, height: 792 },
+  a4: { width: 595, height: 842 },
+  legal: { width: 612, height: 1008 },
+}
 
 export class PageManagementService {
   private transformations: Map<number, PageTransformation> = new Map()
   private pageOrder: number[] = []
+  private blankPages: Map<string, BlankPage> = new Map()
   private totalPages: number = 0
   private history: PageOperation[] = []
   private historyIndex: number = -1
@@ -11,6 +18,7 @@ export class PageManagementService {
 
   initialize(numPages: number): void {
     this.transformations.clear()
+    this.blankPages.clear()
     this.pageOrder = Array.from({ length: numPages }, (_, i) => i + 1)
     this.totalPages = numPages
     this.history = []
@@ -101,6 +109,48 @@ export class PageManagementService {
     this.notifyObservers()
   }
 
+  insertBlankPage(position: number, size: PageSize = 'letter', orientation: PageOrientation = 'portrait'): BlankPage {
+    const dimensions = PAGE_SIZES[size]
+    let width = dimensions.width
+    let height = dimensions.height
+
+    if (orientation === 'landscape') {
+      [width, height] = [height, width]
+    }
+
+    const blankPage: BlankPage = {
+      id: `blank-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      position,
+      size,
+      orientation,
+      width,
+      height,
+    }
+
+    this.blankPages.set(blankPage.id, blankPage)
+    this.addToHistory({ type: 'insertBlank', blankPage })
+    this.notifyObservers()
+
+    return blankPage
+  }
+
+  removeBlankPage(blankPageId: string): void {
+    const blankPage = this.blankPages.get(blankPageId)
+    if (!blankPage) return
+
+    this.blankPages.delete(blankPageId)
+    this.addToHistory({ type: 'removeBlank', blankPageId })
+    this.notifyObservers()
+  }
+
+  getBlankPages(): BlankPage[] {
+    return Array.from(this.blankPages.values()).sort((a, b) => a.position - b.position)
+  }
+
+  getBlankPageAtPosition(position: number): BlankPage | undefined {
+    return Array.from(this.blankPages.values()).find(bp => bp.position === position)
+  }
+
   undo(): boolean {
     if (!this.canUndo()) return false
 
@@ -156,6 +206,14 @@ export class PageManagementService {
         this.pageOrder = newOrder
         break
       }
+      case 'insertBlank': {
+        this.blankPages.delete(operation.blankPage.id)
+        break
+      }
+      case 'removeBlank': {
+        const blankPage = operation.blankPageId
+        break
+      }
     }
   }
 
@@ -190,6 +248,14 @@ export class PageManagementService {
         const [movedPage] = newOrder.splice(operation.fromIndex, 1)
         newOrder.splice(operation.toIndex, 0, movedPage)
         this.pageOrder = newOrder
+        break
+      }
+      case 'insertBlank': {
+        this.blankPages.set(operation.blankPage.id, operation.blankPage)
+        break
+      }
+      case 'removeBlank': {
+        this.blankPages.delete(operation.blankPageId)
         break
       }
     }
@@ -248,6 +314,7 @@ export class PageManagementService {
     return {
       transformations: Array.from(this.transformations.entries()),
       pageOrder: this.pageOrder,
+      blankPages: Array.from(this.blankPages.entries()),
       totalPages: this.totalPages,
     }
   }
@@ -255,6 +322,7 @@ export class PageManagementService {
   importState(state: ReturnType<typeof this.exportState>): void {
     this.transformations = new Map(state.transformations)
     this.pageOrder = state.pageOrder
+    this.blankPages = new Map(state.blankPages)
     this.totalPages = state.totalPages
     this.history = []
     this.historyIndex = -1

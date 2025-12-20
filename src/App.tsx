@@ -22,7 +22,7 @@ import { useState, useEffect, useRef } from 'react'
 function AppContentInner() {
   const { document, isLoading, currentPage, setCurrentPage, getOriginalBytes, getFilename, zoom, setZoom, loadDocument } = usePDF()
   const { annotations, addAnnotation, undo, redo, canUndo, canRedo, setActiveTool, deleteSelectedAnnotation } = useAnnotations()
-  const { transformations, pageOrder } = usePageManagement()
+  const { transformations, pageOrder, blankPages } = usePageManagement()
   const { hasUnsavedChanges, markAsModified, markAsSaved } = useUnsavedChanges()
   const { hasForm, isFormMode, setIsFormMode } = useForm()
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
@@ -211,10 +211,10 @@ function AppContentInner() {
   }, [document, currentPage, setCurrentPage, isMarkupOpen, isFormOpen, hasForm, isFormMode, zoom, setZoom, canUndo, canRedo, undo, redo, setActiveTool, deleteSelectedAnnotation, setIsFormMode])
 
   useEffect(() => {
-    if (annotations.length > 0 || transformations.size > 0 || pageOrder.length > 0) {
+    if (annotations.length > 0 || transformations.size > 0 || pageOrder.length > 0 || blankPages.length > 0) {
       markAsModified()
     }
-  }, [annotations, transformations, pageOrder, markAsModified])
+  }, [annotations, transformations, pageOrder, blankPages, markAsModified])
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -326,6 +326,7 @@ function AppContentInner() {
         annotations={annotations}
         transformations={transformations}
         pageOrder={pageOrder}
+        blankPages={blankPages}
       />
 
       <KeyboardShortcutsDialog

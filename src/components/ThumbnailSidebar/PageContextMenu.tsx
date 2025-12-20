@@ -8,7 +8,8 @@ import {
 import { 
   ArrowCounterClockwise, 
   ArrowClockwise, 
-  Trash 
+  Trash,
+  FilePlus
 } from '@phosphor-icons/react'
 
 interface PageContextMenuProps {
@@ -18,6 +19,8 @@ interface PageContextMenuProps {
   onRotateLeft: (pageNumber: number) => void
   onRotateRight: (pageNumber: number) => void
   onDelete: (pageNumber: number) => void
+  onInsertBefore: (pageNumber: number) => void
+  onInsertAfter: (pageNumber: number) => void
 }
 
 export function PageContextMenu({
@@ -27,13 +30,30 @@ export function PageContextMenu({
   onRotateLeft,
   onRotateRight,
   onDelete,
+  onInsertBefore,
+  onInsertAfter,
 }: PageContextMenuProps) {
   return (
     <ContextMenu>
       <ContextMenuTrigger asChild>
         {children}
       </ContextMenuTrigger>
-      <ContextMenuContent className="w-48">
+      <ContextMenuContent className="w-56">
+        <ContextMenuItem
+          onClick={() => onInsertBefore(pageNumber)}
+          className="gap-2"
+        >
+          <FilePlus size={16} />
+          <span>Insert Blank Page Before</span>
+        </ContextMenuItem>
+        <ContextMenuItem
+          onClick={() => onInsertAfter(pageNumber)}
+          className="gap-2"
+        >
+          <FilePlus size={16} />
+          <span>Insert Blank Page After</span>
+        </ContextMenuItem>
+        <ContextMenuSeparator />
         <ContextMenuItem
           onClick={() => onRotateLeft(pageNumber)}
           className="gap-2"

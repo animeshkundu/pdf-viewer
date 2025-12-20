@@ -8,6 +8,9 @@ import { X, Trash } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { PageContextMenu } from './PageContextMenu'
+import { InsertBlankPageDialog } from '@/components/InsertBlankPageDialog'
+import type { PageSize, PageOrientation } from '@/types/page-management.types'
+import { toast } from 'sonner'
 
 interface ThumbnailProps {
   page: PDFPageProxy
@@ -21,6 +24,8 @@ interface ThumbnailProps {
   onRotateLeft: (pageNumber: number) => void
   onRotateRight: (pageNumber: number) => void
   onDelete: (pageNumber: number) => void
+  onInsertBefore: (pageNumber: number) => void
+  onInsertAfter: (pageNumber: number) => void
   onDragStart: (pageNumber: number) => void
   onDragOver: (event: React.DragEvent) => void
   onDrop: (pageNumber: number) => void
@@ -38,6 +43,8 @@ function Thumbnail({
   onRotateLeft,
   onRotateRight,
   onDelete,
+  onInsertBefore,
+  onInsertAfter,
   onDragStart,
   onDragOver,
   onDrop,
@@ -101,6 +108,8 @@ function Thumbnail({
       onRotateLeft={onRotateLeft}
       onRotateRight={onRotateRight}
       onDelete={onDelete}
+      onInsertBefore={onInsertBefore}
+      onInsertAfter={onInsertAfter}
     >
       <button
         draggable
@@ -150,6 +159,7 @@ export function ThumbnailSidebar({ isOpen, onClose }: ThumbnailSidebarProps) {
     rotatePage, 
     deletePage, 
     deletePages,
+    insertBlankPage,
     getRotation, 
     isDeleted,
     getVisiblePages,
@@ -160,6 +170,9 @@ export function ThumbnailSidebar({ isOpen, onClose }: ThumbnailSidebarProps) {
   const [pages, setPages] = useState<PDFPageProxy[]>([])
   const selectedRef = useRef<HTMLDivElement>(null)
   const [draggedPage, setDraggedPage] = useState<number | null>(null)
+  const [insertDialogOpen, setInsertDialogOpen] = useState(false)
+  const [insertPosition, setInsertPosition] = useState<'before' | 'after'>('before')
+  const [insertPageNumber, setInsertPageNumber] = useState<number>(1)
 
   useEffect(() => {
     const loadPages = async () => {
@@ -246,6 +259,24 @@ export function ThumbnailSidebar({ isOpen, onClose }: ThumbnailSidebarProps) {
     setDraggedPage(null)
   }
 
+  const handleInsertBefore = (pageNumber: number) => {
+    setInsertPageNumber(pageNumber)
+    setInsertPosition('before')
+    setInsertDialogOpen(true)
+  }
+
+  const handleInsertAfter = (pageNumber: number) => {
+    setInsertPageNumber(pageNumber)
+    setInsertPosition('after')
+    setInsertDialogOpen(true)
+  }
+
+  const handleInsertBlankPage = (size: PageSize, orientation: PageOrientation) => {
+    const position = insertPosition === 'before' ? insertPageNumber - 1 : insertPageNumber
+    insertBlankPage(position, size, orientation)
+    toast.success(`Blank page will be inserted ${insertPosition} page ${insertPageNumber}`)
+  }
+
   const visiblePageCount = getVisiblePages().length
 
   if (!isOpen || !document) {
@@ -307,6 +338,8 @@ export function ThumbnailSidebar({ isOpen, onClose }: ThumbnailSidebarProps) {
                   onRotateLeft={handleRotateLeft}
                   onRotateRight={handleRotateRight}
                   onDelete={handleDelete}
+                  onInsertBefore={handleInsertBefore}
+                  onInsertAfter={handleInsertAfter}
                   onDragStart={handleDragStart}
                   onDragOver={handleDragOver}
                   onDrop={handleDrop}
@@ -316,6 +349,14 @@ export function ThumbnailSidebar({ isOpen, onClose }: ThumbnailSidebarProps) {
           })}
         </div>
       </ScrollArea>
+
+      <InsertBlankPageDialog
+        isOpen={insertDialogOpen}
+        onClose={() => setInsertDialogOpen(false)}
+        onInsert={handleInsertBlankPage}
+        position={insertPosition}
+        pageNumber={insertPageNumber}
+      />
     </div>
   )
 }
