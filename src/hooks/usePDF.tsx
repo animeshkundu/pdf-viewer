@@ -10,14 +10,14 @@ interface PDFContextValue {
   document: PDFDocumentProxy | null
   file: File | null
   currentPage: number
-  zoom: number
+  zoom: number | 'fit-width' | 'fit-page'
   isLoading: boolean
   loadProgress: number
   error: string | null
   
   loadDocument: (file: File) => Promise<void>
   setCurrentPage: (page: number) => void
-  setZoom: (zoom: number) => void
+  setZoom: (zoom: number | 'fit-width' | 'fit-page') => void
   cleanup: () => void
   getOriginalBytes: () => ArrayBuffer | null
   getFilename: () => string | null
@@ -29,7 +29,7 @@ export function PDFProvider({ children }: { children: ReactNode }) {
   const [document, setDocument] = useState<PDFDocumentProxy | null>(null)
   const [file, setFile] = useState<File | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
-  const [zoom, setZoom] = useState(-1)
+  const [zoom, setZoom] = useState<number | 'fit-width' | 'fit-page'>('fit-width')
   const [isLoading, setIsLoading] = useState(false)
   const [loadProgress, setLoadProgress] = useState(0)
   const [error, setError] = useState<string | null>(null)
@@ -74,7 +74,7 @@ export function PDFProvider({ children }: { children: ReactNode }) {
     setDocument(null)
     setFile(null)
     setCurrentPage(1)
-    setZoom(-1)
+    setZoom('fit-width')
     setError(null)
   }, [])
 

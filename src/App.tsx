@@ -139,21 +139,23 @@ function AppContentInner() {
 
       if (e.key === '+' || e.key === '=') {
         e.preventDefault()
-        const newZoom = Math.min(zoom * 1.2, 4.0)
+        const currentZoom = typeof zoom === 'number' ? zoom : 1.0
+        const newZoom = Math.min(currentZoom * 1.2, 4.0)
         setZoom(newZoom)
         return
       }
 
       if (e.key === '-') {
         e.preventDefault()
-        const newZoom = Math.max(zoom / 1.2, 0.5)
+        const currentZoom = typeof zoom === 'number' ? zoom : 1.0
+        const newZoom = Math.max(currentZoom / 1.2, 0.5)
         setZoom(newZoom)
         return
       }
 
       if (e.key === '0') {
         e.preventDefault()
-        setZoom(-1)
+        setZoom('fit-width')
         return
       }
 

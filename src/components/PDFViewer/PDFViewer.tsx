@@ -19,30 +19,53 @@ export function PDFViewer() {
   const initialPinchZoomRef = useRef(zoom)
   const hasCalculatedInitialZoom = useRef(false)
 
-  useEffect(() => {
-    if (document && pages.length > 0 && zoom === -1 && !hasCalculatedInitialZoom.current && containerRef.current) {
-      hasCalculatedInitialZoom.current = true
+  const calculateEffectiveZoom = useCallback((page: PDFPageProxy | null): number => {
+    if (!page || !containerRef.current) return 1.0
+    
+    if (zoom === 'fit-width') {
       const container = containerRef.current
       const containerWidth = container.clientWidth
       const padding = 64
       const availableWidth = containerWidth - padding
       
-      const firstPage = pages[0]
-      if (firstPage) {
-        const viewport = firstPage.getViewport({ scale: 1.0 })
-        const pageWidth = viewport.width
-        const fitWidthZoom = availableWidth / pageWidth
-        setZoom(Math.min(fitWidthZoom, 2.0))
-      }
+      const viewport = page.getViewport({ scale: 1.0 })
+      const pageWidth = viewport.width
+      return Math.min(availableWidth / pageWidth, 4.0)
     }
-  }, [document, pages, zoom, setZoom])
+    
+    if (zoom === 'fit-page') {
+      const container = containerRef.current
+      const containerWidth = container.clientWidth
+      const containerHeight = container.clientHeight
+      const padding = 64
+      const availableWidth = containerWidth - padding
+      const availableHeight = containerHeight - padding
+      
+      const viewport = page.getViewport({ scale: 1.0 })
+      const pageWidth = viewport.width
+      const pageHeight = viewport.height
+      
+      const widthScale = availableWidth / pageWidth
+      const heightScale = availableHeight / pageHeight
+      return Math.min(widthScale, heightScale, 4.0)
+    }
+    
+    return zoom
+  }, [zoom])
+
+  useEffect(() => {
+    if (document && pages.length > 0 && zoom === 'fit-width' && !hasCalculatedInitialZoom.current) {
+      hasCalculatedInitialZoom.current = true
+    }
+  }, [document, pages, zoom])
 
   useGestures(containerRef, {
     onPinchStart: () => {
-      initialPinchZoomRef.current = zoom
+      initialPinchZoomRef.current = typeof zoom === 'number' ? zoom : 1.0
     },
     onPinch: (scale) => {
-      const newZoom = Math.max(0.5, Math.min(4.0, initialPinchZoomRef.current * scale))
+      const currentZoom = typeof initialPinchZoomRef.current === 'number' ? initialPinchZoomRef.current : 1.0
+      const newZoom = Math.max(0.5, Math.min(4.0, currentZoom * scale))
       setZoom(newZoom)
     },
     onSwipe: (direction) => {
@@ -189,8 +212,6 @@ export function PDFViewer() {
     return null
   }
 
-  const effectiveZoom = zoom === -1 ? 1.0 : zoom
-
   return (
     <div 
       ref={containerRef}
@@ -212,6 +233,7 @@ export function PDFViewer() {
           
           const isVisible = visiblePages.has(pageNum)
           const rotation = getRotation(pageNum)
+          const effectiveZoom = calculateEffectiveZoom(page)
 
           return (
             <div

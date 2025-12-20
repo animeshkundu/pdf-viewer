@@ -52,21 +52,21 @@ export function Toolbar({
 
   const handleZoomIn = () => {
     const currentIndex = ZOOM_LEVELS.findIndex(z => z.value === zoom)
-    if (currentIndex < ZOOM_LEVELS.length - 1 && typeof ZOOM_LEVELS[currentIndex + 1].value === 'number') {
-      setZoom(ZOOM_LEVELS[currentIndex + 1].value as number)
+    if (currentIndex < ZOOM_LEVELS.length - 1) {
+      setZoom(ZOOM_LEVELS[currentIndex + 1].value)
     }
   }
 
   const handleZoomOut = () => {
     const currentIndex = ZOOM_LEVELS.findIndex(z => z.value === zoom)
-    if (currentIndex > 0 && typeof ZOOM_LEVELS[currentIndex - 1].value === 'number') {
-      setZoom(ZOOM_LEVELS[currentIndex - 1].value as number)
+    if (currentIndex > 0) {
+      setZoom(ZOOM_LEVELS[currentIndex - 1].value)
     }
   }
 
   const handleZoomChange = (value: string) => {
     const zoomLevel = ZOOM_LEVELS.find(z => z.label === value)
-    if (zoomLevel && typeof zoomLevel.value === 'number') {
+    if (zoomLevel) {
       setZoom(zoomLevel.value)
     }
   }
@@ -319,7 +319,7 @@ export function Toolbar({
                     variant="ghost"
                     size="icon"
                     onClick={handleZoomOut}
-                    disabled={zoom <= 0.5}
+                    disabled={zoom === 0.5}
                     aria-label="Zoom out"
                     className="button-press h-8 w-8 hover:bg-background/80"
                   >
@@ -348,7 +348,7 @@ export function Toolbar({
                     variant="ghost"
                     size="icon"
                     onClick={handleZoomIn}
-                    disabled={zoom >= 4.0}
+                    disabled={zoom === 4.0}
                     aria-label="Zoom in"
                     className="button-press h-8 w-8 hover:bg-background/80"
                   >
