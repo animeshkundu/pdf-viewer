@@ -1,7 +1,9 @@
 import { Toaster } from 'sonner'
 import { PDFProvider, usePDF } from './hooks/usePDF.tsx'
 import { SearchProvider } from './hooks/useSearch.tsx'
+import { AnnotationProvider } from './hooks/useAnnotations.tsx'
 import { Toolbar } from './components/Toolbar/Toolbar'
+import { MarkupToolbar } from './components/MarkupToolbar/MarkupToolbar'
 import { PDFViewer } from './components/PDFViewer/PDFViewer'
 import { ThumbnailSidebar } from './components/ThumbnailSidebar/ThumbnailSidebar'
 import { EmptyState } from './components/EmptyState'
@@ -12,6 +14,7 @@ function AppContent() {
   const { document, isLoading, currentPage, setCurrentPage } = usePDF()
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
+  const [isMarkupOpen, setIsMarkupOpen] = useState(false)
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -20,6 +23,20 @@ function AppContent() {
         if (document) {
           setIsSearchOpen(true)
         }
+        return
+      }
+
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'a') {
+        e.preventDefault()
+        if (document) {
+          setIsMarkupOpen(!isMarkupOpen)
+        }
+        return
+      }
+
+      if (e.key === 'Escape') {
+        setIsSearchOpen(false)
+        setIsMarkupOpen(false)
         return
       }
 
@@ -63,7 +80,7 @@ function AppContent() {
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [document, currentPage, setCurrentPage])
+  }, [document, currentPage, setCurrentPage, isMarkupOpen])
 
   return (
     <div className="flex flex-col h-screen">
@@ -71,6 +88,13 @@ function AppContent() {
         onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
         isSidebarOpen={isSidebarOpen}
         onSearchClick={() => setIsSearchOpen(true)}
+        onMarkupClick={() => setIsMarkupOpen(!isMarkupOpen)}
+        isMarkupOpen={isMarkupOpen}
+      />
+      
+      <MarkupToolbar 
+        isOpen={isMarkupOpen}
+        onClose={() => setIsMarkupOpen(false)}
       />
       
       <div className="flex flex-1 overflow-hidden relative">
@@ -104,8 +128,10 @@ function App() {
   return (
     <PDFProvider>
       <SearchProvider>
-        <AppContent />
-        <Toaster position="top-right" />
+        <AnnotationProvider>
+          <AppContent />
+          <Toaster position="top-right" />
+        </AnnotationProvider>
       </SearchProvider>
     </PDFProvider>
   )

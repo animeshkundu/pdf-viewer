@@ -1,18 +1,21 @@
-import { FolderOpen, MagnifyingGlassPlus, MagnifyingGlassMinus, Sidebar, CaretLeft, CaretRight, MagnifyingGlass } from '@phosphor-icons/react'
+import { FolderOpen, MagnifyingGlassPlus, MagnifyingGlassMinus, Sidebar, CaretLeft, CaretRight, MagnifyingGlass, PencilLine } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
 import { usePDF } from '@/hooks/usePDF.tsx'
 import { ZOOM_LEVELS } from '@/types/pdf.types'
 import { useRef, useState } from 'react'
+import { cn } from '@/lib/utils'
 
 interface ToolbarProps {
   onToggleSidebar?: () => void
   isSidebarOpen?: boolean
   onSearchClick?: () => void
+  onMarkupClick?: () => void
+  isMarkupOpen?: boolean
 }
 
-export function Toolbar({ onToggleSidebar, isSidebarOpen, onSearchClick }: ToolbarProps) {
+export function Toolbar({ onToggleSidebar, isSidebarOpen, onSearchClick, onMarkupClick, isMarkupOpen }: ToolbarProps) {
   const { zoom, setZoom, document, loadDocument, currentPage, setCurrentPage } = usePDF()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [pageInputValue, setPageInputValue] = useState('')
@@ -115,6 +118,19 @@ export function Toolbar({ onToggleSidebar, isSidebarOpen, onSearchClick }: Toolb
                 title="Search (Cmd/Ctrl+F)"
               >
                 <MagnifyingGlass size={20} />
+              </Button>
+            )}
+            
+            {onMarkupClick && (
+              <Button
+                variant={isMarkupOpen ? 'default' : 'ghost'}
+                size="default"
+                onClick={onMarkupClick}
+                title="Markup (Cmd/Ctrl+Shift+A)"
+                className={cn('gap-2', isMarkupOpen && 'bg-primary text-primary-foreground')}
+              >
+                <PencilLine size={20} weight={isMarkupOpen ? 'fill' : 'regular'} />
+                Markup
               </Button>
             )}
           </>

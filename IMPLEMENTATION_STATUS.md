@@ -110,11 +110,61 @@
 
 ---
 
-## Phase 3: Annotations - READY TO START
+## Phase 3: Annotations - 🚧 IN PROGRESS
 
 **Goal**: Highlight, draw, and annotate PDFs
 
-**Status**: Blocked until Phase 3 completion
+### Completed ✅
+1. **Type Definitions**
+   - ✅ `annotation.types.ts` - Annotation types and tool definitions
+   - ✅ Highlight, pen, shape, text, note, signature annotation types
+   - ✅ Color palettes and tool settings
+
+2. **Services**
+   - ✅ `AnnotationService` - Manages annotation CRUD operations
+   - ✅ Undo/redo history with 20 action limit
+   - ✅ Export/import functionality
+   - ✅ Observer pattern for reactive updates
+
+3. **State Management**
+   - ✅ `useAnnotations.tsx` - React context for annotation state
+   - ✅ Tool selection and settings
+   - ✅ Selected annotation tracking
+
+4. **UI Components**
+   - ✅ `MarkupToolbar` - Comprehensive annotation toolbar
+   - ✅ Highlight tool with color picker
+   - ✅ Drawing tools (pen, rectangle, circle, arrow, line)
+   - ✅ Undo/redo buttons
+   - ✅ Delete selected annotation
+   - ✅ `AnnotationLayer` - SVG-based annotation rendering
+   - ✅ `AnnotationDrawing` - Interactive drawing layer with mouse events
+
+5. **Integration**
+   - ✅ Added annotation layer to PDFCanvas
+   - ✅ Updated App.tsx with AnnotationProvider
+   - ✅ Added Markup button to Toolbar
+   - ✅ Keyboard shortcuts (Cmd/Ctrl+Shift+A for markup, Esc to close)
+
+### In Progress 🚧
+- [ ] Highlight text selection (requires text layer integration)
+- [ ] Text box annotation with inline editing
+- [ ] Sticky note annotation with content editing
+- [ ] Signature creation and insertion
+- [ ] Annotation selection and manipulation (move, resize, delete)
+- [ ] PDF export with embedded annotations
+
+### Phase 3 Acceptance Criteria
+- [ ] Can draw freehand with pen tool
+- [ ] Can create shapes (rectangle, circle, arrow, line)
+- [ ] Can highlight text selections
+- [ ] Can add text boxes
+- [ ] Can add sticky notes
+- [ ] Can add signatures
+- [ ] Annotations persist during session
+- [ ] Undo/redo works for all annotation operations
+- [ ] Can select and delete annotations
+- [ ] Annotations export with PDF
 
 ---
 
