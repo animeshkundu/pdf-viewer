@@ -1,4 +1,4 @@
-import { FolderOpen, MagnifyingGlassPlus, MagnifyingGlassMinus, Sidebar, CaretLeft, CaretRight, MagnifyingGlass, PencilLine } from '@phosphor-icons/react'
+import { FolderOpen, MagnifyingGlassPlus, MagnifyingGlassMinus, Sidebar, CaretLeft, CaretRight, MagnifyingGlass, PencilLine, Download } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
@@ -13,9 +13,10 @@ interface ToolbarProps {
   onSearchClick?: () => void
   onMarkupClick?: () => void
   isMarkupOpen?: boolean
+  onExportClick?: () => void
 }
 
-export function Toolbar({ onToggleSidebar, isSidebarOpen, onSearchClick, onMarkupClick, isMarkupOpen }: ToolbarProps) {
+export function Toolbar({ onToggleSidebar, isSidebarOpen, onSearchClick, onMarkupClick, isMarkupOpen, onExportClick }: ToolbarProps) {
   const { zoom, setZoom, document, loadDocument, currentPage, setCurrentPage } = usePDF()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [pageInputValue, setPageInputValue] = useState('')
@@ -131,6 +132,19 @@ export function Toolbar({ onToggleSidebar, isSidebarOpen, onSearchClick, onMarku
               >
                 <PencilLine size={20} weight={isMarkupOpen ? 'fill' : 'regular'} />
                 Markup
+              </Button>
+            )}
+            
+            {onExportClick && (
+              <Button
+                variant="ghost"
+                size="default"
+                onClick={onExportClick}
+                title="Export PDF"
+                className="gap-2"
+              >
+                <Download size={20} />
+                Export
               </Button>
             )}
           </>

@@ -16,6 +16,8 @@ interface PDFContextValue {
   setCurrentPage: (page: number) => void
   setZoom: (zoom: number) => void
   cleanup: () => void
+  getOriginalBytes: () => ArrayBuffer | null
+  getFilename: () => string | null
 }
 
 const PDFContext = createContext<PDFContextValue | undefined>(undefined)
@@ -65,6 +67,14 @@ export function PDFProvider({ children }: { children: ReactNode }) {
     setError(null)
   }, [])
 
+  const getOriginalBytes = useCallback(() => {
+    return pdfService.getOriginalBytes()
+  }, [])
+
+  const getFilename = useCallback(() => {
+    return pdfService.getFilename()
+  }, [])
+
   const contextValue = {
     document,
     file,
@@ -77,6 +87,8 @@ export function PDFProvider({ children }: { children: ReactNode }) {
     setCurrentPage,
     setZoom,
     cleanup,
+    getOriginalBytes,
+    getFilename,
   }
 
   return (

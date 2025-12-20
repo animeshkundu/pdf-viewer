@@ -1,21 +1,25 @@
 import { Toaster } from 'sonner'
 import { PDFProvider, usePDF } from './hooks/usePDF.tsx'
 import { SearchProvider } from './hooks/useSearch.tsx'
-import { AnnotationProvider } from './hooks/useAnnotations.tsx'
-import { PageManagementProvider } from './hooks/usePageManagement'
+import { AnnotationProvider, useAnnotations } from './hooks/useAnnotations.tsx'
+import { PageManagementProvider, usePageManagement } from './hooks/usePageManagement'
 import { Toolbar } from './components/Toolbar/Toolbar'
 import { MarkupToolbar } from './components/MarkupToolbar/MarkupToolbar'
 import { PDFViewer } from './components/PDFViewer/PDFViewer'
 import { ThumbnailSidebar } from './components/ThumbnailSidebar/ThumbnailSidebar'
 import { EmptyState } from './components/EmptyState'
 import { SearchBar } from './components/SearchBar/SearchBar'
+import { ExportDialog } from './components/ExportDialog'
 import { useState, useEffect } from 'react'
 
 function AppContent() {
-  const { document, isLoading, currentPage, setCurrentPage } = usePDF()
+  const { document, isLoading, currentPage, setCurrentPage, getOriginalBytes, getFilename } = usePDF()
+  const { annotations } = useAnnotations()
+  const { transformations, pageOrder } = usePageManagement()
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [isMarkupOpen, setIsMarkupOpen] = useState(false)
+  const [isExportOpen, setIsExportOpen] = useState(false)
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -92,6 +96,7 @@ function AppContent() {
           onSearchClick={() => setIsSearchOpen(true)}
           onMarkupClick={() => setIsMarkupOpen(!isMarkupOpen)}
           isMarkupOpen={isMarkupOpen}
+          onExportClick={() => setIsExportOpen(true)}
         />
         
         <MarkupToolbar 
@@ -122,6 +127,16 @@ function AppContent() {
             {!isLoading && document && <PDFViewer />}
           </div>
         </div>
+
+        <ExportDialog
+          isOpen={isExportOpen}
+          onClose={() => setIsExportOpen(false)}
+          originalFilename={getFilename() || undefined}
+          originalPdfBytes={getOriginalBytes()}
+          annotations={annotations}
+          transformations={transformations}
+          pageOrder={pageOrder}
+        />
       </div>
     </PageManagementProvider>
   )

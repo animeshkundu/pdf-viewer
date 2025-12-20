@@ -11,6 +11,8 @@ export class PDFService {
   private documentProxy: PDFDocumentProxy | null = null
   private pageCache: Map<string, HTMLCanvasElement> = new Map()
   private readonly MAX_CACHE_SIZE = 50 * 1024 * 1024
+  private originalBytes: ArrayBuffer | null = null
+  private filename: string | null = null
 
   private constructor() {}
 
@@ -27,6 +29,8 @@ export class PDFService {
   ): Promise<PDFDocumentProxy> {
     try {
       const arrayBuffer = await file.arrayBuffer()
+      this.originalBytes = arrayBuffer
+      this.filename = file.name
       const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer })
 
       if (onProgress) {
@@ -135,6 +139,14 @@ export class PDFService {
     return this.documentProxy
   }
 
+  getOriginalBytes(): ArrayBuffer | null {
+    return this.originalBytes
+  }
+
+  getFilename(): string | null {
+    return this.filename
+  }
+
   async getPageDimensions(pageNumber: number): Promise<{ width: number; height: number }> {
     const page = await this.getPage(pageNumber)
     const viewport = page.getViewport({ scale: 1 })
@@ -147,6 +159,8 @@ export class PDFService {
       this.documentProxy.destroy()
       this.documentProxy = null
     }
+    this.originalBytes = null
+    this.filename = null
   }
 }
 
