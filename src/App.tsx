@@ -3,9 +3,11 @@ import { PDFProvider, usePDF } from './hooks/usePDF.tsx'
 import { SearchProvider } from './hooks/useSearch.tsx'
 import { AnnotationProvider, useAnnotations } from './hooks/useAnnotations.tsx'
 import { PageManagementProvider, usePageManagement } from './hooks/usePageManagement'
+import { FormProvider, useForm } from './hooks/useForm'
 import { useUnsavedChanges } from './hooks/useUnsavedChanges'
 import { Toolbar } from './components/Toolbar/Toolbar'
 import { MarkupToolbar } from './components/MarkupToolbar/MarkupToolbar'
+import { FormToolbar } from './components/FormToolbar/FormToolbar'
 import { PDFViewer } from './components/PDFViewer/PDFViewer'
 import { ThumbnailSidebar } from './components/ThumbnailSidebar/ThumbnailSidebar'
 import { EmptyState } from './components/EmptyState'
@@ -21,9 +23,11 @@ function AppContentInner() {
   const { annotations, addAnnotation, undo, redo, canUndo, canRedo, setActiveTool, deleteSelectedAnnotation } = useAnnotations()
   const { transformations, pageOrder } = usePageManagement()
   const { hasUnsavedChanges, markAsModified, markAsSaved } = useUnsavedChanges()
+  const { hasForm, isFormMode, setIsFormMode } = useForm()
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [isMarkupOpen, setIsMarkupOpen] = useState(false)
+  const [isFormOpen, setIsFormOpen] = useState(false)
   const [isExportOpen, setIsExportOpen] = useState(false)
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -62,6 +66,13 @@ function AppContentInner() {
         return
       }
 
+      if (e.key === 'f' && !e.metaKey && !e.ctrlKey && document && hasForm) {
+        e.preventDefault()
+        setIsFormOpen(!isFormOpen)
+        setIsFormMode(!isFormMode)
+        return
+      }
+
       if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'Z') {
         e.preventDefault()
         if (canRedo) {
@@ -90,6 +101,7 @@ function AppContentInner() {
         }
         setIsSearchOpen(false)
         setIsMarkupOpen(false)
+        setIsFormOpen(false)
         setIsShortcutsOpen(false)
         return
       }
@@ -187,7 +199,7 @@ function AppContentInner() {
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [document, currentPage, setCurrentPage, isMarkupOpen, zoom, setZoom, canUndo, canRedo, undo, redo, setActiveTool, deleteSelectedAnnotation])
+  }, [document, currentPage, setCurrentPage, isMarkupOpen, isFormOpen, hasForm, isFormMode, zoom, setZoom, canUndo, canRedo, undo, redo, setActiveTool, deleteSelectedAnnotation, setIsFormMode])
 
   useEffect(() => {
     if (annotations.length > 0 || transformations.size > 0 || pageOrder.length > 0) {
@@ -235,6 +247,12 @@ function AppContentInner() {
         onSearchClick={() => setIsSearchOpen(true)}
         onMarkupClick={() => setIsMarkupOpen(!isMarkupOpen)}
         isMarkupOpen={isMarkupOpen}
+        onFormClick={() => {
+          setIsFormOpen(!isFormOpen)
+          setIsFormMode(!isFormMode)
+        }}
+        isFormOpen={isFormOpen}
+        hasForm={hasForm}
         onExportClick={() => setIsExportOpen(true)}
         hasUnsavedChanges={hasUnsavedChanges}
         onKeyboardShortcutsClick={() => setIsShortcutsOpen(true)}
@@ -243,6 +261,14 @@ function AppContentInner() {
       <MarkupToolbar 
         isOpen={isMarkupOpen}
         onClose={() => setIsMarkupOpen(false)}
+      />
+
+      <FormToolbar
+        isOpen={isFormOpen}
+        onClose={() => {
+          setIsFormOpen(false)
+          setIsFormMode(false)
+        }}
       />
       
       <div className="flex flex-1 overflow-hidden relative">
@@ -292,7 +318,9 @@ function AppContent() {
   
   return (
     <PageManagementProvider numPages={document?.numPages ?? 0}>
-      <AppContentInner />
+      <FormProvider>
+        <AppContentInner />
+      </FormProvider>
     </PageManagementProvider>
   )
 }

@@ -1,15 +1,18 @@
 import { PDFDocument, rgb, PDFPage, degrees, StandardFonts } from 'pdf-lib'
 import type { Annotation, HighlightAnnotation, PenAnnotation, ShapeAnnotation, TextAnnotation, SignatureAnnotation } from '@/types/annotation.types'
 import type { PageTransformation } from '@/types/page-management.types'
+import { formService } from './form.service'
 
 export interface ExportOptions {
   filename?: string
   includeAnnotations?: boolean
+  includeFormData?: boolean
+  flattenForms?: boolean
   quality?: 'high' | 'medium' | 'low'
 }
 
 export interface ExportProgress {
-  stage: 'loading' | 'processing' | 'annotations' | 'finalizing' | 'complete'
+  stage: 'loading' | 'processing' | 'forms' | 'annotations' | 'finalizing' | 'complete'
   progress: number
   message: string
 }
@@ -34,14 +37,27 @@ export class ExportService {
     pageOrder: number[],
     options: ExportOptions = {}
   ): Promise<Blob> {
-    const { includeAnnotations = true } = options
+    const { includeAnnotations = true, includeFormData = true, flattenForms = false } = options
 
     try {
       this.updateProgress('loading', 0, 'Loading PDF document...')
       const pdfDoc = await PDFDocument.load(originalPdfBytes)
 
-      this.updateProgress('processing', 20, 'Applying page transformations...')
+      this.updateProgress('processing', 15, 'Applying page transformations...')
       await this.applyPageTransformations(pdfDoc, transformations, pageOrder)
+
+      if (includeFormData && formService.hasFields()) {
+        this.updateProgress('forms', 35, 'Filling form fields...')
+        try {
+          await formService.applyFieldValues(pdfDoc)
+          
+          if (flattenForms) {
+            await formService.flattenFields(pdfDoc)
+          }
+        } catch (error) {
+          console.warn('Failed to apply form data:', error)
+        }
+      }
 
       if (includeAnnotations && annotations.length > 0) {
         this.updateProgress('annotations', 60, 'Embedding annotations...')

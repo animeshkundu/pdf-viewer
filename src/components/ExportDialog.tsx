@@ -7,6 +7,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Progress } from '@/components/ui/progress'
 import { Download, FileText, CheckCircle, Warning } from '@phosphor-icons/react'
 import { exportService, ExportProgress } from '@/services/export.service'
+import { formService } from '@/services/form.service'
 import { toast } from 'sonner'
 
 interface ExportDialogProps {
@@ -32,6 +33,8 @@ export function ExportDialog({
     exportService.generateFilename(originalFilename)
   )
   const [includeAnnotations, setIncludeAnnotations] = useState(true)
+  const [includeFormData, setIncludeFormData] = useState(true)
+  const [flattenForms, setFlattenForms] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
   const [exportProgress, setExportProgress] = useState<ExportProgress | null>(null)
   const [exportComplete, setExportComplete] = useState(false)
@@ -55,7 +58,12 @@ export function ExportDialog({
         annotations,
         transformations,
         pageOrder,
-        { filename, includeAnnotations }
+        { 
+          filename, 
+          includeAnnotations,
+          includeFormData,
+          flattenForms
+        }
       )
 
       await exportService.downloadPDF(blob, filename)
@@ -90,6 +98,8 @@ export function ExportDialog({
     t => t.rotation !== 0 || t.isDeleted
   )
   const isReordered = pageOrder.some((pageNum, index) => pageNum !== index + 1)
+  const hasFormFields = formService.hasFields()
+  const formFieldCount = formService.getAllFields().length
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -125,6 +135,12 @@ export function ExportDialog({
                   <span>{annotationCount} annotation{annotationCount !== 1 ? 's' : ''}</span>
                 </div>
               )}
+              {hasFormFields && (
+                <div className="flex items-center gap-2">
+                  <FileText className="w-4 h-4" />
+                  <span>{formFieldCount} form field{formFieldCount !== 1 ? 's' : ''}</span>
+                </div>
+              )}
               {hasTransformations && (
                 <div className="flex items-center gap-2">
                   <FileText className="w-4 h-4" />
@@ -137,28 +153,66 @@ export function ExportDialog({
                   <span>Custom page order</span>
                 </div>
               )}
-              {!annotationCount && !hasTransformations && !isReordered && (
+              {!annotationCount && !hasFormFields && !hasTransformations && !isReordered && (
                 <div className="text-muted-foreground">No changes to apply</div>
               )}
             </div>
           </div>
 
-          {annotationCount > 0 && (
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="include-annotations"
-                checked={includeAnnotations}
-                onCheckedChange={(checked) => setIncludeAnnotations(checked === true)}
-                disabled={isExporting}
-              />
-              <Label
-                htmlFor="include-annotations"
-                className="text-sm font-normal cursor-pointer"
-              >
-                Include annotations in export
-              </Label>
-            </div>
-          )}
+          <div className="space-y-2">
+            {annotationCount > 0 && (
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="include-annotations"
+                  checked={includeAnnotations}
+                  onCheckedChange={(checked) => setIncludeAnnotations(checked === true)}
+                  disabled={isExporting}
+                />
+                <Label
+                  htmlFor="include-annotations"
+                  className="text-sm font-normal cursor-pointer"
+                >
+                  Include annotations in export
+                </Label>
+              </div>
+            )}
+
+            {hasFormFields && (
+              <>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="include-form-data"
+                    checked={includeFormData}
+                    onCheckedChange={(checked) => setIncludeFormData(checked === true)}
+                    disabled={isExporting}
+                  />
+                  <Label
+                    htmlFor="include-form-data"
+                    className="text-sm font-normal cursor-pointer"
+                  >
+                    Include form field values
+                  </Label>
+                </div>
+
+                {includeFormData && (
+                  <div className="flex items-center space-x-2 ml-6">
+                    <Checkbox
+                      id="flatten-forms"
+                      checked={flattenForms}
+                      onCheckedChange={(checked) => setFlattenForms(checked === true)}
+                      disabled={isExporting}
+                    />
+                    <Label
+                      htmlFor="flatten-forms"
+                      className="text-sm font-normal cursor-pointer"
+                    >
+                      Flatten forms (make read-only)
+                    </Label>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
 
           {isExporting && exportProgress && (
             <div className="space-y-2">

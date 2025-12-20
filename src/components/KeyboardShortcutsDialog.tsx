@@ -15,6 +15,7 @@ const shortcuts: Shortcut[] = [
   { keys: ['Ctrl/Cmd', 'S'], description: 'Download/Save PDF', category: 'actions' },
   { keys: ['Ctrl/Cmd', 'F'], description: 'Search document', category: 'actions' },
   { keys: ['Ctrl/Cmd', 'Shift', 'A'], description: 'Toggle markup toolbar', category: 'actions' },
+  { keys: ['F'], description: 'Toggle form filling mode', category: 'actions' },
   { keys: ['Ctrl/Cmd', 'Z'], description: 'Undo last action', category: 'actions' },
   { keys: ['Ctrl/Cmd', 'Shift', 'Z'], description: 'Redo last action', category: 'actions' },
   

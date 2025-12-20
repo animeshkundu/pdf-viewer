@@ -1,4 +1,4 @@
-import { FolderOpen, MagnifyingGlassPlus, MagnifyingGlassMinus, Sidebar, CaretLeft, CaretRight, MagnifyingGlass, PencilLine, Download, Question } from '@phosphor-icons/react'
+import { FolderOpen, MagnifyingGlassPlus, MagnifyingGlassMinus, Sidebar, CaretLeft, CaretRight, MagnifyingGlass, PencilLine, Download, Question, TextT } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
@@ -14,12 +14,27 @@ interface ToolbarProps {
   onSearchClick?: () => void
   onMarkupClick?: () => void
   isMarkupOpen?: boolean
+  onFormClick?: () => void
+  isFormOpen?: boolean
+  hasForm?: boolean
   onExportClick?: () => void
   hasUnsavedChanges?: boolean
   onKeyboardShortcutsClick?: () => void
 }
 
-export function Toolbar({ onToggleSidebar, isSidebarOpen, onSearchClick, onMarkupClick, isMarkupOpen, onExportClick, hasUnsavedChanges, onKeyboardShortcutsClick }: ToolbarProps) {
+export function Toolbar({ 
+  onToggleSidebar, 
+  isSidebarOpen, 
+  onSearchClick, 
+  onMarkupClick, 
+  isMarkupOpen,
+  onFormClick,
+  isFormOpen,
+  hasForm,
+  onExportClick, 
+  hasUnsavedChanges, 
+  onKeyboardShortcutsClick 
+}: ToolbarProps) {
   const { zoom, setZoom, document, loadDocument, currentPage, setCurrentPage } = usePDF()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [pageInputValue, setPageInputValue] = useState('')
@@ -166,6 +181,25 @@ export function Toolbar({ onToggleSidebar, isSidebarOpen, onSearchClick, onMarku
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>Markup (Ctrl/Cmd+Shift+A)</TooltipContent>
+                </Tooltip>
+              )}
+
+              {hasForm && onFormClick && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant={isFormOpen ? 'default' : 'ghost'}
+                      size="default"
+                      onClick={onFormClick}
+                      aria-label="Toggle form filling (F)"
+                      aria-pressed={isFormOpen}
+                      className={cn('gap-2 button-press transition-all', isFormOpen && 'bg-ocean-blue text-white shadow-md')}
+                    >
+                      <TextT size={20} weight={isFormOpen ? 'fill' : 'regular'} aria-hidden="true" />
+                      <span className="hidden sm:inline">Forms</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Forms (F)</TooltipContent>
                 </Tooltip>
               )}
               

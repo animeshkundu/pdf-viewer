@@ -4,6 +4,7 @@ import { pdfService } from '@/services/pdf.service'
 import { PDFTextLayer } from '@/components/PDFViewer/PDFTextLayer'
 import { AnnotationLayer } from '@/components/AnnotationLayer/AnnotationLayer'
 import { AnnotationDrawing } from '@/components/AnnotationDrawing/AnnotationDrawing'
+import { FormOverlayLayer } from '@/components/FormFieldOverlay/FormOverlayLayer'
 import { usePageManagement } from '@/hooks/usePageManagement'
 
 interface PDFCanvasProps {
@@ -52,6 +53,8 @@ export function PDFCanvas({ page, scale, pageNumber }: PDFCanvasProps) {
     }
   }, [page, scale, pageNumber, rotation, isRendering])
 
+  const viewport = page.getViewport({ scale, rotation })
+  
   return (
     <div className="relative flex items-center justify-center p-4">
       <div className="relative">
@@ -77,6 +80,12 @@ export function PDFCanvas({ page, scale, pageNumber }: PDFCanvasProps) {
           width={dimensions.width}
           height={dimensions.height}
           scale={scale}
+        />
+        <FormOverlayLayer
+          pageNumber={pageNumber}
+          scale={scale}
+          pageWidth={viewport.width / scale}
+          pageHeight={viewport.height / scale}
         />
       </div>
     </div>
