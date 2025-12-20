@@ -5,6 +5,7 @@ import { AnnotationProvider, useAnnotations } from './hooks/useAnnotations.tsx'
 import { PageManagementProvider, usePageManagement } from './hooks/usePageManagement'
 import { FormProvider, useForm } from './hooks/useForm'
 import { WatermarkProvider, useWatermark } from './hooks/useWatermark'
+import { PageNumberProvider, usePageNumber } from './hooks/usePageNumber'
 import { useUnsavedChanges } from './hooks/useUnsavedChanges'
 import { Toolbar } from './components/Toolbar/Toolbar'
 import { MarkupToolbar } from './components/MarkupToolbar/MarkupToolbar'
@@ -16,6 +17,7 @@ import { SearchBar } from './components/SearchBar/SearchBar'
 import { ExportDialog } from './components/ExportDialog'
 import { KeyboardShortcutsDialog } from './components/KeyboardShortcutsDialog'
 import { WatermarkDialog } from './components/WatermarkDialog'
+import { PageNumberDialog } from './components/PageNumberDialog'
 import { InstallPrompt } from './components/InstallPrompt'
 import { OfflineIndicator } from './components/OfflineIndicator'
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from './components/ui/resizable'
@@ -28,6 +30,7 @@ function AppContentInner() {
   const { hasUnsavedChanges, markAsModified, markAsSaved } = useUnsavedChanges()
   const { hasForm, isFormMode, setIsFormMode } = useForm()
   const { watermark } = useWatermark()
+  const { pageNumberConfig } = usePageNumber()
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [isMarkupOpen, setIsMarkupOpen] = useState(false)
@@ -35,6 +38,7 @@ function AppContentInner() {
   const [isExportOpen, setIsExportOpen] = useState(false)
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false)
   const [isWatermarkOpen, setIsWatermarkOpen] = useState(false)
+  const [isPageNumberOpen, setIsPageNumberOpen] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -225,10 +229,10 @@ function AppContentInner() {
   }, [document, currentPage, setCurrentPage, isMarkupOpen, isFormOpen, hasForm, isFormMode, zoom, setZoom, canUndo, canRedo, undo, redo, setActiveTool, deleteSelectedAnnotation, setIsFormMode])
 
   useEffect(() => {
-    if (annotations.length > 0 || transformations.size > 0 || pageOrder.length > 0 || blankPages.length > 0 || watermark !== null) {
+    if (annotations.length > 0 || transformations.size > 0 || pageOrder.length > 0 || blankPages.length > 0 || watermark !== null || pageNumberConfig !== null) {
       markAsModified()
     }
-  }, [annotations, transformations, pageOrder, blankPages, watermark, markAsModified])
+  }, [annotations, transformations, pageOrder, blankPages, watermark, pageNumberConfig, markAsModified])
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -277,6 +281,7 @@ function AppContentInner() {
         isFormOpen={isFormOpen}
         hasForm={hasForm}
         onWatermarkClick={() => setIsWatermarkOpen(true)}
+        onPageNumberClick={() => setIsPageNumberOpen(true)}
         onExportClick={() => setIsExportOpen(true)}
         hasUnsavedChanges={hasUnsavedChanges}
         onKeyboardShortcutsClick={() => setIsShortcutsOpen(true)}
@@ -343,11 +348,17 @@ function AppContentInner() {
         pageOrder={pageOrder}
         blankPages={blankPages}
         watermark={watermark}
+        pageNumberConfig={pageNumberConfig}
       />
 
       <WatermarkDialog
         isOpen={isWatermarkOpen}
         onClose={() => setIsWatermarkOpen(false)}
+      />
+
+      <PageNumberDialog
+        isOpen={isPageNumberOpen}
+        onClose={() => setIsPageNumberOpen(false)}
       />
 
       <KeyboardShortcutsDialog
@@ -365,7 +376,9 @@ function AppContent() {
     <PageManagementProvider numPages={document?.numPages ?? 0}>
       <FormProvider>
         <WatermarkProvider>
-          <AppContentInner />
+          <PageNumberProvider>
+            <AppContentInner />
+          </PageNumberProvider>
         </WatermarkProvider>
       </FormProvider>
     </PageManagementProvider>

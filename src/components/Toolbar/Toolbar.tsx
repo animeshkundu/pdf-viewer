@@ -1,4 +1,4 @@
-import { FolderOpen, MagnifyingGlassPlus, MagnifyingGlassMinus, Sidebar, CaretLeft, CaretRight, MagnifyingGlass, PencilLine, Download, Question, TextT, Stamp } from '@phosphor-icons/react'
+import { FolderOpen, MagnifyingGlassPlus, MagnifyingGlassMinus, Sidebar, CaretLeft, CaretRight, MagnifyingGlass, PencilLine, Download, Question, TextT, Stamp, NumberSquareOne } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
@@ -8,6 +8,7 @@ import { ZOOM_LEVELS } from '@/types/pdf.types'
 import { useRef, useState } from 'react'
 import { cn } from '@/lib/utils'
 import { useWatermark } from '@/hooks/useWatermark'
+import { usePageNumber } from '@/hooks/usePageNumber'
 
 interface ToolbarProps {
   onToggleSidebar?: () => void
@@ -22,6 +23,7 @@ interface ToolbarProps {
   hasUnsavedChanges?: boolean
   onKeyboardShortcutsClick?: () => void
   onWatermarkClick?: () => void
+  onPageNumberClick?: () => void
 }
 
 export function Toolbar({ 
@@ -36,10 +38,12 @@ export function Toolbar({
   onExportClick, 
   hasUnsavedChanges, 
   onKeyboardShortcutsClick,
-  onWatermarkClick 
+  onWatermarkClick,
+  onPageNumberClick 
 }: ToolbarProps) {
   const { zoom, setZoom, document, loadDocument, currentPage, setCurrentPage } = usePDF()
   const { hasWatermark } = useWatermark()
+  const { hasPageNumbers } = usePageNumber()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [pageInputValue, setPageInputValue] = useState('')
 
@@ -241,6 +245,28 @@ export function Toolbar({
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>Add Watermark</TooltipContent>
+                </Tooltip>
+              )}
+
+              {onPageNumberClick && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant={hasPageNumbers ? 'default' : 'ghost'}
+                      size="default"
+                      onClick={onPageNumberClick}
+                      aria-label="Add page numbers"
+                      aria-pressed={hasPageNumbers}
+                      className={cn(
+                        'gap-2 button-press transition-all duration-200',
+                        hasPageNumbers && 'bg-secondary text-secondary-foreground shadow-sm'
+                      )}
+                    >
+                      <NumberSquareOne size={18} weight={hasPageNumbers ? 'fill' : 'regular'} aria-hidden="true" />
+                      <span className="hidden sm:inline font-medium">Page Numbers</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Add Page Numbers</TooltipContent>
                 </Tooltip>
               )}
               

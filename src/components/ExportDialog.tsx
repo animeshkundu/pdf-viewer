@@ -5,12 +5,13 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Progress } from '@/components/ui/progress'
-import { Download, FileText, CheckCircle, Warning, Stamp } from '@phosphor-icons/react'
+import { Download, FileText, CheckCircle, Warning, Stamp, NumberSquareOne } from '@phosphor-icons/react'
 import { exportService, ExportProgress } from '@/services/export.service'
 import { formService } from '@/services/form.service'
 import { toast } from 'sonner'
 import type { BlankPage } from '@/types/page-management.types'
 import type { Watermark } from '@/types/watermark.types'
+import type { PageNumberConfig } from '@/types/page-number.types'
 
 interface ExportDialogProps {
   isOpen: boolean
@@ -22,6 +23,7 @@ interface ExportDialogProps {
   pageOrder: number[]
   blankPages: BlankPage[]
   watermark: Watermark | null
+  pageNumberConfig: PageNumberConfig | null
 }
 
 export function ExportDialog({
@@ -34,6 +36,7 @@ export function ExportDialog({
   pageOrder,
   blankPages,
   watermark,
+  pageNumberConfig,
 }: ExportDialogProps) {
   const [filename, setFilename] = useState(() => 
     exportService.generateFilename(originalFilename)
@@ -66,6 +69,7 @@ export function ExportDialog({
         pageOrder,
         blankPages,
         watermark,
+        pageNumberConfig,
         { 
           filename, 
           includeAnnotations,
@@ -161,6 +165,12 @@ export function ExportDialog({
                 <div className="flex items-center gap-2">
                   <Stamp className="w-4 h-4" />
                   <span>Watermark: "{watermark.text}"</span>
+                </div>
+              )}
+              {pageNumberConfig && pageNumberConfig.enabled && (
+                <div className="flex items-center gap-2">
+                  <NumberSquareOne className="w-4 h-4" />
+                  <span>Page numbers ({pageNumberConfig.format === 'numeric' ? 'numeric' : 'text'})</span>
                 </div>
               )}
               {hasFormFields && (

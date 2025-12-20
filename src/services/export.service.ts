@@ -2,8 +2,10 @@ import { PDFDocument, rgb, PDFPage, degrees, StandardFonts } from 'pdf-lib'
 import type { Annotation, HighlightAnnotation, PenAnnotation, ShapeAnnotation, TextAnnotation, SignatureAnnotation, RedactionAnnotation } from '@/types/annotation.types'
 import type { PageTransformation, BlankPage } from '@/types/page-management.types'
 import type { Watermark } from '@/types/watermark.types'
+import type { PageNumberConfig } from '@/types/page-number.types'
 import { formService } from './form.service'
 import { watermarkService } from './watermark.service'
+import { pageNumberService } from './page-number.service'
 
 export interface ExportOptions {
   filename?: string
@@ -14,7 +16,7 @@ export interface ExportOptions {
 }
 
 export interface ExportProgress {
-  stage: 'loading' | 'processing' | 'watermark' | 'forms' | 'annotations' | 'finalizing' | 'complete'
+  stage: 'loading' | 'processing' | 'page-numbers' | 'watermark' | 'forms' | 'annotations' | 'finalizing' | 'complete'
   progress: number
   message: string
 }
@@ -39,6 +41,7 @@ export class ExportService {
     pageOrder: number[],
     blankPages: BlankPage[],
     watermark: Watermark | null,
+    pageNumberConfig: PageNumberConfig | null,
     options: ExportOptions = {}
   ): Promise<Blob> {
     const { includeAnnotations = true, includeFormData = true, flattenForms = false } = options
@@ -53,6 +56,11 @@ export class ExportService {
       if (blankPages.length > 0) {
         this.updateProgress('processing', 25, 'Inserting blank pages...')
         await this.insertBlankPages(pdfDoc, blankPages)
+      }
+
+      if (pageNumberConfig && pageNumberConfig.enabled) {
+        this.updateProgress('page-numbers', 30, 'Adding page numbers...')
+        await pageNumberService.applyPageNumbersToPDF(pdfDoc, pageNumberConfig)
       }
 
       if (watermark) {

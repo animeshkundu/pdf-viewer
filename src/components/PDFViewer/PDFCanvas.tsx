@@ -6,6 +6,7 @@ import { AnnotationLayer } from '@/components/AnnotationLayer/AnnotationLayer'
 import { AnnotationDrawing } from '@/components/AnnotationDrawing/AnnotationDrawing'
 import { FormOverlayLayer } from '@/components/FormFieldOverlay/FormOverlayLayer'
 import { WatermarkOverlay } from '@/components/WatermarkOverlay/WatermarkOverlay'
+import { PageNumberOverlay } from '@/components/PageNumberOverlay/PageNumberOverlay'
 import { usePageManagement } from '@/hooks/usePageManagement'
 import { usePDF } from '@/hooks/usePDF.tsx'
 
@@ -90,6 +91,12 @@ export function PDFCanvas({ page, scale, pageNumber }: PDFCanvasProps) {
           height={dimensions.height}
           scale={scale}
           totalPages={document?.numPages || 0}
+        />
+        <PageNumberOverlay
+          pageNumber={pageNumber}
+          scale={scale}
+          pageWidth={dimensions.width}
+          pageHeight={dimensions.height}
         />
         <FormOverlayLayer
           pageNumber={pageNumber}
