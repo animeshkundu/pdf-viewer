@@ -43,16 +43,21 @@ function Thumbnail({
   onDrop,
 }: ThumbnailProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
   const [isRendered, setIsRendered] = useState(false)
 
   useEffect(() => {
     setIsRendered(false)
     
     const renderThumbnail = async () => {
-      if (!canvasRef.current) return
+      if (!canvasRef.current || !containerRef.current) return
 
       try {
-        await pdfService.renderPage(page, 0.3, canvasRef.current)
+        const containerWidth = containerRef.current.clientWidth
+        const viewport = page.getViewport({ scale: 1 })
+        const scale = (containerWidth - 16) / viewport.width
+        
+        await pdfService.renderPage(page, scale, canvasRef.current)
         setIsRendered(true)
       } catch (error) {
         console.error('Error rendering thumbnail:', error)
@@ -96,14 +101,15 @@ function Thumbnail({
         )}
       >
         <div 
-          className="relative bg-white shadow-sm w-full flex items-center justify-center"
+          ref={containerRef}
+          className="relative bg-white shadow-sm w-full flex items-center justify-center overflow-hidden"
           style={{
             transform: `rotate(${rotation}deg)`,
             transformOrigin: 'center center',
             transition: 'transform 200ms ease-out'
           }}
         >
-          <canvas ref={canvasRef} className="max-w-full h-auto" />
+          <canvas ref={canvasRef} className="w-full h-auto" />
         </div>
         <span className="text-xs font-medium text-muted-foreground">
           {pageNumber}
