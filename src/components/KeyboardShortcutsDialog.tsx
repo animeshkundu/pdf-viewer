@@ -27,6 +27,7 @@ const shortcuts: Shortcut[] = [
   { keys: ['Home'], description: 'Go to first page', category: 'navigation' },
   { keys: ['End'], description: 'Go to last page', category: 'navigation' },
   
+  { keys: ['v'], description: 'Select/Copy text mode', category: 'tools' },
   { keys: ['h'], description: 'Activate highlight tool', category: 'tools' },
   { keys: ['p'], description: 'Activate pen tool', category: 'tools' },
   { keys: ['s'], description: 'Activate signature tool', category: 'tools' },
@@ -41,7 +42,7 @@ const shortcuts: Shortcut[] = [
   { keys: ['0'], description: 'Fit to width', category: 'view' },
   { keys: ['1'], description: 'Zoom to 100%', category: 'view' },
   
-  { keys: ['Escape'], description: 'Close dialogs/toolbars', category: 'actions' },
+  { keys: ['Escape'], description: 'Close dialogs/Deselect tool', category: 'actions' },
   { keys: ['?'], description: 'Show keyboard shortcuts', category: 'actions' },
 ]
 

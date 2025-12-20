@@ -43,11 +43,22 @@ export function PDFTextLayer({ page, scale, pageNumber, width, height }: PDFText
           div.style.fontFamily = 'sans-serif'
           div.style.transformOrigin = '0 0'
           div.style.whiteSpace = 'pre'
-          div.style.pointerEvents = 'auto'
-          div.style.userSelect = 'text'
-          div.style.cursor = activeTool === 'highlight' ? 'crosshair' : 'text'
           div.style.color = 'transparent'
           div.setAttribute('data-text-layer', 'true')
+          
+          if (activeTool === null || activeTool === 'select') {
+            div.style.pointerEvents = 'auto'
+            div.style.userSelect = 'text'
+            div.style.cursor = 'text'
+          } else if (activeTool === 'highlight') {
+            div.style.pointerEvents = 'auto'
+            div.style.userSelect = 'text'
+            div.style.cursor = 'crosshair'
+          } else {
+            div.style.pointerEvents = 'none'
+            div.style.userSelect = 'none'
+            div.style.cursor = 'default'
+          }
 
           textLayerRef.current?.appendChild(div)
         })
@@ -109,8 +120,8 @@ export function PDFTextLayer({ page, scale, pageNumber, width, height }: PDFText
       style={{
         width,
         height,
-        pointerEvents: 'auto',
-        userSelect: 'text',
+        pointerEvents: (activeTool === null || activeTool === 'select' || activeTool === 'highlight') ? 'auto' : 'none',
+        userSelect: (activeTool === null || activeTool === 'select') ? 'text' : 'none',
         zIndex: activeTool === 'highlight' ? 20 : 10,
       }}
     />

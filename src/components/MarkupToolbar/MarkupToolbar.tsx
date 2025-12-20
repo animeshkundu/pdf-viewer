@@ -19,6 +19,8 @@ import {
   ArrowCounterClockwise,
   ArrowClockwise,
   Trash,
+  Cursor,
+  TextT,
 } from '@phosphor-icons/react'
 import { ToolType, HIGHLIGHT_COLORS, PEN_COLORS, PEN_THICKNESSES } from '@/types/annotation.types'
 import { SignatureManager } from '@/components/SignatureManager/SignatureManager'
@@ -92,6 +94,25 @@ export function MarkupToolbar({ isOpen, onClose }: MarkupToolbarProps) {
     <TooltipProvider>
       <div className="border-b bg-card border-border px-4 py-2 flex items-center gap-2">
         <div className="flex items-center gap-1">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={activeTool === null || activeTool === 'select' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setActiveTool(null)}
+                className={cn(
+                  'h-9 w-9 p-0',
+                  (activeTool === null || activeTool === 'select') && 'bg-primary text-primary-foreground'
+                )}
+              >
+                <TextT className="h-5 w-5" weight={(activeTool === null || activeTool === 'select') ? 'fill' : 'regular'} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Select Text (V)</TooltipContent>
+          </Tooltip>
+
+          <Separator orientation="vertical" className="h-6 mx-1" />
+
           <Popover>
             <PopoverTrigger asChild>
               <Button

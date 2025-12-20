@@ -71,92 +71,74 @@ export class SearchService {
     options: { caseSensitive?: boolean; wholeWord?: boolean }
   ): SearchMatch[] {
     const matches: SearchMatch[] = []
-    const pageText = pageTextContent.items.map((item) => item.str).join(' ')
-    const normalizedPageText = options.caseSensitive ? pageText : pageText.toLowerCase()
-
-    let startIndex = 0
+    
+    let currentCharIndex = 0
     let matchIndex = 0
 
-    while (true) {
-      let foundIndex = normalizedPageText.indexOf(query, startIndex)
-      
-      if (foundIndex === -1) break
+    for (let itemIdx = 0; itemIdx < pageTextContent.items.length; itemIdx++) {
+      const item = pageTextContent.items[itemIdx]
+      const itemText = options.caseSensitive ? item.str : item.str.toLowerCase()
+      const normalizedQuery = options.caseSensitive ? query : query.toLowerCase()
 
-      if (options.wholeWord) {
-        const beforeChar = foundIndex > 0 ? normalizedPageText[foundIndex - 1] : ' '
-        const afterChar = foundIndex + query.length < normalizedPageText.length 
-          ? normalizedPageText[foundIndex + query.length] 
-          : ' '
+      for (let charIdx = 0; charIdx <= itemText.length - normalizedQuery.length; charIdx++) {
+        const substring = itemText.substring(charIdx, charIdx + normalizedQuery.length)
         
-        if (!/\s/.test(beforeChar) || !/\s/.test(afterChar)) {
-          startIndex = foundIndex + 1
-          continue
+        if (substring === normalizedQuery) {
+          if (options.wholeWord) {
+            const beforeChar = charIdx > 0 ? itemText[charIdx - 1] : ' '
+            const afterChar = charIdx + normalizedQuery.length < itemText.length 
+              ? itemText[charIdx + normalizedQuery.length] 
+              : ' '
+            
+            if (!/[\s,;.!?]/.test(beforeChar) || !/[\s,;.!?]/.test(afterChar)) {
+              continue
+            }
+          }
+
+          const boundingBoxes = this.calculateCharacterBoundingBoxes(
+            item,
+            charIdx,
+            normalizedQuery.length
+          )
+
+          matches.push({
+            pageNumber: pageTextContent.pageNumber,
+            matchIndex,
+            text: item.str.substring(charIdx, charIdx + query.length),
+            boundingBoxes,
+          })
+
+          matchIndex++
         }
       }
-
-      const matchText = pageText.substr(foundIndex, query.length)
-      const boundingBoxes = this.calculateBoundingBoxes(
-        pageTextContent,
-        foundIndex,
-        query.length
-      )
-
-      matches.push({
-        pageNumber: pageTextContent.pageNumber,
-        matchIndex,
-        text: matchText,
-        boundingBoxes,
-      })
-
-      matchIndex++
-      startIndex = foundIndex + query.length
+      
+      currentCharIndex += item.str.length + 1
     }
 
     return matches
   }
 
-  private calculateBoundingBoxes(
-    pageTextContent: PageTextContent,
-    startIndex: number,
+  private calculateCharacterBoundingBoxes(
+    item: PageTextContent['items'][0],
+    startChar: number,
     length: number
   ): Array<{ x: number; y: number; width: number; height: number }> {
-    const boxes: Array<{ x: number; y: number; width: number; height: number }> = []
-    let currentIndex = 0
-
-    for (const item of pageTextContent.items) {
-      const itemLength = item.str.length
-      const itemStart = currentIndex
-      const itemEnd = currentIndex + itemLength
-      const matchStart = startIndex
-      const matchEnd = startIndex + length
-
-      if (itemEnd >= matchStart && itemStart < matchEnd) {
-        const overlapStart = Math.max(itemStart, matchStart)
-        const overlapEnd = Math.min(itemEnd, matchEnd)
-        const startCharInItem = overlapStart - itemStart
-        const endCharInItem = overlapEnd - itemStart
-        const charsInItem = endCharInItem - startCharInItem
-
-        const [scaleX, , , scaleY, x, y] = item.transform
-        const totalWidth = item.width * Math.abs(scaleX)
-        const charWidth = totalWidth / itemLength
-        
-        const xOffset = charWidth * startCharInItem
-        const boxWidth = charWidth * charsInItem
-        
-        boxes.push({
-          x: x + xOffset,
-          y,
-          width: boxWidth,
-          height: item.height * Math.abs(scaleY),
-        })
-      }
-
-      currentIndex = itemEnd + 1
-      if (currentIndex > startIndex + length) break
-    }
-
-    return boxes
+    const [scaleX, , , scaleY, x, y] = item.transform
+    const totalWidth = item.width * Math.abs(scaleX)
+    const itemLength = item.str.length
+    
+    if (itemLength === 0) return []
+    
+    const charWidth = totalWidth / itemLength
+    const xOffset = charWidth * startChar
+    const boxWidth = charWidth * length
+    
+    return [{
+      x: x + xOffset,
+      y,
+      width: boxWidth,
+      height: item.height * Math.abs(scaleY),
+    }]
   }
 
   clearCache(): void {

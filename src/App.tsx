@@ -85,6 +85,9 @@ function AppContentInner() {
       }
 
       if (e.key === 'Escape') {
+        if (isMarkupOpen) {
+          setActiveTool(null)
+        }
         setIsSearchOpen(false)
         setIsMarkupOpen(false)
         setIsShortcutsOpen(false)
@@ -149,6 +152,10 @@ function AppContentInner() {
 
       if (isMarkupOpen) {
         switch (e.key) {
+          case 'v':
+            e.preventDefault()
+            setActiveTool(null)
+            break
           case 'h':
             e.preventDefault()
             setActiveTool('highlight')
