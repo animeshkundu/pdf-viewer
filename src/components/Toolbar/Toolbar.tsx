@@ -1,7 +1,8 @@
-import { FolderOpen, MagnifyingGlassPlus, MagnifyingGlassMinus, Sidebar, CaretLeft, CaretRight, MagnifyingGlass, PencilLine, Download } from '@phosphor-icons/react'
+import { FolderOpen, MagnifyingGlassPlus, MagnifyingGlassMinus, Sidebar, CaretLeft, CaretRight, MagnifyingGlass, PencilLine, Download, Question } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip'
 import { usePDF } from '@/hooks/usePDF.tsx'
 import { ZOOM_LEVELS } from '@/types/pdf.types'
 import { useRef, useState } from 'react'
@@ -14,9 +15,11 @@ interface ToolbarProps {
   onMarkupClick?: () => void
   isMarkupOpen?: boolean
   onExportClick?: () => void
+  hasUnsavedChanges?: boolean
+  onKeyboardShortcutsClick?: () => void
 }
 
-export function Toolbar({ onToggleSidebar, isSidebarOpen, onSearchClick, onMarkupClick, isMarkupOpen, onExportClick }: ToolbarProps) {
+export function Toolbar({ onToggleSidebar, isSidebarOpen, onSearchClick, onMarkupClick, isMarkupOpen, onExportClick, hasUnsavedChanges, onKeyboardShortcutsClick }: ToolbarProps) {
   const { zoom, setZoom, document, loadDocument, currentPage, setCurrentPage } = usePDF()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [pageInputValue, setPageInputValue] = useState('')
@@ -81,151 +84,227 @@ export function Toolbar({ onToggleSidebar, isSidebarOpen, onSearchClick, onMarku
   const currentZoomLabel = ZOOM_LEVELS.find(z => z.value === zoom)?.label || '100%'
 
   return (
-    <div className="flex items-center justify-between border-b border-border bg-canvas-gray px-3 py-3 gap-4">
-      <div className="flex items-center gap-2">
-        <Button
-          variant="default"
-          size="default"
-          onClick={handleOpenClick}
-          className="gap-2"
-        >
-          <FolderOpen size={20} />
-          Open File
-        </Button>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="application/pdf"
-          onChange={handleFileSelect}
-          className="hidden"
-        />
-        
-        {document && onToggleSidebar && (
-          <>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onToggleSidebar}
-              title={isSidebarOpen ? 'Hide sidebar' : 'Show sidebar'}
-            >
-              <Sidebar size={20} />
-            </Button>
-            
-            {onSearchClick && (
+    <TooltipProvider>
+      <div className="flex items-center justify-between border-b border-border bg-canvas-gray px-3 py-3 gap-4" role="toolbar" aria-label="Document toolbar">
+        <div className="flex items-center gap-2">
+          <Tooltip>
+            <TooltipTrigger asChild>
               <Button
-                variant="ghost"
-                size="icon"
-                onClick={onSearchClick}
-                title="Search (Cmd/Ctrl+F)"
-              >
-                <MagnifyingGlass size={20} />
-              </Button>
-            )}
-            
-            {onMarkupClick && (
-              <Button
-                variant={isMarkupOpen ? 'default' : 'ghost'}
+                variant="default"
                 size="default"
-                onClick={onMarkupClick}
-                title="Markup (Cmd/Ctrl+Shift+A)"
-                className={cn('gap-2', isMarkupOpen && 'bg-primary text-primary-foreground')}
-              >
-                <PencilLine size={20} weight={isMarkupOpen ? 'fill' : 'regular'} />
-                Markup
-              </Button>
-            )}
-            
-            {onExportClick && (
-              <Button
-                variant="ghost"
-                size="default"
-                onClick={onExportClick}
-                title="Export PDF"
+                onClick={handleOpenClick}
                 className="gap-2"
+                aria-label="Open PDF file (Ctrl/Cmd+O)"
               >
-                <Download size={20} />
-                Export
+                <FolderOpen size={20} aria-hidden="true" />
+                Open File
+                {hasUnsavedChanges && (
+                  <span className="ml-1 w-2 h-2 rounded-full bg-destructive" aria-label="Unsaved changes" />
+                )}
               </Button>
-            )}
-          </>
+            </TooltipTrigger>
+            <TooltipContent>Open PDF file (Ctrl/Cmd+O)</TooltipContent>
+          </Tooltip>
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="application/pdf"
+            onChange={handleFileSelect}
+            className="hidden"
+            aria-label="File input"
+          />
+          
+          {document && onToggleSidebar && (
+            <>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={onToggleSidebar}
+                    aria-label={isSidebarOpen ? 'Hide sidebar' : 'Show sidebar'}
+                    aria-pressed={isSidebarOpen}
+                  >
+                    <Sidebar size={20} aria-hidden="true" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{isSidebarOpen ? 'Hide sidebar' : 'Show sidebar'}</TooltipContent>
+              </Tooltip>
+              
+              {onSearchClick && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={onSearchClick}
+                      aria-label="Search document (Ctrl/Cmd+F)"
+                    >
+                      <MagnifyingGlass size={20} aria-hidden="true" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Search (Ctrl/Cmd+F)</TooltipContent>
+                </Tooltip>
+              )}
+              
+              {onMarkupClick && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant={isMarkupOpen ? 'default' : 'ghost'}
+                      size="default"
+                      onClick={onMarkupClick}
+                      aria-label="Toggle markup toolbar (Ctrl/Cmd+Shift+A)"
+                      aria-pressed={isMarkupOpen}
+                      className={cn('gap-2', isMarkupOpen && 'bg-primary text-primary-foreground')}
+                    >
+                      <PencilLine size={20} weight={isMarkupOpen ? 'fill' : 'regular'} aria-hidden="true" />
+                      Markup
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Markup (Ctrl/Cmd+Shift+A)</TooltipContent>
+                </Tooltip>
+              )}
+              
+              {onExportClick && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="default"
+                      onClick={onExportClick}
+                      aria-label="Export PDF (Ctrl/Cmd+S)"
+                      className="gap-2"
+                    >
+                      <Download size={20} aria-hidden="true" />
+                      Export
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Export (Ctrl/Cmd+S)</TooltipContent>
+                </Tooltip>
+              )}
+
+              {onKeyboardShortcutsClick && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={onKeyboardShortcutsClick}
+                      aria-label="Keyboard shortcuts (?)"
+                    >
+                      <Question size={20} aria-hidden="true" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Keyboard shortcuts (?)</TooltipContent>
+                </Tooltip>
+              )}
+            </>
+          )}
+        </div>
+
+        {document && (
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2" role="group" aria-label="Page navigation">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handlePrevPage}
+                    disabled={currentPage <= 1}
+                    aria-label="Previous page"
+                  >
+                    <CaretLeft size={20} aria-hidden="true" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Previous page (↑/k)</TooltipContent>
+              </Tooltip>
+
+              <form onSubmit={handlePageInputSubmit} className="flex items-center gap-1">
+                <Input
+                  type="text"
+                  value={pageInputValue || currentPage}
+                  onChange={handlePageInputChange}
+                  onFocus={(e) => {
+                    setPageInputValue(currentPage.toString())
+                    e.target.select()
+                  }}
+                  onBlur={() => setPageInputValue('')}
+                  className="w-14 h-8 text-center text-sm"
+                  aria-label={`Current page ${currentPage} of ${document.numPages}`}
+                />
+                <span className="text-sm text-muted-foreground whitespace-nowrap" aria-hidden="true">
+                  of {document.numPages}
+                </span>
+              </form>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleNextPage}
+                    disabled={currentPage >= document.numPages}
+                    aria-label="Next page"
+                  >
+                    <CaretRight size={20} aria-hidden="true" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Next page (↓/j)</TooltipContent>
+              </Tooltip>
+            </div>
+
+            <div className="h-5 w-px bg-border" aria-hidden="true" />
+
+            <div className="flex items-center gap-2" role="group" aria-label="Zoom controls">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleZoomOut}
+                    disabled={zoom <= 0.5}
+                    aria-label="Zoom out"
+                  >
+                    <MagnifyingGlassMinus size={20} aria-hidden="true" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Zoom out (-)</TooltipContent>
+              </Tooltip>
+
+              <Select value={currentZoomLabel} onValueChange={handleZoomChange}>
+                <SelectTrigger className="w-32" aria-label={`Zoom level: ${currentZoomLabel}`}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {ZOOM_LEVELS.map((level) => (
+                    <SelectItem key={level.label} value={level.label}>
+                      {level.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleZoomIn}
+                    disabled={zoom >= 4.0}
+                    aria-label="Zoom in"
+                  >
+                    <MagnifyingGlassPlus size={20} aria-hidden="true" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Zoom in (+/=)</TooltipContent>
+              </Tooltip>
+            </div>
+          </div>
         )}
       </div>
-
-      {document && (
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handlePrevPage}
-              disabled={currentPage <= 1}
-            >
-              <CaretLeft size={20} />
-            </Button>
-
-            <form onSubmit={handlePageInputSubmit} className="flex items-center gap-1">
-              <Input
-                type="text"
-                value={pageInputValue || currentPage}
-                onChange={handlePageInputChange}
-                onFocus={(e) => {
-                  setPageInputValue(currentPage.toString())
-                  e.target.select()
-                }}
-                onBlur={() => setPageInputValue('')}
-                className="w-14 h-8 text-center text-sm"
-              />
-              <span className="text-sm text-muted-foreground whitespace-nowrap">
-                of {document.numPages}
-              </span>
-            </form>
-
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleNextPage}
-              disabled={currentPage >= document.numPages}
-            >
-              <CaretRight size={20} />
-            </Button>
-          </div>
-
-          <div className="h-5 w-px bg-border" />
-
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleZoomOut}
-              disabled={zoom <= 0.5}
-            >
-              <MagnifyingGlassMinus size={20} />
-            </Button>
-
-            <Select value={currentZoomLabel} onValueChange={handleZoomChange}>
-              <SelectTrigger className="w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {ZOOM_LEVELS.map((level) => (
-                  <SelectItem key={level.label} value={level.label}>
-                    {level.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleZoomIn}
-              disabled={zoom >= 4.0}
-            >
-              <MagnifyingGlassPlus size={20} />
-            </Button>
-          </div>
-        </div>
-      )}
-    </div>
+    </TooltipProvider>
   )
 }
