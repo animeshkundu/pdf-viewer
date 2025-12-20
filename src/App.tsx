@@ -286,7 +286,7 @@ function AppContentInner() {
         <ResizablePanelGroup direction="horizontal" className="h-full">
           {isSidebarOpen && (
             <>
-              <ResizablePanel defaultSize={20} minSize={15} maxSize={35}>
+              <ResizablePanel defaultSize={20} minSize={12} maxSize={40}>
                 <ThumbnailSidebar 
                   isOpen={isSidebarOpen}
                   onClose={() => setIsSidebarOpen(false)}

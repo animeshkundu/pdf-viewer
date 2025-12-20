@@ -45,15 +45,30 @@ function Thumbnail({
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const [isRendered, setIsRendered] = useState(false)
+  const [containerWidth, setContainerWidth] = useState(0)
 
   useEffect(() => {
+    if (!containerRef.current) return
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setContainerWidth(entry.contentRect.width)
+      }
+    })
+
+    resizeObserver.observe(containerRef.current)
+    return () => resizeObserver.disconnect()
+  }, [])
+
+  useEffect(() => {
+    if (containerWidth === 0) return
+    
     setIsRendered(false)
     
     const renderThumbnail = async () => {
-      if (!canvasRef.current || !containerRef.current) return
+      if (!canvasRef.current) return
 
       try {
-        const containerWidth = containerRef.current.clientWidth
         const viewport = page.getViewport({ scale: 1 })
         const scale = (containerWidth - 16) / viewport.width
         
@@ -65,7 +80,7 @@ function Thumbnail({
     }
 
     renderThumbnail()
-  }, [page])
+  }, [page, containerWidth])
 
   if (isDeleted) {
     return null
@@ -235,7 +250,7 @@ export function ThumbnailSidebar({ isOpen, onClose }: ThumbnailSidebarProps) {
   }
 
   return (
-    <div className="border-r border-border bg-canvas-gray flex flex-col h-full min-w-[180px]">
+    <div className="border-r border-border bg-canvas-gray flex flex-col h-full w-full">
       <div className="flex items-center justify-between px-3 py-3 border-b border-border">
         <h2 className="text-sm font-semibold text-foreground">
           Pages ({visiblePageCount})
