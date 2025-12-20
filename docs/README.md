@@ -63,9 +63,43 @@ This directory contains comprehensive architecture and design documentation for 
 - Accessibility scenarios
 - Error recovery procedures
 
+#### [AGENT.md](./AGENT.md)
+**Agent Development Guide** - Comprehensive guide for AI agents and LLMs
+- Pre-work documentation review checklist
+- Development workflow and standards
+- Testing requirements (>90% coverage)
+- Build and validation steps
+- Documentation update guidelines
+- ADR and history documentation process
+- Common patterns and best practices
+- Self-review checklist
+
+#### [ADR/](./ADR/)
+**Architecture Decision Records** - Documented architectural decisions
+- [ADR-0001](./ADR/0001-pdf-rendering-library.md): Using PDF.js for PDF Rendering
+- [ADR-0002](./ADR/0002-pdf-manipulation-library.md): Using pdf-lib for PDF Manipulation
+- [ADR-0003](./ADR/0003-virtualized-rendering.md): Virtualized Page Rendering Strategy
+- [ADR-0004](./ADR/0004-annotation-storage.md): Annotation Data Structure and Storage
+- [ADR-0005](./ADR/0005-state-management.md): React Context for State Management
+- [ADR-0006](./ADR/0006-testing-strategy.md): Testing Framework and Strategy
+
+#### [history/](./history/)
+**Deprecated Features** - Historical record of removed/deprecated features
+- Migration guides for deprecated APIs
+- Reasons for deprecation
+- Replacement recommendations
+- Timeline of changes
+
 ---
 
 ## Quick Reference
+
+### For AI Agents/LLMs (START HERE)
+1. **ALWAYS** read [AGENT.md](./AGENT.md) first
+2. Review relevant [ADRs](./ADR/) before making architectural changes
+3. Check [history/](./history/) for deprecated features
+4. Follow testing requirements (>90% coverage)
+5. Update documentation with every change
 
 ### For Product/Design Review
 1. Start with [PRD.md](../PRD.md) for product vision
@@ -73,14 +107,18 @@ This directory contains comprehensive architecture and design documentation for 
 3. Check [USER_WORKFLOWS.md](./USER_WORKFLOWS.md) for UX flows
 
 ### For Development
-1. Read [ARCHITECTURE.md](./ARCHITECTURE.md) for system overview
-2. Reference [TECHNICAL_SPEC.md](./TECHNICAL_SPEC.md) for implementation patterns
-3. Follow [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md) for task breakdown
+1. Read [AGENT.md](./AGENT.md) for development workflow
+2. Review [ARCHITECTURE.md](./ARCHITECTURE.md) for system overview
+3. Check [ADR/](./ADR/) for architectural decisions
+4. Reference [TECHNICAL_SPEC.md](./TECHNICAL_SPEC.md) for implementation patterns
+5. Follow [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md) for task breakdown
 
 ### For Testing
-1. Use [USER_WORKFLOWS.md](./USER_WORKFLOWS.md) for test scenarios
-2. Check [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md) for acceptance criteria
-3. Reference [TECHNICAL_SPEC.md](./TECHNICAL_SPEC.md) for edge cases
+1. Review [ADR-0006](./ADR/0006-testing-strategy.md) for testing strategy
+2. Use [USER_WORKFLOWS.md](./USER_WORKFLOWS.md) for test scenarios
+3. Check [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md) for acceptance criteria
+4. Reference [TECHNICAL_SPEC.md](./TECHNICAL_SPEC.md) for edge cases
+5. Maintain >90% code coverage
 
 ---
 
@@ -180,16 +218,22 @@ This directory contains comprehensive architecture and design documentation for 
 ## Getting Started
 
 ### For New Team Members
-1. Read [PRD.md](../PRD.md) to understand product vision
-2. Review [ARCHITECTURE.md](./ARCHITECTURE.md) for system overview
-3. Set up development environment (see README.md)
-4. Start with Phase 1 tasks in [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md)
+1. Read [AGENT.md](./AGENT.md) for complete development guide
+2. Read [PRD.md](../PRD.md) to understand product vision
+3. Review [ARCHITECTURE.md](./ARCHITECTURE.md) for system overview
+4. Study [ADRs](./ADR/) to understand key decisions
+5. Set up development environment (see main README.md)
+6. Start with Phase 1 tasks in [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md)
 
 ### For Contributors
-1. Check [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md) for open tasks
-2. Reference [TECHNICAL_SPEC.md](./TECHNICAL_SPEC.md) for patterns
-3. Follow [DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md) for styling
-4. Test against scenarios in [USER_WORKFLOWS.md](./USER_WORKFLOWS.md)
+1. **MUST READ**: [AGENT.md](./AGENT.md) for workflow and standards
+2. Check [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md) for open tasks
+3. Review relevant [ADRs](./ADR/) before making changes
+4. Reference [TECHNICAL_SPEC.md](./TECHNICAL_SPEC.md) for patterns
+5. Follow [DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md) for styling
+6. Write tests (>90% coverage required)
+7. Update documentation when making changes
+8. Test against scenarios in [USER_WORKFLOWS.md](./USER_WORKFLOWS.md)
 
 ---
 

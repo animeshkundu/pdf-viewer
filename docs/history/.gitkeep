@@ -1,0 +1,17 @@
+# Placeholder for Future Deprecations
+
+This directory will contain documentation for deprecated features as the project evolves.
+
+## Current Status
+
+As of the initial project creation, no features have been deprecated yet. This directory structure is prepared for future use.
+
+## When to Add Files Here
+
+Add deprecation documentation when:
+- Removing a feature or component
+- Changing a public API
+- Migrating from one technology to another
+- Restructuring code in a breaking way
+
+See [README.md](./README.md) for the full template and guidelines.
