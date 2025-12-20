@@ -1,4 +1,4 @@
-import { FolderOpen, MagnifyingGlassPlus, MagnifyingGlassMinus, Sidebar, CaretLeft, CaretRight } from '@phosphor-icons/react'
+import { FolderOpen, MagnifyingGlassPlus, MagnifyingGlassMinus, Sidebar, CaretLeft, CaretRight, MagnifyingGlass } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
@@ -9,9 +9,10 @@ import { useRef, useState } from 'react'
 interface ToolbarProps {
   onToggleSidebar?: () => void
   isSidebarOpen?: boolean
+  onSearchClick?: () => void
 }
 
-export function Toolbar({ onToggleSidebar, isSidebarOpen }: ToolbarProps) {
+export function Toolbar({ onToggleSidebar, isSidebarOpen, onSearchClick }: ToolbarProps) {
   const { zoom, setZoom, document, loadDocument, currentPage, setCurrentPage } = usePDF()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [pageInputValue, setPageInputValue] = useState('')
@@ -96,14 +97,27 @@ export function Toolbar({ onToggleSidebar, isSidebarOpen }: ToolbarProps) {
         />
         
         {document && onToggleSidebar && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onToggleSidebar}
-            title={isSidebarOpen ? 'Hide sidebar' : 'Show sidebar'}
-          >
-            <Sidebar size={20} />
-          </Button>
+          <>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onToggleSidebar}
+              title={isSidebarOpen ? 'Hide sidebar' : 'Show sidebar'}
+            >
+              <Sidebar size={20} />
+            </Button>
+            
+            {onSearchClick && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onSearchClick}
+                title="Search (Cmd/Ctrl+F)"
+              >
+                <MagnifyingGlass size={20} />
+              </Button>
+            )}
+          </>
         )}
       </div>
 

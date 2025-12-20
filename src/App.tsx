@@ -1,17 +1,28 @@
 import { Toaster } from 'sonner'
 import { PDFProvider, usePDF } from './hooks/usePDF.tsx'
+import { SearchProvider } from './hooks/useSearch.tsx'
 import { Toolbar } from './components/Toolbar/Toolbar'
 import { PDFViewer } from './components/PDFViewer/PDFViewer'
 import { ThumbnailSidebar } from './components/ThumbnailSidebar/ThumbnailSidebar'
 import { EmptyState } from './components/EmptyState'
+import { SearchBar } from './components/SearchBar/SearchBar'
 import { useState, useEffect } from 'react'
 
 function AppContent() {
   const { document, isLoading, currentPage, setCurrentPage } = usePDF()
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'f') {
+        e.preventDefault()
+        if (document) {
+          setIsSearchOpen(true)
+        }
+        return
+      }
+
       if (!document) return
 
       switch (e.key) {
@@ -59,9 +70,12 @@ function AppContent() {
       <Toolbar 
         onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
         isSidebarOpen={isSidebarOpen}
+        onSearchClick={() => setIsSearchOpen(true)}
       />
       
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden relative">
+        <SearchBar isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
+        
         <ThumbnailSidebar 
           isOpen={isSidebarOpen}
           onClose={() => setIsSidebarOpen(false)}
@@ -89,8 +103,10 @@ function AppContent() {
 function App() {
   return (
     <PDFProvider>
-      <AppContent />
-      <Toaster position="top-right" />
+      <SearchProvider>
+        <AppContent />
+        <Toaster position="top-right" />
+      </SearchProvider>
     </PDFProvider>
   )
 }

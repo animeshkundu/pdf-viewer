@@ -31,6 +31,8 @@ Create an ADR when:
 | [0004](0004-annotation-storage.md) | Annotation Data Structure and Storage | Accepted | 2025-01-XX |
 | [0005](0005-state-management.md) | React Context for State Management | Accepted | 2025-01-XX |
 | [0006](0006-testing-strategy.md) | Testing Framework and Strategy | Accepted | 2025-01-XX |
+| [0007](007-keyboard-navigation.md) | Keyboard Navigation Implementation | Accepted | 2025-01-27 |
+| [0008](008-document-search.md) | Document-Wide Search with Result Highlighting | Accepted | 2025-01-27 |
 
 ## ADR Template
 

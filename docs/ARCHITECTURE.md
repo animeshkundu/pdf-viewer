@@ -17,6 +17,7 @@ A client-side PDF viewer/editor built with React + TypeScript, processing all do
 ┌─────────────────────────────────────────────────────────┐
 │                  Core Services Layer                     │
 │  • PDFService (rendering, parsing)                      │
+│  • SearchService (text extraction, matching)            │
 │  • AnnotationService (overlays, persistence)            │
 │  • ExportService (PDF generation)                       │
 │  • StorageService (signatures, preferences)             │
@@ -50,15 +51,36 @@ A client-side PDF viewer/editor built with React + TypeScript, processing all do
 **Key Functions**:
 - `loadDocument(file: File): Promise<PDFDocument>`
 - `renderPage(pageNum: number, scale: number): Promise<HTMLCanvasElement>`
-- `getPageText(pageNum: number): Promise<string>`
-- `searchDocument(query: string): Promise<SearchResult[]>`
+- `getPage(pageNum: number): Promise<PDFPageProxy>`
+- `getPageDimensions(pageNum: number): Promise<{ width, height }>`
 
 **Implementation Notes**:
 - Uses Web Workers for parsing to avoid blocking UI
 - Implements virtualized rendering (only visible pages + buffer)
-- Caches rendered canvases with LRU eviction
+- Caches rendered canvases with LRU eviction (50MB limit)
+- Progressive page loading for large documents
 
-### 2. AnnotationService
+### 2. SearchService
+**Responsibility**: Extract text and search across document
+
+**Key Functions**:
+- `extractPageText(page: PDFPageProxy, pageNum: number): Promise<PageTextContent>`
+- `searchInDocument(doc: PDFDocument, query: string, options): Promise<SearchMatch[]>`
+- `searchInPage(pageTextContent, query, options): SearchMatch[]`
+- `calculateBoundingBoxes(pageTextContent, startIndex, length): BoundingBox[]`
+
+**Features**:
+- Case-sensitive and whole-word search options
+- Caches extracted text per page for performance
+- Calculates bounding boxes for visual highlighting
+- Progress reporting for long searches
+
+**Implementation Notes**:
+- Uses PDF.js `getTextContent()` for text extraction
+- Stores text with transform matrices for positioning
+- String-based search (not indexed) - fast enough for <500 pages
+
+### 3. AnnotationService
 **Responsibility**: Manage user annotations (highlights, drawings, text)
 
 **Key Functions**:
@@ -82,7 +104,7 @@ interface Annotation {
 
 **Storage**: Annotations stored in React state, exported to PDF on save
 
-### 3. ExportService
+### 4. ExportService
 **Responsibility**: Generate downloadable PDF with all modifications
 
 **Key Functions**:
@@ -94,7 +116,7 @@ interface Annotation {
 - Renders annotations as permanent PDF elements
 - Applies page rotations, deletions, reordering
 
-### 4. StorageService
+### 5. StorageService
 **Responsibility**: Persist user data locally
 
 **Key Functions**:

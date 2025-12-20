@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { PDFPageProxy } from 'pdfjs-dist'
 import { pdfService } from '@/services/pdf.service'
+import { SearchHighlight } from '@/components/SearchBar/SearchHighlight'
 
 interface PDFCanvasProps {
   page: PDFPageProxy
@@ -11,6 +12,7 @@ interface PDFCanvasProps {
 export function PDFCanvas({ page, scale, pageNumber }: PDFCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [isRendering, setIsRendering] = useState(false)
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 })
 
   useEffect(() => {
     const renderPage = async () => {
@@ -18,6 +20,8 @@ export function PDFCanvas({ page, scale, pageNumber }: PDFCanvasProps) {
 
       setIsRendering(true)
       try {
+        const viewport = page.getViewport({ scale })
+        setDimensions({ width: viewport.width, height: viewport.height })
         await pdfService.renderPage(page, scale, canvasRef.current)
       } catch (error) {
         console.error('Error rendering page:', error)
@@ -31,11 +35,19 @@ export function PDFCanvas({ page, scale, pageNumber }: PDFCanvasProps) {
 
   return (
     <div className="relative flex items-center justify-center p-4">
-      <canvas
-        ref={canvasRef}
-        className="shadow-lg bg-white"
-        style={{ maxWidth: '100%', height: 'auto' }}
-      />
+      <div className="relative">
+        <canvas
+          ref={canvasRef}
+          className="shadow-lg bg-white"
+          style={{ maxWidth: '100%', height: 'auto' }}
+        />
+        <SearchHighlight
+          pageNumber={pageNumber}
+          scale={scale}
+          pageWidth={dimensions.width}
+          pageHeight={dimensions.height}
+        />
+      </div>
     </div>
   )
 }
