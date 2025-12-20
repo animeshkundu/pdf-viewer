@@ -21,30 +21,31 @@ interface AnnotationLayerProps {
 }
 
 export function AnnotationLayer({ pageNum, width, height, scale }: AnnotationLayerProps) {
-  const { getPageAnnotations, selectedAnnotationId, setSelectedAnnotation } = useAnnotations()
+  const { getPageAnnotations, selectedAnnotationId, setSelectedAnnotation, activeTool } = useAnnotations()
   const annotations = getPageAnnotations(pageNum)
 
   const renderAnnotation = (annotation: Annotation) => {
     const isSelected = annotation.id === selectedAnnotationId
+    const isSelectable = activeTool === 'select' || activeTool === null
 
     switch (annotation.type) {
       case 'highlight':
-        return <HighlightRenderer key={annotation.id} annotation={annotation as HighlightAnnotation} isSelected={isSelected} onClick={() => setSelectedAnnotation(annotation.id)} />
+        return <HighlightRenderer key={annotation.id} annotation={annotation as HighlightAnnotation} isSelected={isSelected} onClick={() => isSelectable && setSelectedAnnotation(annotation.id)} />
       case 'pen':
-        return <PenRenderer key={annotation.id} annotation={annotation as PenAnnotation} isSelected={isSelected} onClick={() => setSelectedAnnotation(annotation.id)} />
+        return <PenRenderer key={annotation.id} annotation={annotation as PenAnnotation} isSelected={isSelected} onClick={() => isSelectable && setSelectedAnnotation(annotation.id)} />
       case 'rectangle':
       case 'circle':
       case 'arrow':
       case 'line':
-        return <ShapeRenderer key={annotation.id} annotation={annotation as ShapeAnnotation} isSelected={isSelected} onClick={() => setSelectedAnnotation(annotation.id)} />
+        return <ShapeRenderer key={annotation.id} annotation={annotation as ShapeAnnotation} isSelected={isSelected} onClick={() => isSelectable && setSelectedAnnotation(annotation.id)} />
       case 'text':
-        return <TextRenderer key={annotation.id} annotation={annotation as TextAnnotation} isSelected={isSelected} onClick={() => setSelectedAnnotation(annotation.id)} />
+        return <TextRenderer key={annotation.id} annotation={annotation as TextAnnotation} isSelected={isSelected} onClick={() => isSelectable && setSelectedAnnotation(annotation.id)} />
       case 'note':
-        return <NoteRenderer key={annotation.id} annotation={annotation as NoteAnnotation} isSelected={isSelected} onClick={() => setSelectedAnnotation(annotation.id)} />
+        return <NoteRenderer key={annotation.id} annotation={annotation as NoteAnnotation} isSelected={isSelected} onClick={() => isSelectable && setSelectedAnnotation(annotation.id)} />
       case 'signature':
-        return <DraggableSignature key={annotation.id} annotation={annotation as SignatureAnnotation} isSelected={isSelected} onClick={() => setSelectedAnnotation(annotation.id)} scale={scale} />
+        return <DraggableSignature key={annotation.id} annotation={annotation as SignatureAnnotation} isSelected={isSelected} onClick={() => isSelectable && setSelectedAnnotation(annotation.id)} scale={scale} />
       case 'redaction':
-        return <RedactionRenderer key={annotation.id} annotation={annotation as RedactionAnnotation} isSelected={isSelected} onClick={() => setSelectedAnnotation(annotation.id)} />
+        return <RedactionRenderer key={annotation.id} annotation={annotation as RedactionAnnotation} isSelected={isSelected} onClick={() => isSelectable && setSelectedAnnotation(annotation.id)} />
       default:
         return null
     }
@@ -71,7 +72,7 @@ interface RendererProps<T> {
 
 function HighlightRenderer({ annotation, isSelected, onClick }: RendererProps<HighlightAnnotation>) {
   return (
-    <g onClick={onClick} className="cursor-pointer">
+    <g onClick={onClick} className="cursor-move hover:opacity-80 transition-opacity">
       {annotation.boxes.map((box, index) => (
         <rect
           key={index}
@@ -100,7 +101,7 @@ function PenRenderer({ annotation, isSelected, onClick }: RendererProps<PenAnnot
     .join(' ')
 
   return (
-    <g onClick={onClick} className="cursor-pointer">
+    <g onClick={onClick} className="cursor-move hover:opacity-80 transition-opacity">
       <path
         d={pathData}
         fill="none"
@@ -132,7 +133,7 @@ function ShapeRenderer({ annotation, isSelected, onClick }: RendererProps<ShapeA
   switch (annotation.type) {
     case 'rectangle':
       return (
-        <g onClick={onClick} className="cursor-pointer">
+        <g onClick={onClick} className="cursor-move hover:opacity-80 transition-opacity">
           <rect
             x={Math.min(start.x, end.x)}
             y={Math.min(start.y, end.y)}
@@ -164,7 +165,7 @@ function ShapeRenderer({ annotation, isSelected, onClick }: RendererProps<ShapeA
       const rx = Math.abs(end.x - start.x) / 2
       const ry = Math.abs(end.y - start.y) / 2
       return (
-        <g onClick={onClick} className="cursor-pointer">
+        <g onClick={onClick} className="cursor-move hover:opacity-80 transition-opacity">
           <ellipse
             cx={cx}
             cy={cy}
@@ -192,7 +193,7 @@ function ShapeRenderer({ annotation, isSelected, onClick }: RendererProps<ShapeA
 
     case 'line':
       return (
-        <g onClick={onClick} className="cursor-pointer">
+        <g onClick={onClick} className="cursor-move hover:opacity-80 transition-opacity">
           <line
             x1={start.x}
             y1={start.y}
@@ -227,7 +228,7 @@ function ShapeRenderer({ annotation, isSelected, onClick }: RendererProps<ShapeA
       const arrowPoint2Y = end.y - arrowLength * Math.sin(angle + arrowAngle)
 
       return (
-        <g onClick={onClick} className="cursor-pointer">
+        <g onClick={onClick} className="cursor-move hover:opacity-80 transition-opacity">
           <line
             x1={start.x}
             y1={start.y}
@@ -277,7 +278,7 @@ function ShapeRenderer({ annotation, isSelected, onClick }: RendererProps<ShapeA
 
 function TextRenderer({ annotation, isSelected, onClick }: RendererProps<TextAnnotation>) {
   return (
-    <g onClick={onClick} className="cursor-pointer">
+    <g onClick={onClick} className="cursor-move hover:opacity-80 transition-opacity">
       {isSelected && (
         <rect
           x={annotation.position.x - 2}
@@ -364,7 +365,7 @@ function NoteRenderer({ annotation, isSelected, onClick }: RendererProps<NoteAnn
 
 function RedactionRenderer({ annotation, isSelected, onClick }: RendererProps<RedactionAnnotation>) {
   return (
-    <g onClick={onClick} className="cursor-pointer">
+    <g onClick={onClick} className="cursor-move hover:opacity-80 transition-opacity">
       {annotation.boxes.map((box, index) => (
         <rect
           key={index}

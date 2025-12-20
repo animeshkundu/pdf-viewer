@@ -96,14 +96,14 @@ function Thumbnail({
         )}
       >
         <div 
-          className="relative bg-white shadow-sm"
+          className="relative bg-white shadow-sm w-full flex items-center justify-center"
           style={{
             transform: `rotate(${rotation}deg)`,
             transformOrigin: 'center center',
             transition: 'transform 200ms ease-out'
           }}
         >
-          <canvas ref={canvasRef} />
+          <canvas ref={canvasRef} className="max-w-full h-auto" />
         </div>
         <span className="text-xs font-medium text-muted-foreground">
           {pageNumber}
@@ -229,7 +229,7 @@ export function ThumbnailSidebar({ isOpen, onClose }: ThumbnailSidebarProps) {
   }
 
   return (
-    <div className="w-52 border-r border-border bg-canvas-gray flex flex-col h-full">
+    <div className="border-r border-border bg-canvas-gray flex flex-col h-full min-w-[180px]">
       <div className="flex items-center justify-between px-3 py-3 border-b border-border">
         <h2 className="text-sm font-semibold text-foreground">
           Pages ({visiblePageCount})

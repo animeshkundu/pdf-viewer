@@ -277,7 +277,8 @@ export function AnnotationDrawing({ pageNum, width, height, scale }: AnnotationD
   }
 
   const getCursor = () => {
-    if (!activeTool || activeTool === 'select') return 'default'
+    if (!activeTool) return 'default'
+    if (activeTool === 'select') return 'pointer'
     if (activeTool === 'pen') return 'crosshair'
     if (activeTool === 'text' || activeTool === 'note' || activeTool === 'signature') return 'pointer'
     if (activeTool === 'redaction') return 'crosshair'

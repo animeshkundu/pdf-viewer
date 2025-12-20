@@ -29,7 +29,7 @@ export function PDFProvider({ children }: { children: ReactNode }) {
   const [document, setDocument] = useState<PDFDocumentProxy | null>(null)
   const [file, setFile] = useState<File | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
-  const [zoom, setZoom] = useState(1.0)
+  const [zoom, setZoom] = useState(-1)
   const [isLoading, setIsLoading] = useState(false)
   const [loadProgress, setLoadProgress] = useState(0)
   const [error, setError] = useState<string | null>(null)
@@ -74,7 +74,7 @@ export function PDFProvider({ children }: { children: ReactNode }) {
     setDocument(null)
     setFile(null)
     setCurrentPage(1)
-    setZoom(1.0)
+    setZoom(-1)
     setError(null)
   }, [])
 

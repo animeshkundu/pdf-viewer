@@ -16,6 +16,7 @@ import { ExportDialog } from './components/ExportDialog'
 import { KeyboardShortcutsDialog } from './components/KeyboardShortcutsDialog'
 import { InstallPrompt } from './components/InstallPrompt'
 import { OfflineIndicator } from './components/OfflineIndicator'
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from './components/ui/resizable'
 import { useState, useEffect, useRef } from 'react'
 
 function AppContentInner() {
@@ -282,25 +283,36 @@ function AppContentInner() {
       <div className="flex flex-1 overflow-hidden relative">
         <SearchBar isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
         
-        <ThumbnailSidebar 
-          isOpen={isSidebarOpen}
-          onClose={() => setIsSidebarOpen(false)}
-        />
-        
-        <main id="main-content" className="flex-1 flex flex-col" role="main" aria-label="PDF viewer">
-          {isLoading && (
-            <div className="flex-1 flex items-center justify-center" role="status" aria-live="polite">
-              <div className="text-center space-y-4">
-                <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" aria-hidden="true"></div>
-                <p className="text-muted-foreground">Loading PDF...</p>
-              </div>
-            </div>
+        <ResizablePanelGroup direction="horizontal" className="h-full">
+          {isSidebarOpen && (
+            <>
+              <ResizablePanel defaultSize={20} minSize={15} maxSize={35}>
+                <ThumbnailSidebar 
+                  isOpen={isSidebarOpen}
+                  onClose={() => setIsSidebarOpen(false)}
+                />
+              </ResizablePanel>
+              <ResizableHandle withHandle />
+            </>
           )}
           
-          {!isLoading && !document && <EmptyState />}
-          
-          {!isLoading && document && <PDFViewer />}
-        </main>
+          <ResizablePanel defaultSize={80}>
+            <main id="main-content" className="flex-1 flex flex-col h-full" role="main" aria-label="PDF viewer">
+              {isLoading && (
+                <div className="flex-1 flex items-center justify-center" role="status" aria-live="polite">
+                  <div className="text-center space-y-4">
+                    <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" aria-hidden="true"></div>
+                    <p className="text-muted-foreground">Loading PDF...</p>
+                  </div>
+                </div>
+              )}
+              
+              {!isLoading && !document && <EmptyState />}
+              
+              {!isLoading && document && <PDFViewer />}
+            </main>
+          </ResizablePanel>
+        </ResizablePanelGroup>
       </div>
 
       <ExportDialog

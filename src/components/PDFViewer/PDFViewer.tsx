@@ -17,6 +17,25 @@ export function PDFViewer() {
   const isUserScrollingRef = useRef(true)
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const initialPinchZoomRef = useRef(zoom)
+  const hasCalculatedInitialZoom = useRef(false)
+
+  useEffect(() => {
+    if (document && pages.length > 0 && zoom === -1 && !hasCalculatedInitialZoom.current && containerRef.current) {
+      hasCalculatedInitialZoom.current = true
+      const container = containerRef.current
+      const containerWidth = container.clientWidth
+      const padding = 64
+      const availableWidth = containerWidth - padding
+      
+      const firstPage = pages[0]
+      if (firstPage) {
+        const viewport = firstPage.getViewport({ scale: 1.0 })
+        const pageWidth = viewport.width
+        const fitWidthZoom = availableWidth / pageWidth
+        setZoom(Math.min(fitWidthZoom, 2.0))
+      }
+    }
+  }, [document, pages, zoom, setZoom])
 
   useGestures(containerRef, {
     onPinchStart: () => {
@@ -39,6 +58,7 @@ export function PDFViewer() {
     const loadPages = async () => {
       if (!document) {
         setPages([])
+        hasCalculatedInitialZoom.current = false
         return
       }
 
@@ -169,6 +189,8 @@ export function PDFViewer() {
     return null
   }
 
+  const effectiveZoom = zoom === -1 ? 1.0 : zoom
+
   return (
     <div 
       ref={containerRef}
@@ -194,15 +216,15 @@ export function PDFViewer() {
               {isVisible ? (
                 <PDFCanvas
                   page={page}
-                  scale={zoom}
+                  scale={effectiveZoom}
                   pageNumber={pageNum}
                 />
               ) : (
                 <div 
                   className="bg-white shadow-lg"
                   style={{
-                    width: page.getViewport({ scale: zoom, rotation }).width,
-                    height: page.getViewport({ scale: zoom, rotation }).height,
+                    width: page.getViewport({ scale: effectiveZoom, rotation }).width,
+                    height: page.getViewport({ scale: effectiveZoom, rotation }).height,
                   }}
                 />
               )}
