@@ -200,7 +200,7 @@ export function PDFTextLayer({ page, scale, pageNumber, width, height }: PDFText
         width,
         height,
         pointerEvents: (activeTool === null || activeTool === 'select' || activeTool === 'highlight' || activeTool === 'redaction') ? 'auto' : 'none',
-        userSelect: (activeTool === null || activeTool === 'select') ? 'text' : 'none',
+        userSelect: (activeTool === null || activeTool === 'select' || activeTool === 'highlight' || activeTool === 'redaction') ? 'text' : 'none',
         zIndex: (activeTool === 'highlight' || activeTool === 'redaction') ? 20 : 10,
       }}
     />
