@@ -46,8 +46,10 @@ function Thumbnail({
   const [isRendered, setIsRendered] = useState(false)
 
   useEffect(() => {
+    setIsRendered(false)
+    
     const renderThumbnail = async () => {
-      if (!canvasRef.current || isRendered) return
+      if (!canvasRef.current) return
 
       try {
         await pdfService.renderPage(page, 0.3, canvasRef.current)
@@ -58,7 +60,7 @@ function Thumbnail({
     }
 
     renderThumbnail()
-  }, [page, isRendered])
+  }, [page])
 
   if (isDeleted) {
     return null
@@ -142,6 +144,8 @@ export function ThumbnailSidebar({ isOpen, onClose }: ThumbnailSidebarProps) {
         return
       }
 
+      setPages([])
+      
       const loadedPages: PDFPageProxy[] = []
       for (let i = 1; i <= document.numPages; i++) {
         const page = await pdfService.getPage(i)
@@ -253,7 +257,7 @@ export function ThumbnailSidebar({ isOpen, onClose }: ThumbnailSidebarProps) {
         </div>
       </div>
 
-      <ScrollArea className="flex-1">
+      <ScrollArea className="flex-1 h-0">
         <div className="p-3 space-y-3">
           {pageOrder.map((pageNum) => {
             const page = pages[pageNum - 1]
