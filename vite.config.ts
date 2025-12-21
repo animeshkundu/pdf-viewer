@@ -1,22 +1,29 @@
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react-swc";
-import { defineConfig, PluginOption } from "vite";
+import { defineConfig } from "vite";
 import { VitePWA } from 'vite-plugin-pwa';
-
-import sparkPlugin from "@github/spark/spark-vite-plugin";
-import createIconImportProxy from "@github/spark/vitePhosphorIconProxyPlugin";
 import { resolve } from 'path'
 
 const projectRoot = process.env.PROJECT_ROOT || import.meta.dirname
 
+// Determine base path based on branch name for GitHub Pages deployment
+// Default to '/' for development and main/master branches
+// Use '/test-{branch-name}/' for other branches
+const getBasePath = () => {
+  const branchName = process.env.GITHUB_REF_NAME || process.env.BRANCH_NAME || 'main'
+  if (branchName === 'main' || branchName === 'master' || process.env.NODE_ENV === 'development') {
+    return '/'
+  }
+  const safeBranch = branchName.replace(/[^a-zA-Z0-9-]/g, '-')
+  return `/test-${safeBranch}/`
+}
+
 // https://vite.dev/config/
 export default defineConfig({
+  base: getBasePath(),
   plugins: [
     react(),
     tailwindcss(),
-    // DO NOT REMOVE
-    createIconImportProxy() as PluginOption,
-    sparkPlugin() as PluginOption,
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['icon-192x192.png', 'icon-512x512.png', 'icon-maskable-512x512.png'],

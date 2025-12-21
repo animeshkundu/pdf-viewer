@@ -17,7 +17,7 @@ This is a client-side PDF viewer and editor built with React + TypeScript, inspi
 
 **ALWAYS review these files first**:
 1. `docs/README.md` - Documentation index
-2. `PRD.md` - Product requirements
+2. `docs/PRD.md` - Product requirements
 3. `docs/ARCHITECTURE.md` - System architecture
 4. `docs/TECHNICAL_SPEC.md` - Technical details
 5. `docs/ADR/` - Architecture decisions

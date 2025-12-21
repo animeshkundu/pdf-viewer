@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { useKV } from '@github/spark/hooks'
+import { useLocalStorage } from '@/hooks/useLocalStorage'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -19,7 +19,7 @@ interface SignatureCreatorProps {
 }
 
 export function SignatureCreator({ isOpen, onClose, onSelectSignature }: SignatureCreatorProps) {
-  const [savedSignatures, setSavedSignatures] = useKV<SavedSignature[]>('pdf-signatures', [])
+  const [savedSignatures, setSavedSignatures] = useLocalStorage<SavedSignature[]>('pdf-signatures', [])
   const [activeTab, setActiveTab] = useState<'draw' | 'upload' | 'saved'>('draw')
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [isDrawing, setIsDrawing] = useState(false)

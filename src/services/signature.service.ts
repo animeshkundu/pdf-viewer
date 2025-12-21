@@ -14,7 +14,8 @@ export class SignatureService {
 
   async loadSignatures(): Promise<SavedSignature[]> {
     try {
-      const signatures = await window.spark.kv.get<SavedSignature[]>(SignatureService.STORAGE_KEY)
+      const item = window.localStorage.getItem(SignatureService.STORAGE_KEY)
+      const signatures = item ? JSON.parse(item) : []
       return signatures || []
     } catch (error) {
       console.error('Error loading signatures:', error)
@@ -36,7 +37,7 @@ export class SignatureService {
     }
 
     signatures.push(newSignature)
-    await window.spark.kv.set(SignatureService.STORAGE_KEY, signatures)
+    window.localStorage.setItem(SignatureService.STORAGE_KEY, JSON.stringify(signatures))
     
     return newSignature
   }
@@ -44,7 +45,7 @@ export class SignatureService {
   async deleteSignature(id: string): Promise<void> {
     const signatures = await this.loadSignatures()
     const filtered = signatures.filter(sig => sig.id !== id)
-    await window.spark.kv.set(SignatureService.STORAGE_KEY, filtered)
+    window.localStorage.setItem(SignatureService.STORAGE_KEY, JSON.stringify(filtered))
   }
 
   async updateSignature(id: string, updates: Partial<Pick<SavedSignature, 'name'>>): Promise<void> {
@@ -53,12 +54,12 @@ export class SignatureService {
     
     if (index !== -1) {
       signatures[index] = { ...signatures[index], ...updates }
-      await window.spark.kv.set(SignatureService.STORAGE_KEY, signatures)
+      window.localStorage.setItem(SignatureService.STORAGE_KEY, JSON.stringify(signatures))
     }
   }
 
   async clearAllSignatures(): Promise<void> {
-    await window.spark.kv.delete(SignatureService.STORAGE_KEY)
+    window.localStorage.removeItem(SignatureService.STORAGE_KEY)
   }
 
   canAddMore(currentCount: number): boolean {

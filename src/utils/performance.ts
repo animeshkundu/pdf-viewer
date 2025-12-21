@@ -43,8 +43,8 @@ export class PerformanceMonitor {
     if (typeof performance.measure === 'function') {
       try {
         performance.measure(name, startMark, endMark)
-      } catch (e) {
-        
+      } catch {
+        // Silently fail if measure is not available
       }
     }
 

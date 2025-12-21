@@ -19,7 +19,7 @@ Complete documentation is available in the `docs/` directory:
 ### Essential Reading
 
 - **[docs/AGENT.md](docs/AGENT.md)** - **START HERE** for development workflow, testing, and standards
-- **[PRD.md](PRD.md)** - Product requirements and feature specifications
+- **[docs/PRD.md](docs/PRD.md)** - Product requirements and feature specifications
 - **[docs/README.md](docs/README.md)** - Documentation index and quick reference
 
 ### Architecture & Design
@@ -74,26 +74,88 @@ npm run build
 
 ```bash
 # Run tests
-npm run test:unit
+npm run test
+
+# Run tests with UI
+npm run test:ui
 
 # Run tests with coverage
 npm run test:coverage
+
+# Run E2E tests
+npm run e2e
 
 # Run linter
 npm run lint
 
 # Type check
-npm run build
+npm run typecheck
 ```
 
 ## 🧪 Testing
 
-This project maintains **>90% code coverage**. Every feature requires:
-- Unit tests for business logic
-- Component tests for UI
-- E2E tests for user workflows
+This project uses **Vitest** for unit tests and **Playwright** for end-to-end testing.
 
-See [docs/ADR/0006-testing-strategy.md](docs/ADR/0006-testing-strategy.md) for details.
+### Running Tests
+
+```bash
+# Unit tests (watch mode)
+npm run test
+
+# Unit tests with coverage
+npm run test:coverage
+
+# E2E tests
+npm run e2e
+
+# E2E tests with UI
+npm run e2e:ui
+
+# E2E tests with debug
+npm run e2e:debug
+```
+
+### Test Structure
+
+- **Unit Tests**: Located in `src/**/__tests__/` directories
+- **E2E Tests**: Located in `e2e/` directory
+- **Coverage**: Reports generated in `coverage/` directory
+
+### Writing Tests
+
+```typescript
+// Unit test example
+import { describe, it, expect } from 'vitest'
+
+describe('MyFunction', () => {
+  it('should do something', () => {
+    expect(myFunction()).toBe(expected)
+  })
+})
+
+// E2E test example
+import { test, expect } from '@playwright/test'
+
+test('should load app', async ({ page }) => {
+  await page.goto('/')
+  await expect(page).toHaveTitle(/PDF Viewer/)
+})
+```
+
+See the [Testing Guide](docs/ADR/0006-testing-strategy.md) for more details.
+
+## 🚀 CI/CD
+
+This project uses GitHub Actions for continuous integration and deployment:
+
+- **Lint**: Runs ESLint on all code
+- **Type Check**: Validates TypeScript types
+- **Build**: Creates production build
+- **Unit Tests**: Runs all unit tests with coverage
+- **E2E Tests**: Runs end-to-end tests
+- **Deploy**: Automatically deploys to GitHub Pages on main branch
+
+See `.github/workflows/ci.yml` for the full CI/CD configuration.
 
 ## 📖 Development Workflow
 
@@ -118,8 +180,8 @@ See [docs/ADR/0006-testing-strategy.md](docs/ADR/0006-testing-strategy.md) for d
 └─────────────────────────────────────────┘
                   ↓
 ┌─────────────────────────────────────────┐
-│     External Libraries                   │
-│  PDF.js, pdf-lib, Spark KV              │
+│     External Libraries & Browser APIs    │
+│  PDF.js, pdf-lib, localStorage           │
 └─────────────────────────────────────────┘
 ```
 
