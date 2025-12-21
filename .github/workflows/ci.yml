@@ -274,6 +274,7 @@ jobs:
             fi
             echo "Successfully copied files to root"
           fi
+          rm -rf /tmp/dist_artifacts
           echo "Deployment directory prepared successfully"
 
       - name: Commit and push changes
