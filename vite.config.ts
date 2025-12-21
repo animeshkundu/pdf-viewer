@@ -7,36 +7,47 @@ import { resolve } from 'path'
 const projectRoot = process.env.PROJECT_ROOT || import.meta.dirname
 
 // Determine base path based on branch name for GitHub Pages deployment
-// Default to '/' for development and main/master branches
-// Use '/test-{branch-name}/' for other branches
+// For project repos: /pdf-viewer/ for main, /pdf-viewer/test-{branch}/ for others
+// Development uses '/' for simplicity
 const getBasePath = () => {
-  const branchName = process.env.GITHUB_REF_NAME || process.env.BRANCH_NAME || 'main'
-  if (branchName === 'main' || branchName === 'master' || process.env.NODE_ENV === 'development') {
+  // In development, use root for simplicity
+  if (process.env.NODE_ENV === 'development') {
     return '/'
   }
+  
+  const branchName = process.env.GITHUB_REF_NAME || process.env.BRANCH_NAME || 'main'
+  const repoName = 'pdf-viewer' // GitHub Pages project repo base path
+  
+  if (branchName === 'main' || branchName === 'master') {
+    return `/${repoName}/`
+  }
+  
   const safeBranch = branchName.replace(/[^a-zA-Z0-9-]/g, '-')
-  return `/test-${safeBranch}/`
+  return `/${repoName}/test-${safeBranch}/`
 }
 
 // https://vite.dev/config/
-export default defineConfig({
-  base: getBasePath(),
-  plugins: [
-    react(),
-    tailwindcss(),
-    VitePWA({
-      registerType: 'autoUpdate',
-      includeAssets: ['icon-192x192.png', 'icon-512x512.png', 'icon-maskable-512x512.png'],
-      manifest: {
-        name: 'PDF Viewer & Editor',
-        short_name: 'PDF Editor',
-        description: 'Professional client-side PDF viewing, annotation, and editing tool',
-        theme_color: '#474747',
-        background_color: '#f5f5f7',
-        display: 'standalone',
-        scope: '/',
-        start_url: '/',
-        orientation: 'any',
+export default defineConfig(({ mode }) => {
+  const basePath = getBasePath()
+  
+  return {
+    base: basePath,
+    plugins: [
+      react(),
+      tailwindcss(),
+      VitePWA({
+        registerType: 'autoUpdate',
+        includeAssets: ['icon-192x192.png', 'icon-512x512.png', 'icon-maskable-512x512.png'],
+        manifest: {
+          name: 'PDF Viewer & Editor',
+          short_name: 'PDF Editor',
+          description: 'Professional client-side PDF viewing, annotation, and editing tool',
+          theme_color: '#474747',
+          background_color: '#f5f5f7',
+          display: 'standalone',
+          scope: basePath,
+          start_url: basePath,
+          orientation: 'any',
         icons: [
           {
             src: '/icon-192x192.png',
@@ -93,4 +104,4 @@ export default defineConfig({
   optimizeDeps: {
     exclude: ['pdfjs-dist']
   }
-});
+}});
