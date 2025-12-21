@@ -77,12 +77,22 @@ jobs:
         env:
           GITHUB_REF_NAME: ${{ github.ref_name }}
 
+      - name: Verify build output
+        run: |
+          if [ ! -d "dist" ]; then
+            echo "Error: dist/ directory was not created by build"
+            exit 1
+          fi
+          echo "Build artifacts in dist/:"
+          ls -lah dist/
+          
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: dist
           path: dist/
           retention-days: 1
+          if-no-files-found: error
 
   test:
     name: Unit Tests
@@ -139,6 +149,15 @@ jobs:
           name: dist
           path: dist/
 
+      - name: Verify downloaded artifacts
+        run: |
+          if [ ! -d "dist" ]; then
+            echo "Error: dist/ directory not found after download"
+            exit 1
+          fi
+          echo "Downloaded build artifacts:"
+          ls -lah dist/
+
       - name: Run E2E tests
         run: npm run e2e
 
@@ -174,6 +193,17 @@ jobs:
           name: dist
           path: _temp_dist/
 
+      - name: List downloaded build files
+        run: |
+          echo "Checking _temp_dist/ directory:"
+          if [ -d "_temp_dist" ]; then
+            ls -lah _temp_dist/ || echo "_temp_dist/ exists but is empty or unreadable"
+            echo "File count: $(find _temp_dist -type f | wc -l)"
+          else
+            echo "Error: _temp_dist/ directory does not exist"
+            exit 1
+          fi
+
       - name: Initialize or checkout gh-pages branch
         run: |
           git config user.name "github-actions[bot]"
@@ -207,18 +237,45 @@ jobs:
 
       - name: Prepare deployment directory
         run: |
+          set -e  # Exit on error
+          
+          # Verify _temp_dist exists and has files
+          if [ ! -d "_temp_dist" ]; then
+            echo "Error: _temp_dist/ directory not found"
+            exit 1
+          fi
+          
+          FILE_COUNT=$(find _temp_dist -type f | wc -l)
+          if [ "$FILE_COUNT" -eq 0 ]; then
+            echo "Error: _temp_dist/ directory is empty"
+            exit 1
+          fi
+          
+          echo "Deploying $FILE_COUNT files from _temp_dist/"
+          
           DEPLOY_PATH="${{ steps.deploy_path.outputs.path }}"
           if [ "$DEPLOY_PATH" != "." ]; then
             mkdir -p "$DEPLOY_PATH"
             rm -rf "$DEPLOY_PATH"/*
-            cp -r _temp_dist/* "$DEPLOY_PATH"/
+            if ! cp -r _temp_dist/* "$DEPLOY_PATH"/; then
+              echo "Error: Failed to copy files to $DEPLOY_PATH/"
+              ls -lah _temp_dist/
+              exit 1
+            fi
+            echo "Successfully copied files to $DEPLOY_PATH/"
           else
             # For main/master, replace root content but preserve test- directories
             find . -maxdepth 1 -type f -delete
             find . -maxdepth 1 -type d ! -name "." ! -name ".git" ! -name "test-*" -exec rm -rf {} +
-            cp -r _temp_dist/* .
+            if ! cp -r _temp_dist/* .; then
+              echo "Error: Failed to copy files to root"
+              ls -lah _temp_dist/
+              exit 1
+            fi
+            echo "Successfully copied files to root"
           fi
           rm -rf _temp_dist
+          echo "Deployment directory prepared successfully"
 
       - name: Commit and push changes
         run: |
