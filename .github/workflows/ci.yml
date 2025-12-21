@@ -1,10 +1,21 @@
 name: CI/CD
 
+# Deployment Strategy:
+# - Main branch deploys to root of GitHub Pages (https://animeshkundu.github.io/pdf-viewer/)
+# - Other branches deploy to test subdirectories (https://animeshkundu.github.io/pdf-viewer/test-{branch}/)
+# - PRs run tests but don't deploy
+# - Manual workflow dispatch available for deploying any branch
+
 on:
   push:
-    branches: [ main, develop ]
+    branches: 
+      - main
+      - develop
+      - 'feature/**'
+      - 'fix/**'
   pull_request:
     branches: [ main ]
+  workflow_dispatch: # Allow manual trigger for any branch
 
 permissions:
   contents: read
