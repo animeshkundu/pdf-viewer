@@ -7,15 +7,23 @@ import { resolve } from 'path'
 const projectRoot = process.env.PROJECT_ROOT || import.meta.dirname
 
 // Determine base path based on branch name for GitHub Pages deployment
-// Default to '/' for development and main/master branches
-// Use '/test-{branch-name}/' for other branches
+// For GitHub Pages project repos (github.io/repo-name), we need '/repo-name/' base path
+// Use '/pdf-viewer/' for main/master branches on GitHub Pages
+// Use '/pdf-viewer/test-{branch-name}/' for other branches
+// Use '/' for local development (when GITHUB_REF_NAME is not set)
 const getBasePath = () => {
-  const branchName = process.env.GITHUB_REF_NAME || process.env.BRANCH_NAME || 'main'
-  if (branchName === 'main' || branchName === 'master' || process.env.NODE_ENV === 'development') {
+  // If GITHUB_REF_NAME is not set, we're in local development - use '/'
+  const branchName = process.env.GITHUB_REF_NAME
+  if (!branchName) {
     return '/'
   }
+  
+  // On GitHub Actions, use proper paths
+  if (branchName === 'main' || branchName === 'master') {
+    return '/pdf-viewer/'
+  }
   const safeBranch = branchName.replace(/[^a-zA-Z0-9-]/g, '-')
-  return `/test-${safeBranch}/`
+  return `/pdf-viewer/test-${safeBranch}/`
 }
 
 // https://vite.dev/config/
@@ -34,24 +42,24 @@ export default defineConfig({
         theme_color: '#474747',
         background_color: '#f5f5f7',
         display: 'standalone',
-        scope: '/',
-        start_url: '/',
+        scope: getBasePath(),
+        start_url: getBasePath(),
         orientation: 'any',
         icons: [
           {
-            src: '/icon-192x192.png',
+            src: 'icon-192x192.png',
             sizes: '192x192',
             type: 'image/png',
             purpose: 'any'
           },
           {
-            src: '/icon-512x512.png',
+            src: 'icon-512x512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any'
           },
           {
-            src: '/icon-maskable-512x512.png',
+            src: 'icon-maskable-512x512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable'
