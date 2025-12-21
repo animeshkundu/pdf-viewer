@@ -187,20 +187,20 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Download build artifacts
+      - name: Download build artifacts to temp location
         uses: actions/download-artifact@v4
         with:
           name: dist
-          path: _temp_dist/
+          path: /tmp/dist_artifacts/
 
-      - name: List downloaded build files
+      - name: Verify downloaded build files
         run: |
-          echo "Checking _temp_dist/ directory:"
-          if [ -d "_temp_dist" ]; then
-            ls -lah _temp_dist/ || echo "_temp_dist/ exists but is empty or unreadable"
-            echo "File count: $(find _temp_dist -type f | wc -l)"
+          echo "Checking /tmp/dist_artifacts/ directory:"
+          if [ -d "/tmp/dist_artifacts" ]; then
+            ls -lah /tmp/dist_artifacts/ || echo "/tmp/dist_artifacts/ exists but is empty or unreadable"
+            echo "File count: $(find /tmp/dist_artifacts -type f | wc -l)"
           else
-            echo "Error: _temp_dist/ directory does not exist"
+            echo "Error: /tmp/dist_artifacts/ directory does not exist"
             exit 1
           fi
 
@@ -239,27 +239,27 @@ jobs:
         run: |
           set -e  # Exit on error
           
-          # Verify _temp_dist exists and has files
-          if [ ! -d "_temp_dist" ]; then
-            echo "Error: _temp_dist/ directory not found"
+          # Verify artifacts exist and have files
+          if [ ! -d "/tmp/dist_artifacts" ]; then
+            echo "Error: /tmp/dist_artifacts/ directory not found"
             exit 1
           fi
           
-          FILE_COUNT=$(find _temp_dist -type f | wc -l)
+          FILE_COUNT=$(find /tmp/dist_artifacts -type f | wc -l)
           if [ "$FILE_COUNT" -eq 0 ]; then
-            echo "Error: _temp_dist/ directory is empty"
+            echo "Error: /tmp/dist_artifacts/ directory is empty"
             exit 1
           fi
           
-          echo "Deploying $FILE_COUNT files from _temp_dist/"
+          echo "Deploying $FILE_COUNT files from /tmp/dist_artifacts/"
           
           DEPLOY_PATH="${{ steps.deploy_path.outputs.path }}"
           if [ "$DEPLOY_PATH" != "." ]; then
             mkdir -p "$DEPLOY_PATH"
             rm -rf "$DEPLOY_PATH"/*
-            if ! cp -r _temp_dist/* "$DEPLOY_PATH"/; then
+            if ! cp -r /tmp/dist_artifacts/* "$DEPLOY_PATH"/; then
               echo "Error: Failed to copy files to $DEPLOY_PATH/"
-              ls -lah _temp_dist/
+              ls -lah /tmp/dist_artifacts/
               exit 1
             fi
             echo "Successfully copied files to $DEPLOY_PATH/"
@@ -267,14 +267,13 @@ jobs:
             # For main/master, replace root content but preserve test- directories
             find . -maxdepth 1 -type f -delete
             find . -maxdepth 1 -type d ! -name "." ! -name ".git" ! -name "test-*" -exec rm -rf {} +
-            if ! cp -r _temp_dist/* .; then
+            if ! cp -r /tmp/dist_artifacts/* .; then
               echo "Error: Failed to copy files to root"
-              ls -lah _temp_dist/
+              ls -lah /tmp/dist_artifacts/
               exit 1
             fi
             echo "Successfully copied files to root"
           fi
-          rm -rf _temp_dist
           echo "Deployment directory prepared successfully"
 
       - name: Commit and push changes

@@ -114,7 +114,7 @@ export function AnnotationDrawing({ pageNum, width, height, scale }: AnnotationD
       case 'rectangle':
       case 'circle':
       case 'arrow':
-      case 'line':
+      case 'line': {
         const annotation: ShapeAnnotation = {
           id: `${activeTool}-${timestamp}`,
           type: activeTool,
@@ -127,8 +127,9 @@ export function AnnotationDrawing({ pageNum, width, height, scale }: AnnotationD
         }
         addAnnotation(annotation)
         break
+      }
 
-      case 'redaction':
+      case 'redaction': {
         const redactionBox = {
           x: Math.min(startPoint.x, currentPoint.x),
           y: Math.min(startPoint.y, currentPoint.y),
@@ -148,6 +149,7 @@ export function AnnotationDrawing({ pageNum, width, height, scale }: AnnotationD
           addAnnotation(redactionAnnotation)
         }
         break
+      }
     }
 
     setIsDrawing(false)
@@ -159,7 +161,7 @@ export function AnnotationDrawing({ pageNum, width, height, scale }: AnnotationD
     if (!isDrawing || !startPoint || !currentPoint) return null
 
     switch (activeTool) {
-      case 'pen':
+      case 'pen': {
         if (penPoints.length < 2) return null
         const pathData = penPoints
           .map((point, index) => {
@@ -178,6 +180,7 @@ export function AnnotationDrawing({ pageNum, width, height, scale }: AnnotationD
             opacity={0.7}
           />
         )
+      }
 
       case 'rectangle':
         return (
@@ -208,7 +211,7 @@ export function AnnotationDrawing({ pageNum, width, height, scale }: AnnotationD
           />
         )
 
-      case 'circle':
+      case 'circle': {
         const cx = (startPoint.x + currentPoint.x) / 2
         const cy = (startPoint.y + currentPoint.y) / 2
         const rx = Math.abs(currentPoint.x - startPoint.x) / 2
@@ -225,6 +228,7 @@ export function AnnotationDrawing({ pageNum, width, height, scale }: AnnotationD
             opacity={0.7}
           />
         )
+      }
 
       case 'line':
         return (
@@ -240,7 +244,7 @@ export function AnnotationDrawing({ pageNum, width, height, scale }: AnnotationD
           />
         )
 
-      case 'arrow':
+      case 'arrow': {
         const angle = Math.atan2(currentPoint.y - startPoint.y, currentPoint.x - startPoint.x)
         const arrowLength = 15
         const arrowAngle = Math.PI / 6
@@ -270,6 +274,7 @@ export function AnnotationDrawing({ pageNum, width, height, scale }: AnnotationD
             />
           </g>
         )
+      }
 
       default:
         return null

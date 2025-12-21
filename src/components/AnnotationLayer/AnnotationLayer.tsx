@@ -159,7 +159,7 @@ function ShapeRenderer({ annotation, isSelected, onClick }: RendererProps<ShapeA
         </g>
       )
 
-    case 'circle':
+    case 'circle': {
       const cx = (start.x + end.x) / 2
       const cy = (start.y + end.y) / 2
       const rx = Math.abs(end.x - start.x) / 2
@@ -190,6 +190,7 @@ function ShapeRenderer({ annotation, isSelected, onClick }: RendererProps<ShapeA
           )}
         </g>
       )
+    }
 
     case 'line':
       return (
@@ -217,7 +218,7 @@ function ShapeRenderer({ annotation, isSelected, onClick }: RendererProps<ShapeA
         </g>
       )
 
-    case 'arrow':
+    case 'arrow': {
       const angle = Math.atan2(end.y - start.y, end.x - start.x)
       const arrowLength = 15
       const arrowAngle = Math.PI / 6
@@ -270,6 +271,7 @@ function ShapeRenderer({ annotation, isSelected, onClick }: RendererProps<ShapeA
           )}
         </g>
       )
+    }
 
     default:
       return null
