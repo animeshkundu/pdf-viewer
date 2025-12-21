@@ -163,33 +163,34 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Checkout gh-pages branch
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          ref: gh-pages
           fetch-depth: 0
-        continue-on-error: true
-
-      - name: Create gh-pages branch if it doesn't exist
-        run: |
-          if ! git show-ref --verify --quiet refs/heads/gh-pages; then
-            git checkout --orphan gh-pages
-            git rm -rf .
-            git commit --allow-empty -m "Initialize gh-pages branch"
-            git push origin gh-pages
-          fi
-        continue-on-error: true
-
-      - name: Checkout gh-pages branch
-        uses: actions/checkout@v4
-        with:
-          ref: gh-pages
 
       - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
           name: dist
           path: _temp_dist/
+
+      - name: Initialize or checkout gh-pages branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Check if gh-pages branch exists on remote
+          if git ls-remote --exit-code --heads origin gh-pages; then
+            echo "gh-pages branch exists, checking out"
+            git fetch origin gh-pages
+            git checkout gh-pages
+          else
+            echo "gh-pages branch doesn't exist, creating orphan branch"
+            git checkout --orphan gh-pages
+            git rm -rf .
+            git commit --allow-empty -m "Initialize gh-pages branch"
+            git push origin gh-pages
+          fi
 
       - name: Determine deployment path
         id: deploy_path
@@ -218,11 +219,6 @@ jobs:
             cp -r _temp_dist/* .
           fi
           rm -rf _temp_dist
-
-      - name: Configure git
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Commit and push changes
         run: |
