@@ -31,6 +31,13 @@ describe('SignatureService', () => {
       const signatures = await service.loadSignatures()
       expect(signatures).toEqual(mockSignatures)
     })
+
+    it('should return empty array on JSON parse error', async () => {
+      localStorage.setItem('pdf-editor-signatures', 'invalid json')
+      
+      const signatures = await service.loadSignatures()
+      expect(signatures).toEqual([])
+    })
   })
 
   describe('saveSignature', () => {
@@ -106,6 +113,20 @@ describe('SignatureService', () => {
       const signatures = await service.loadSignatures()
       expect(signatures[0].name).toBe('Updated')
     })
+
+    it('should do nothing when id does not exist', async () => {
+      await service.saveSignature({
+        name: 'Original',
+        imageData: 'data:image/png;base64,test',
+        width: 100,
+        height: 50,
+      })
+
+      await service.updateSignature('nonexistent-id', { name: 'Updated' })
+
+      const signatures = await service.loadSignatures()
+      expect(signatures[0].name).toBe('Original')
+    })
   })
 
   describe('clearAllSignatures', () => {
@@ -150,6 +171,87 @@ describe('SignatureService', () => {
       expect(() => service.createSignatureImage(canvas)).toThrow(
         'Failed to create canvas context'
       )
+    })
+
+    it('should throw error when image data cannot be retrieved', () => {
+      const canvas = document.createElement('canvas')
+      const mockGetContext = vi.fn().mockReturnValue({
+        getImageData: vi.fn().mockReturnValue(null),
+      })
+      vi.spyOn(canvas, 'getContext').mockImplementation(mockGetContext as any)
+
+      expect(() => service.createSignatureImage(canvas)).toThrow(
+        'Failed to get image data'
+      )
+    })
+
+    it('should throw error when no signature content found', () => {
+      const canvas = document.createElement('canvas')
+      canvas.width = 100
+      canvas.height = 100
+      
+      const emptyImageData = {
+        data: new Uint8ClampedArray(100 * 100 * 4), // All zeros = transparent
+        width: 100,
+        height: 100,
+      }
+      
+      const mockGetContext = vi.fn().mockReturnValue({
+        getImageData: vi.fn().mockReturnValue(emptyImageData),
+      })
+      vi.spyOn(canvas, 'getContext').mockImplementation(mockGetContext as any)
+
+      expect(() => service.createSignatureImage(canvas)).toThrow(
+        'No signature content found'
+      )
+    })
+
+    it('should create signature image with bounds', () => {
+      const canvas = document.createElement('canvas')
+      canvas.width = 100
+      canvas.height = 100
+      
+      // Create image data with some content
+      const imageData = {
+        data: new Uint8ClampedArray(100 * 100 * 4),
+        width: 100,
+        height: 100,
+      }
+      // Add some alpha values to simulate content
+      for (let i = 0; i < 10; i++) {
+        imageData.data[i * 4 + 3] = 255 // Set alpha to 255 for first 10 pixels
+      }
+      
+      const mockCtx = {
+        getImageData: vi.fn().mockReturnValue(imageData),
+      }
+      
+      const mockTempCanvas = {
+        width: 0,
+        height: 0,
+        getContext: vi.fn().mockReturnValue({
+          drawImage: vi.fn(),
+        }),
+        toDataURL: vi.fn().mockReturnValue('data:image/png;base64,result'),
+      }
+      
+      const originalCreateElement = document.createElement.bind(document)
+      vi.spyOn(document, 'createElement').mockImplementation((tagName: string) => {
+        if (tagName === 'canvas') {
+          return mockTempCanvas as any
+        }
+        return originalCreateElement(tagName)
+      })
+      
+      vi.spyOn(canvas, 'getContext').mockReturnValue(mockCtx as any)
+
+      const result = service.createSignatureImage(canvas)
+
+      expect(result.imageData).toBe('data:image/png;base64,result')
+      expect(result.width).toBeGreaterThan(0)
+      expect(result.height).toBeGreaterThan(0)
+      
+      vi.restoreAllMocks()
     })
   })
 })

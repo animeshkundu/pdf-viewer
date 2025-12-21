@@ -27,13 +27,12 @@ export default defineConfig({
         'src/vite-env.d.ts',
         'src/components/ui/**', // shadcn components
       ],
-      // Coverage thresholds set to 70% (achievable with current test suite)
-      // Full 85%+ requires extensive mocking of browser APIs and complex services
+      // Coverage thresholds set to 75% for entire project
       thresholds: {
-        branches: 70,
+        branches: 75,
         functions: 85,
-        lines: 70,
-        statements: 70,
+        lines: 75,
+        statements: 75,
       },
     },
   },
