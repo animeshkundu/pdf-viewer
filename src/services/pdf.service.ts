@@ -8,12 +8,6 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
 
 export type PasswordReason = 'NEED_PASSWORD' | 'INCORRECT_PASSWORD'
 
-export interface PasswordRequest {
-  reason: PasswordReason
-  resolve: (password: string) => void
-  reject: (error: Error) => void
-}
-
 export class PDFService {
   private static instance: PDFService
   private documentProxy: PDFDocumentProxy | null = null

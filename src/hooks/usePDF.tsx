@@ -9,8 +9,6 @@ import { toast } from 'sonner'
 interface PasswordState {
   isOpen: boolean
   isIncorrectPassword: boolean
-  resolve: ((password: string) => void) | null
-  reject: ((error: Error) => void) | null
 }
 
 interface PDFContextValue {
@@ -38,8 +36,6 @@ const PDFContext = createContext<PDFContextValue | undefined>(undefined)
 const initialPasswordState: PasswordState = {
   isOpen: false,
   isIncorrectPassword: false,
-  resolve: null,
-  reject: null,
 }
 
 export function PDFProvider({ children }: { children: ReactNode }) {
@@ -64,8 +60,6 @@ export function PDFProvider({ children }: { children: ReactNode }) {
       setPasswordState({
         isOpen: true,
         isIncorrectPassword: reason === 'INCORRECT_PASSWORD',
-        resolve,
-        reject,
       })
     })
   }, [])
