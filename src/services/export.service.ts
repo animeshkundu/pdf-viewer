@@ -181,7 +181,8 @@ export class ExportService {
     const pageMapping = this.createPageMapping(transformations, pageOrder)
     
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica)
-    const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
+    // Bold font reserved for future use with annotation text styling
+    const _boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
 
     for (const annotation of annotations) {
       const newPageIndex = pageMapping.get(annotation.pageNum)
@@ -311,7 +312,7 @@ export class ExportService {
         })
         break
 
-      case 'circle':
+      case 'circle': {
         const centerX = (start.x + end.x) / 2
         const centerY = (start.y + end.y) / 2
         const radiusX = Math.abs(end.x - start.x) / 2
@@ -328,6 +329,7 @@ export class ExportService {
           color: annotation.fill ? rgb(color.r, color.g, color.b) : undefined,
         })
         break
+      }
 
       case 'line':
       case 'arrow':
@@ -455,9 +457,9 @@ export class ExportService {
     const a = c * Math.cos((h * Math.PI) / 180)
     const b = c * Math.sin((h * Math.PI) / 180)
 
-    let L = l * 100
-    let A = a * 100
-    let B = b * 100
+    const L = l * 100
+    const A = a * 100
+    const B = b * 100
 
     let y = (L + 16) / 116
     let x = A / 500 + y

@@ -88,12 +88,22 @@ jobs:
         env:
           GITHUB_REF_NAME: ${{ github.ref_name }}
 
+      - name: Verify build output
+        run: |
+          if [ ! -d "dist" ]; then
+            echo "Error: dist/ directory was not created by build"
+            exit 1
+          fi
+          echo "Build artifacts in dist/:"
+          ls -lah dist/
+          
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: dist
           path: dist/
           retention-days: 1
+          if-no-files-found: error
 
   test:
     name: Unit Tests
@@ -150,6 +160,15 @@ jobs:
           name: dist
           path: dist/
 
+      - name: Verify downloaded artifacts
+        run: |
+          if [ ! -d "dist" ]; then
+            echo "Error: dist/ directory not found after download"
+            exit 1
+          fi
+          echo "Downloaded build artifacts:"
+          ls -lah dist/
+
       - name: Run E2E tests
         run: npm run e2e
 
@@ -179,11 +198,22 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Download build artifacts
+      - name: Download build artifacts to temp location
         uses: actions/download-artifact@v4
         with:
           name: dist
-          path: _temp_dist/
+          path: /tmp/dist_artifacts/
+
+      - name: Verify downloaded build files
+        run: |
+          echo "Checking /tmp/dist_artifacts/ directory:"
+          if [ -d "/tmp/dist_artifacts" ]; then
+            ls -lah /tmp/dist_artifacts/ || echo "/tmp/dist_artifacts/ exists but is empty or unreadable"
+            echo "File count: $(find /tmp/dist_artifacts -type f | wc -l)"
+          else
+            echo "Error: /tmp/dist_artifacts/ directory does not exist"
+            exit 1
+          fi
 
       - name: Initialize or checkout gh-pages branch
         run: |
@@ -218,18 +248,45 @@ jobs:
 
       - name: Prepare deployment directory
         run: |
+          set -e  # Exit on error
+          
+          # Verify artifacts exist and have files
+          if [ ! -d "/tmp/dist_artifacts" ]; then
+            echo "Error: /tmp/dist_artifacts/ directory not found"
+            exit 1
+          fi
+          
+          FILE_COUNT=$(find /tmp/dist_artifacts -type f | wc -l)
+          if [ "$FILE_COUNT" -eq 0 ]; then
+            echo "Error: /tmp/dist_artifacts/ directory is empty"
+            exit 1
+          fi
+          
+          echo "Deploying $FILE_COUNT files from /tmp/dist_artifacts/"
+          
           DEPLOY_PATH="${{ steps.deploy_path.outputs.path }}"
           if [ "$DEPLOY_PATH" != "." ]; then
             mkdir -p "$DEPLOY_PATH"
             rm -rf "$DEPLOY_PATH"/*
-            cp -r _temp_dist/* "$DEPLOY_PATH"/
+            if ! cp -r /tmp/dist_artifacts/* "$DEPLOY_PATH"/; then
+              echo "Error: Failed to copy files to $DEPLOY_PATH/"
+              ls -lah /tmp/dist_artifacts/
+              exit 1
+            fi
+            echo "Successfully copied files to $DEPLOY_PATH/"
           else
             # For main/master, replace root content but preserve test- directories
             find . -maxdepth 1 -type f -delete
             find . -maxdepth 1 -type d ! -name "." ! -name ".git" ! -name "test-*" -exec rm -rf {} +
-            cp -r _temp_dist/* .
+            if ! cp -r /tmp/dist_artifacts/* .; then
+              echo "Error: Failed to copy files to root"
+              ls -lah /tmp/dist_artifacts/
+              exit 1
+            fi
+            echo "Successfully copied files to root"
           fi
-          rm -rf _temp_dist
+          rm -rf /tmp/dist_artifacts
+          echo "Deployment directory prepared successfully"
 
       - name: Commit and push changes
         run: |

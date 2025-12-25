@@ -7,62 +7,59 @@ import { resolve } from 'path'
 const projectRoot = process.env.PROJECT_ROOT || import.meta.dirname
 
 // Determine base path based on branch name for GitHub Pages deployment
-// For project repos: /pdf-viewer/ for main, /pdf-viewer/test-{branch}/ for others
-// Development uses '/' for simplicity
+// For GitHub Pages project repos (github.io/repo-name), we need '/repo-name/' base path
+// Use '/pdf-viewer/' for main/master branches on GitHub Pages
+// Use '/pdf-viewer/test-{branch-name}/' for other branches
+// Use '/' for local development (when GITHUB_REF_NAME is not set)
 const getBasePath = () => {
-  // In development, use root for simplicity
-  if (process.env.NODE_ENV === 'development') {
+  // If GITHUB_REF_NAME is not set, we're in local development - use '/'
+  const branchName = process.env.GITHUB_REF_NAME
+  if (!branchName) {
     return '/'
   }
   
-  const branchName = process.env.GITHUB_REF_NAME || process.env.BRANCH_NAME || 'main'
-  const repoName = 'pdf-viewer' // GitHub Pages project repo base path
-  
+  // On GitHub Actions, use proper paths
   if (branchName === 'main' || branchName === 'master') {
-    return `/${repoName}/`
+    return '/pdf-viewer/'
   }
-  
   const safeBranch = branchName.replace(/[^a-zA-Z0-9-]/g, '-')
-  return `/${repoName}/test-${safeBranch}/`
+  return `/pdf-viewer/test-${safeBranch}/`
 }
 
 // https://vite.dev/config/
-export default defineConfig(({ mode }) => {
-  const basePath = getBasePath()
-  
-  return {
-    base: basePath,
-    plugins: [
-      react(),
-      tailwindcss(),
-      VitePWA({
-        registerType: 'autoUpdate',
-        includeAssets: ['icon-192x192.png', 'icon-512x512.png', 'icon-maskable-512x512.png'],
-        manifest: {
-          name: 'PDF Viewer & Editor',
-          short_name: 'PDF Editor',
-          description: 'Professional client-side PDF viewing, annotation, and editing tool',
-          theme_color: '#474747',
-          background_color: '#f5f5f7',
-          display: 'standalone',
-          scope: basePath,
-          start_url: basePath,
-          orientation: 'any',
+export default defineConfig({
+  base: getBasePath(),
+  plugins: [
+    react(),
+    tailwindcss(),
+    VitePWA({
+      registerType: 'autoUpdate',
+      includeAssets: ['icon-192x192.png', 'icon-512x512.png', 'icon-maskable-512x512.png'],
+      manifest: {
+        name: 'PDF Viewer & Editor',
+        short_name: 'PDF Editor',
+        description: 'Professional client-side PDF viewing, annotation, and editing tool',
+        theme_color: '#474747',
+        background_color: '#f5f5f7',
+        display: 'standalone',
+        scope: getBasePath(),
+        start_url: getBasePath(),
+        orientation: 'any',
         icons: [
           {
-            src: '/icon-192x192.png',
+            src: 'icon-192x192.png',
             sizes: '192x192',
             type: 'image/png',
             purpose: 'any'
           },
           {
-            src: '/icon-512x512.png',
+            src: 'icon-512x512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any'
           },
           {
-            src: '/icon-maskable-512x512.png',
+            src: 'icon-maskable-512x512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable'
@@ -104,4 +101,4 @@ export default defineConfig(({ mode }) => {
   optimizeDeps: {
     exclude: ['pdfjs-dist']
   }
-}});
+});
