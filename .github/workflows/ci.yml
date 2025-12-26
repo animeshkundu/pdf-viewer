@@ -19,8 +19,6 @@ on:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
   group: "pages"
@@ -187,11 +185,6 @@ jobs:
     if: github.event_name == 'push' || github.event_name == 'pull_request'
     permissions:
       contents: write
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -302,19 +295,13 @@ jobs:
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
-            BRANCH_NAME="${GITHUB_REF#refs/heads/}"
+            # For PRs, use the head branch name; for push events, use the ref
+            if [ "${{ github.event_name }}" = "pull_request" ]; then
+              BRANCH_NAME="${{ github.head_ref }}"
+            else
+              BRANCH_NAME="${GITHUB_REF#refs/heads/}"
+            fi
             git commit -m "Deploy $BRANCH_NAME to GitHub Pages"
             git push origin gh-pages
+            echo "Successfully deployed to gh-pages branch"
           fi
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: .
-
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
