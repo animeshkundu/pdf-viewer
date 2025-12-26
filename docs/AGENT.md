@@ -6,6 +6,33 @@ This document provides comprehensive guidance for AI agents (LLMs, Copilot, etc.
 
 ---
 
+## ⚠️ MANDATORY: Pre-PR Validation Requirements
+
+**Before raising any PR or marking work as complete, ALL of the following checks MUST pass with ZERO ERRORS:**
+
+```bash
+# 1. Lint - MUST have 0 errors
+npm run lint
+
+# 2. TypeScript type checking - MUST pass with no errors
+npm run typecheck
+
+# 3. Build - MUST complete successfully
+npm run build
+
+# 4. Unit tests - ALL tests MUST pass
+npm run test -- --run
+
+# 5. E2E tests - ALL tests MUST pass
+npm run e2e
+```
+
+**This is non-negotiable.** A PR or task completion with failing checks is considered incomplete and will be rejected.
+
+⚠️ **Note**: Lint warnings are acceptable, but lint errors are not. TypeScript errors, build failures, and test failures of any kind are blockers.
+
+---
+
 ## Critical: Recent Fixes and Known Patterns
 
 ### Text Layer Implementation (ADR-009)
@@ -130,31 +157,42 @@ npm run test:coverage
 - Function coverage: >90%
 - Statement coverage: >90%
 
-### 4. Build and Validation
+### 4. Build and Validation (MANDATORY - ZERO ERRORS REQUIRED)
 
-**ALWAYS run these commands before completing any task**:
+**⚠️ CRITICAL: ALL of the following commands MUST pass with ZERO ERRORS before raising any PR or marking work complete:**
 
 ```bash
-# 1. Type checking and build
-npm run build
-
-# 2. Lint code
+# 1. Lint code - MUST have 0 errors (warnings are acceptable)
 npm run lint
 
-# 3. Run unit tests
-npm run test:unit
+# 2. Type checking - MUST pass with no errors
+npm run typecheck
 
-# 4. Run E2E tests
-npm run test:e2e
+# 3. Build - MUST complete successfully
+npm run build
 
-# 5. Check coverage
+# 4. Run unit tests - ALL tests MUST pass
+npm run test -- --run
+
+# 5. Run E2E tests - ALL tests MUST pass
+npm run e2e
+
+# 6. (Optional) Check coverage
 npm run test:coverage
 ```
 
+**A PR with ANY of the following is considered INCOMPLETE and will be REJECTED:**
+- ❌ Lint errors (warnings are OK)
+- ❌ TypeScript type errors
+- ❌ Build failures
+- ❌ Failing unit tests
+- ❌ Failing E2E tests
+
 **Fix all errors before submitting**. If errors cannot be resolved:
-- Document the issue
+- Document the issue clearly
 - Explain attempted solutions
 - Provide recommendations for resolution
+- Do NOT submit the PR as complete
 
 ### 5. Documentation Updates
 
