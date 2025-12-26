@@ -84,7 +84,8 @@ jobs:
       - name: Build application
         run: npm run build
         env:
-          GITHUB_REF_NAME: ${{ github.ref_name }}
+          # For PRs, use head_ref; for push events, use ref_name
+          GITHUB_REF_NAME: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
 
       - name: Verify build output
         run: |
