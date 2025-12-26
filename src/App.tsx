@@ -18,13 +18,14 @@ import { ExportDialog } from './components/ExportDialog'
 import { KeyboardShortcutsDialog } from './components/KeyboardShortcutsDialog'
 import { WatermarkDialog } from './components/WatermarkDialog'
 import { PageNumberDialog } from './components/PageNumberDialog'
+import { PasswordDialog } from './components/PasswordDialog'
 import { InstallPrompt } from './components/InstallPrompt'
 import { OfflineIndicator } from './components/OfflineIndicator'
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from './components/ui/resizable'
 import { useState, useEffect, useRef } from 'react'
 
 function AppContentInner() {
-  const { document, isLoading, currentPage, setCurrentPage, getOriginalBytes, getFilename, zoom, setZoom, loadDocument } = usePDF()
+  const { document, isLoading, currentPage, setCurrentPage, getOriginalBytes, getFilename, zoom, setZoom, loadDocument, passwordState, submitPassword, cancelPassword } = usePDF()
   const { annotations, addAnnotation, undo, redo, canUndo, canRedo, setActiveTool, deleteSelectedAnnotation } = useAnnotations()
   const { transformations, pageOrder, blankPages } = usePageManagement()
   const { hasUnsavedChanges, markAsModified, markAsSaved } = useUnsavedChanges()
@@ -364,6 +365,13 @@ function AppContentInner() {
       <KeyboardShortcutsDialog
         isOpen={isShortcutsOpen}
         onClose={() => setIsShortcutsOpen(false)}
+      />
+
+      <PasswordDialog
+        isOpen={passwordState.isOpen}
+        isIncorrectPassword={passwordState.isIncorrectPassword}
+        onSubmit={submitPassword}
+        onCancel={cancelPassword}
       />
     </div>
   )
