@@ -281,6 +281,29 @@ Read full ADRs in `docs/ADR/` before making related changes.
 - Validate file types before processing
 - Handle errors gracefully (no sensitive info in errors)
 
+## ⚠️ MANDATORY: Pre-PR Validation (ZERO ERRORS REQUIRED)
+
+**Before raising ANY PR or marking work as complete, ALL of the following checks MUST pass with ZERO ERRORS:**
+
+```bash
+# 1. Lint - MUST have 0 errors (warnings are acceptable)
+npm run lint
+
+# 2. TypeScript type checking - MUST pass with no errors
+npm run typecheck
+
+# 3. Build - MUST complete successfully
+npm run build
+
+# 4. Unit tests - ALL tests MUST pass
+npm run test -- --run
+
+# 5. E2E tests - ALL tests MUST pass
+npm run e2e
+```
+
+**This is non-negotiable.** A PR with failing checks is considered incomplete and will be rejected.
+
 ## Build & Test Commands
 
 ```bash
@@ -293,13 +316,17 @@ npm run build
 # Lint
 npm run lint
 
-# Tests
-npm run test:unit
-npm run test:e2e
-npm run test:coverage
+# TypeScript type check
+npm run typecheck
 
-# Type check
-tsc --noEmit
+# Unit tests (single run)
+npm run test -- --run
+
+# E2E tests
+npm run e2e
+
+# Coverage report
+npm run test:coverage
 ```
 
 ## Documentation Requirements
@@ -321,6 +348,7 @@ tsc --noEmit
 - Make breaking changes without ADR
 - Skip tests
 - Forget to update documentation
+- **Submit PRs with failing lint, typecheck, build, or tests**
 
 ✅ **Do**:
 - Follow existing patterns

@@ -6,6 +6,8 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
   import.meta.url
 ).toString()
 
+export type PasswordReason = 'NEED_PASSWORD' | 'INCORRECT_PASSWORD'
+
 export class PDFService {
   private static instance: PDFService
   private documentProxy: PDFDocumentProxy | null = null
@@ -25,7 +27,8 @@ export class PDFService {
 
   async loadDocument(
     file: File,
-    onProgress?: (progress: number) => void
+    onProgress?: (progress: number) => void,
+    onPasswordRequest?: (reason: PasswordReason) => Promise<string>
   ): Promise<PDFDocumentProxy> {
     try {
       if (this.documentProxy) {
@@ -46,9 +49,29 @@ export class PDFService {
         }
       }
 
+      // Handle password-protected PDFs
+      if (onPasswordRequest) {
+        loadingTask.onPassword = (updatePassword: (password: string | Error) => void, reason: number) => {
+          const passwordReason: PasswordReason = reason === 1 ? 'NEED_PASSWORD' : 'INCORRECT_PASSWORD'
+          
+          onPasswordRequest(passwordReason)
+            .then((password) => {
+              updatePassword(password)
+            })
+            .catch((err) => {
+              // User cancelled or error occurred
+              updatePassword(err instanceof Error ? err : new Error('Password entry cancelled'))
+            })
+        }
+      }
+
       this.documentProxy = await loadingTask.promise
       return this.documentProxy
     } catch (error) {
+      // Check if it's a password error that wasn't handled
+      if (error instanceof Error && error.name === 'PasswordException') {
+        throw new Error('This PDF is password protected.')
+      }
       console.error('Failed to load PDF:', error)
       throw new Error('Unable to load PDF document. The file may be corrupted or invalid.')
     }
