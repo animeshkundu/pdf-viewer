@@ -22,6 +22,7 @@ import { InstallPrompt } from './components/InstallPrompt'
 import { OfflineIndicator } from './components/OfflineIndicator'
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from './components/ui/resizable'
 import { useState, useEffect, useRef } from 'react'
+import { PDFMetadataProvider } from './hooks/usePDFMetadata'
 
 function AppContentInner() {
   const { document, isLoading, currentPage, setCurrentPage, getOriginalBytes, getFilename, zoom, setZoom, loadDocument } = usePDF()
@@ -375,11 +376,13 @@ function AppContent() {
   return (
     <PageManagementProvider numPages={document?.numPages ?? 0}>
       <FormProvider>
-        <WatermarkProvider>
-          <PageNumberProvider>
-            <AppContentInner />
-          </PageNumberProvider>
-        </WatermarkProvider>
+        <PDFMetadataProvider>
+          <WatermarkProvider>
+            <PageNumberProvider>
+              <AppContentInner />
+            </PageNumberProvider>
+          </WatermarkProvider>
+        </PDFMetadataProvider>
       </FormProvider>
     </PageManagementProvider>
   )
