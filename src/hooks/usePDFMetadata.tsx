@@ -40,7 +40,7 @@ export function PDFMetadataProvider({ children }: { children: ReactNode }) {
     setOutline(outlineItems)
     setAttachments(attachmentItems)
     setOptionalContentConfig(config)
-    setLayers(pdfMetadataService.buildLayerTree(config))
+    setLayers(config ? pdfMetadataService.buildLayerTree(config) : [])
   }
 
   useEffect(() => {
