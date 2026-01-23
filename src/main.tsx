@@ -5,6 +5,7 @@ import App from './App.tsx'
 import { ErrorFallback } from './ErrorFallback.tsx'
 
 import "./main.css"
+import "pdfjs-dist/web/pdf_viewer.css"
 import "./styles/theme.css"
 import "./index.css"
 
