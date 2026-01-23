@@ -48,6 +48,7 @@ export function PDFMetadataProvider({ children }: { children: ReactNode }) {
   }, [document])
 
   const setLayerVisibility = (layerId: string, visible: boolean) => {
+    if (!optionalContentConfig) return
     pdfMetadataService.applyLayerVisibility(optionalContentConfig, layerId, visible)
     setLayers(pdfMetadataService.buildLayerTree(optionalContentConfig))
   }
