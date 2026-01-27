@@ -1,0 +1,1 @@
+if('serviceWorker' in navigator) {window.addEventListener('load', () => {navigator.serviceWorker.register('/test-14-merge/sw.js', { scope: '/test-14-merge/' })})}
