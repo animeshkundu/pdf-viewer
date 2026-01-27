@@ -81,13 +81,25 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Determine branch name
+        id: branch
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BRANCH_NAME="${{ github.head_ref }}"
+          else
+            BRANCH_NAME="${GITHUB_REF#refs/heads/}"
+          fi
+          echo "name=$BRANCH_NAME" >> $GITHUB_OUTPUT
+          echo "Building for branch: $BRANCH_NAME"
+
       - name: Build application
         run: npm run build
         env:
-          # For PRs, use head_ref; for push events, use ref_name
-          GITHUB_REF_NAME: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
+          # Explicitly set branch name to ensure consistent base path calculation
+          # PR events use github.head_ref, push events use github.ref_name
+          GITHUB_REF_NAME: ${{ steps.branch.outputs.name }}
 
-      - name: Verify build output
+      - name: Verify build output and base path
         run: |
           if [ ! -d "dist" ]; then
             echo "Error: dist/ directory was not created by build"
@@ -95,6 +107,29 @@ jobs:
           fi
           echo "Build artifacts in dist/:"
           ls -lah dist/
+          
+          # Verify the base path in index.html matches expected branch
+          BRANCH_NAME="${{ steps.branch.outputs.name }}"
+          if [ "$BRANCH_NAME" = "main" ] || [ "$BRANCH_NAME" = "master" ]; then
+            EXPECTED_PATH="/"
+          else
+            SAFE_BRANCH=$(echo "$BRANCH_NAME" | sed 's/[^a-zA-Z0-9-]/-/g')
+            EXPECTED_PATH="/test-$SAFE_BRANCH/"
+          fi
+          
+          echo "Expected base path: $EXPECTED_PATH"
+          echo "Checking index.html for correct paths..."
+          
+          # Check if index.html contains the expected path
+          if grep -q "src=\"${EXPECTED_PATH}" dist/index.html; then
+            echo "✓ Base path verification passed"
+          else
+            echo "✗ Base path verification FAILED!"
+            echo "Expected paths starting with: $EXPECTED_PATH"
+            echo "Actual index.html content:"
+            head -30 dist/index.html
+            exit 1
+          fi
           
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
@@ -187,44 +222,21 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Download build artifacts to temp location
+      - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
           name: dist
-          path: /tmp/dist_artifacts/
+          path: ./dist
 
       - name: Verify downloaded build files
         run: |
-          echo "Checking /tmp/dist_artifacts/ directory:"
-          if [ -d "/tmp/dist_artifacts" ]; then
-            ls -lah /tmp/dist_artifacts/ || echo "/tmp/dist_artifacts/ exists but is empty or unreadable"
-            echo "File count: $(find /tmp/dist_artifacts -type f | wc -l)"
+          echo "Checking dist/ directory:"
+          if [ -d "dist" ]; then
+            ls -lah dist/ || echo "dist/ exists but is empty or unreadable"
+            echo "File count: $(find dist -type f | wc -l)"
           else
-            echo "Error: /tmp/dist_artifacts/ directory does not exist"
+            echo "Error: dist/ directory does not exist"
             exit 1
-          fi
-
-      - name: Initialize or checkout gh-pages branch
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          
-          # Check if gh-pages branch exists on remote
-          if git ls-remote --exit-code --heads origin gh-pages; then
-            echo "gh-pages branch exists, checking out"
-            git fetch origin gh-pages
-            git checkout gh-pages
-          else
-            echo "gh-pages branch doesn't exist, creating orphan branch"
-            git checkout --orphan gh-pages
-            git rm -rf .
-            git commit --allow-empty -m "Initialize gh-pages branch"
-            git push origin gh-pages
           fi
 
       - name: Determine deployment path
@@ -240,69 +252,38 @@ jobs:
           echo "Branch name: $BRANCH_NAME"
           
           if [ "$BRANCH_NAME" = "main" ] || [ "$BRANCH_NAME" = "master" ]; then
-            echo "path=." >> $GITHUB_OUTPUT
+            echo "is_main=true" >> $GITHUB_OUTPUT
+            echo "destination_dir=" >> $GITHUB_OUTPUT
             echo "Deploying to root"
           else
             SAFE_BRANCH=$(echo "$BRANCH_NAME" | sed 's/[^a-zA-Z0-9-]/-/g')
-            echo "path=test-$SAFE_BRANCH" >> $GITHUB_OUTPUT
+            echo "is_main=false" >> $GITHUB_OUTPUT
+            echo "destination_dir=test-$SAFE_BRANCH" >> $GITHUB_OUTPUT
             echo "Deploying to test-$SAFE_BRANCH/"
           fi
+          echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
 
-      - name: Prepare deployment directory
-        run: |
-          set -e  # Exit on error
-          
-          # Verify artifacts exist and have files
-          if [ ! -d "/tmp/dist_artifacts" ]; then
-            echo "Error: /tmp/dist_artifacts/ directory not found"
-            exit 1
-          fi
-          
-          FILE_COUNT=$(find /tmp/dist_artifacts -type f | wc -l)
-          if [ "$FILE_COUNT" -eq 0 ]; then
-            echo "Error: /tmp/dist_artifacts/ directory is empty"
-            exit 1
-          fi
-          
-          echo "Deploying $FILE_COUNT files from /tmp/dist_artifacts/"
-          
-          DEPLOY_PATH="${{ steps.deploy_path.outputs.path }}"
-          if [ "$DEPLOY_PATH" != "." ]; then
-            mkdir -p "$DEPLOY_PATH"
-            rm -rf "$DEPLOY_PATH"/*
-            if ! cp -r /tmp/dist_artifacts/* "$DEPLOY_PATH"/; then
-              echo "Error: Failed to copy files to $DEPLOY_PATH/"
-              ls -lah /tmp/dist_artifacts/
-              exit 1
-            fi
-            echo "Successfully copied files to $DEPLOY_PATH/"
-          else
-            # For main/master, replace root content but preserve test- directories
-            find . -maxdepth 1 -type f -delete
-            find . -maxdepth 1 -type d ! -name "." ! -name ".git" ! -name "test-*" -exec rm -rf {} +
-            if ! cp -r /tmp/dist_artifacts/* .; then
-              echo "Error: Failed to copy files to root"
-              ls -lah /tmp/dist_artifacts/
-              exit 1
-            fi
-            echo "Successfully copied files to root"
-          fi
-          rm -rf /tmp/dist_artifacts
-          echo "Deployment directory prepared successfully"
+      - name: Deploy to GitHub Pages (main branch - root)
+        if: steps.deploy_path.outputs.is_main == 'true'
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          keep_files: true
+          force_orphan: false
+          user_name: 'github-actions[bot]'
+          user_email: 'github-actions[bot]@users.noreply.github.com'
+          commit_message: 'Deploy ${{ steps.deploy_path.outputs.branch_name }} to GitHub Pages'
 
-      - name: Commit and push changes
-        run: |
-          git add .
-          if git diff --staged --quiet; then
-            echo "No changes to commit"
-          else
-            # For PRs, use the head branch name; for push events, use the ref
-            if [ "${{ github.event_name }}" = "pull_request" ]; then
-              BRANCH_NAME="${{ github.head_ref }}"
-            else
-              BRANCH_NAME="${GITHUB_REF#refs/heads/}"
-            fi
-            git commit -m "Deploy $BRANCH_NAME to GitHub Pages"
-            git push origin gh-pages
-            echo "Successfully deployed to gh-pages branch"
-          fi
+      - name: Deploy to GitHub Pages (preview - subdirectory)
+        if: steps.deploy_path.outputs.is_main == 'false'
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          destination_dir: ${{ steps.deploy_path.outputs.destination_dir }}
+          keep_files: true
+          force_orphan: false
+          user_name: 'github-actions[bot]'
+          user_email: 'github-actions[bot]@users.noreply.github.com'
+          commit_message: 'Deploy ${{ steps.deploy_path.outputs.branch_name }} to GitHub Pages'
