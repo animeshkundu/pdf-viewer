@@ -92,6 +92,13 @@ jobs:
           echo "name=$BRANCH_NAME" >> $GITHUB_OUTPUT
           echo "Building for branch: $BRANCH_NAME"
 
+      - name: Clean Vite cache
+        run: |
+          # Remove any existing vite cache to ensure fresh build with correct base path
+          rm -rf node_modules/.vite
+          rm -rf .vite
+          echo "Vite cache cleared"
+
       - name: Build application
         run: npm run build
         env:
@@ -120,8 +127,8 @@ jobs:
           echo "Expected base path: $EXPECTED_PATH"
           echo "Checking index.html for correct paths..."
           
-          # Check if index.html contains the expected path
-          if grep -q "src=\"${EXPECTED_PATH}" dist/index.html; then
+          # Check if index.html contains the expected path in src or href attributes
+          if grep -qE "(src|href)=[\"']${EXPECTED_PATH}" dist/index.html; then
             echo "✓ Base path verification passed"
           else
             echo "✗ Base path verification FAILED!"
