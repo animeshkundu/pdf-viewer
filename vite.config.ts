@@ -7,9 +7,8 @@ import { resolve } from 'path'
 const projectRoot = process.env.PROJECT_ROOT || import.meta.dirname
 
 // Determine base path based on branch name for GitHub Pages deployment
-// For GitHub Pages project repos (github.io/repo-name), we need '/repo-name/' base path
-// Use '/pdf-viewer/' for main/master branches on GitHub Pages
-// Use '/pdf-viewer/test-{branch-name}/' for other branches
+// Use '/' for main/master branches (deployed to root)
+// Use '/test-{branch-name}/' for other branches (deployed to subdirectories)
 // Use '/' for local development (when GITHUB_REF_NAME is not set)
 const getBasePath = () => {
   // If GITHUB_REF_NAME is not set, we're in local development - use '/'
@@ -20,10 +19,10 @@ const getBasePath = () => {
   
   // On GitHub Actions, use proper paths
   if (branchName === 'main' || branchName === 'master') {
-    return '/pdf-viewer/'
+    return '/'
   }
   const safeBranch = branchName.replace(/[^a-zA-Z0-9-]/g, '-')
-  return `/pdf-viewer/test-${safeBranch}/`
+  return `/test-${safeBranch}/`
 }
 
 // https://vite.dev/config/

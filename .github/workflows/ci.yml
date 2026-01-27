@@ -1,9 +1,9 @@
 name: CI/CD
 
 # Deployment Strategy:
-# - Main branch deploys to root of GitHub Pages (https://animeshkundu.github.io/pdf-viewer/)
-# - Other branches deploy to test subdirectories (https://animeshkundu.github.io/pdf-viewer/test-{branch}/)
-# - PRs deploy to test subdirectories for preview (https://animeshkundu.github.io/pdf-viewer/test-{branch}/)
+# - Main branch deploys to root (/)
+# - Other branches deploy to test subdirectories (/test-{branch}/)
+# - PRs deploy to test subdirectories for preview (/test-{branch}/)
 # - Manual workflow dispatch available for deploying any branch
 
 on:
