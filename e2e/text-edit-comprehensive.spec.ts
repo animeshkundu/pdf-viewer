@@ -18,19 +18,24 @@ async function uploadPdfAndWaitForLoad(page: Page) {
   const samplePdfPath = path.join(__dirname, 'fixtures', 'sample.pdf')
   await fileInput.setInputFiles(samplePdfPath)
   
-  await page.waitForLoadState('networkidle')
-  await page.waitForTimeout(1500)
+  // Wait for canvas to be visible (indicates PDF is rendering)
+  await page.waitForSelector('canvas', { state: 'visible', timeout: 30000 })
+  await page.waitForLoadState('networkidle', { timeout: 30000 })
+  await page.waitForTimeout(2000) // Extra time for rendering
 }
 
-// Helper to activate text edit mode
+// Helper to activate text edit mode with better waits
 async function activateTextEditMode(page: Page) {
   const toolsButton = page.getByRole('button', { name: /Tools/i })
-  await toolsButton.click()
-  await page.waitForTimeout(300)
+  await toolsButton.waitFor({ state: 'visible', timeout: 10000 })
+  await toolsButton.click({ timeout: 10000 })
+  await page.waitForTimeout(500)
   
   const editTextItem = page.getByRole('menuitem', { name: /Edit Text/i })
-  await editTextItem.click()
-  await page.waitForTimeout(2500) // Wait for MuPDF to initialize
+  await editTextItem.waitFor({ state: 'visible', timeout: 10000 })
+  await editTextItem.click({ timeout: 10000 })
+  // Wait longer for MuPDF to initialize in CI
+  await page.waitForTimeout(5000)
 }
 
 test.describe('Text Edit Mode - Activation', () => {
