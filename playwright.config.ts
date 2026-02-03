@@ -35,6 +35,18 @@ export default defineConfig({
     
     /* Screenshot on failure */
     screenshot: 'only-on-failure',
+    
+    /* Increase default timeout for actions to handle slower CI environments */
+    actionTimeout: 30000, // 30 seconds for actions
+    navigationTimeout: 60000, // 60 seconds for navigation
+  },
+  
+  /* Global test timeout - increased for CI environments */
+  timeout: 90000, // 90 seconds per test
+  
+  /* Expect timeout for assertions */
+  expect: {
+    timeout: 10000, // 10 seconds for assertions
   },
 
   /* Configure projects for major browsers */

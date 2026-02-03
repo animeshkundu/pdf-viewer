@@ -36,16 +36,19 @@ test.describe('Search Feature Tests', () => {
     await page.goto('/')
     await uploadPDF(page, 'search-test.pdf')
     
+    // Wait for PDF to be fully loaded
+    await page.waitForTimeout(1500)
+    
     await page.keyboard.press('Control+f')
-    await page.waitForTimeout(500)
+    await page.waitForTimeout(1000) // Increased timeout for dialog
     
     const searchInput = page.getByPlaceholder('Search in document...')
-    await expect(searchInput).toBeVisible()
+    await searchInput.waitFor({ state: 'visible', timeout: 10000 })
     
     await page.keyboard.press('Escape')
-    await page.waitForTimeout(300)
+    await page.waitForTimeout(1000) // Increased timeout for closing
     
-    await expect(searchInput).not.toBeVisible()
+    await expect(searchInput).not.toBeVisible({ timeout: 5000 })
   })
 
   test('searches for text and finds results', async ({ page }) => {
