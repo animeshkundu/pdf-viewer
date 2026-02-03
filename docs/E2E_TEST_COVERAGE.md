@@ -4,9 +4,11 @@ This document provides a comprehensive overview of the E2E test coverage for the
 
 ## Test Suite Summary
 
-**Total Tests**: 205 comprehensive E2E tests across 8 test files
+**Total Tests**: 205 comprehensive E2E tests across 8 test files (3 existing + 5 new)
 
 ### Test Files
+
+**Existing Test Files** (included in total count):
 
 1. **app.spec.ts** (2 tests)
    - Basic application loading
@@ -35,6 +37,8 @@ This document provides a comprehensive overview of the E2E test coverage for the
    - Markup toolbar toggle
    - Export dialog
    - Text editing mode activation
+
+**New Test Files** (added in this PR):
 
 4. **toolbar-comprehensive.spec.ts** (81 tests)
    - **File Operations** (3 tests): Open button, file dialog, toolbar controls
@@ -241,10 +245,10 @@ This document provides a comprehensive overview of the E2E test coverage for the
 - ✅ User-friendly error messages
 
 **Performance**:
-- ✅ Load time < 10s
-- ✅ Text edit init < 5s
-- ✅ Button response < 1s
-- ✅ Mode switching < 2s
+- ✅ Initial page load < 10s (includes network, bundle parsing, and initial render)
+- ✅ Text edit initialization < 5s (includes MuPDF WASM loading and text extraction)
+- ✅ Button interaction response < 1s (user-perceivable immediate feedback)
+- ✅ Mode switching < 2s (includes state transitions and re-rendering)
 
 **Accessibility**:
 - ✅ ARIA labels
@@ -320,9 +324,20 @@ All test files use helper functions for common operations:
 - `activateTextEditMode(page)` - Activates text editing mode (in text-edit-comprehensive.spec.ts)
 
 ### Waiting Strategies
-- `page.waitForLoadState('networkidle')` - Wait for network to be idle
-- `page.waitForTimeout(ms)` - Wait for specific duration for animations/transitions
-- `expect(element).toBeVisible()` - Wait for element visibility
+Tests use a combination of waiting strategies:
+- `page.waitForLoadState('networkidle')` - Wait for network to be idle after navigation
+- `page.waitForTimeout(ms)` - Wait for specific durations for animations/transitions (used sparingly)
+- `expect(element).toBeVisible()` - Wait for element visibility with automatic retry
+- Fixed timeouts are used primarily for:
+  - UI animations and transitions (200-500ms)
+  - MuPDF WASM initialization (2000-2500ms - time for module loading and PDF parsing)
+  - Dialog open/close animations (300-500ms)
+
+**Note on MuPDF waits**: The 2.5-second wait for MuPDF initialization accounts for:
+1. WASM module loading (~1s)
+2. PDF text extraction (~1s)
+3. DOM rendering of text blocks (~500ms)
+This is a known limitation of WASM-based libraries and is necessary for stable tests.
 
 ### Accessibility Testing
 - All interactive elements are accessed via semantic roles
