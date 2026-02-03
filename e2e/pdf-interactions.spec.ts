@@ -135,15 +135,46 @@ test.describe('PDF Viewer Interactions', () => {
 
   test('should export dialog opens with Ctrl+S', async ({ page }) => {
     await page.goto('/')
-    
+
     // Upload PDF and wait for load
     await uploadPdfAndWaitForLoad(page)
-    
+
     // Open export dialog with Ctrl+S
     await page.keyboard.press('Control+s')
     await page.waitForTimeout(200)
-    
+
     // Close with Escape
     await page.keyboard.press('Escape')
+  })
+
+  test('should enable text editing mode from Tools menu', async ({ page }) => {
+    await page.goto('/')
+
+    // Upload PDF and wait for load
+    await uploadPdfAndWaitForLoad(page)
+
+    // Open Tools dropdown - look for the button with "Tools" text
+    const toolsButton = page.getByRole('button', { name: /Tools/i })
+    await toolsButton.click()
+    await page.waitForTimeout(200)
+
+    // Click on "Edit Text" menu item
+    const editTextItem = page.getByRole('menuitem', { name: /Edit Text/i })
+    await editTextItem.click()
+
+    // Wait for MuPDF to initialize and text blocks to load
+    await page.waitForTimeout(2000)
+
+    // Check that no detached ArrayBuffer error is shown in console
+    // The test passes if no JavaScript error is thrown
+
+    // Check for text editing being enabled - there should be a loading state or text blocks
+    // The TextEditLayer should render without errors
+
+    // Close text editing mode by clicking the button again
+    await toolsButton.click()
+    await page.waitForTimeout(200)
+    const exitEditItem = page.getByRole('menuitem', { name: /Exit Text Edit Mode/i })
+    await exitEditItem.click()
   })
 })

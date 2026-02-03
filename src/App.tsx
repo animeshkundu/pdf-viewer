@@ -6,6 +6,12 @@ import { PageManagementProvider, usePageManagement } from './hooks/usePageManage
 import { FormProvider, useForm } from './hooks/useForm'
 import { WatermarkProvider, useWatermark } from './hooks/useWatermark'
 import { PageNumberProvider, usePageNumber } from './hooks/usePageNumber'
+import { SplitMergeProvider } from './hooks/useSplitMerge'
+import { SecurityProvider } from './hooks/useSecurity'
+import { ConversionProvider } from './hooks/useConversion'
+import { OCRProvider } from './hooks/useOCR'
+import { AdvancedToolsProvider } from './hooks/useAdvancedTools'
+import { TextEditProvider, useTextEdit } from './hooks/useTextEdit'
 import { useUnsavedChanges } from './hooks/useUnsavedChanges'
 import { Toolbar } from './components/Toolbar/Toolbar'
 import { MarkupToolbar } from './components/MarkupToolbar/MarkupToolbar'
@@ -18,6 +24,17 @@ import { ExportDialog } from './components/ExportDialog'
 import { KeyboardShortcutsDialog } from './components/KeyboardShortcutsDialog'
 import { WatermarkDialog } from './components/WatermarkDialog'
 import { PageNumberDialog } from './components/PageNumberDialog'
+import { SplitDialog } from './components/SplitDialog'
+import { MergeDialog } from './components/MergeDialog'
+import { SanitizeDialog } from './components/SanitizeDialog'
+import { ImagesToPdfDialog } from './components/ImagesToPdfDialog'
+import { PdfToImagesDialog } from './components/PdfToImagesDialog'
+import { OCRDialog } from './components/OCRDialog'
+import { CompressDialog } from './components/CompressDialog'
+import { CompareDialog } from './components/CompareDialog'
+import { PresentationMode } from './components/PresentationMode'
+import { BookmarksPanel } from './components/BookmarksPanel'
+import { PDFInfoPanel } from './components/PDFInfoPanel'
 import { InstallPrompt } from './components/InstallPrompt'
 import { OfflineIndicator } from './components/OfflineIndicator'
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from './components/ui/resizable'
@@ -31,6 +48,8 @@ function AppContentInner() {
   const { hasForm, isFormMode, setIsFormMode } = useForm()
   const { watermark } = useWatermark()
   const { pageNumberConfig } = usePageNumber()
+  const { state: textEditState, enableTextEdit, disableTextEdit } = useTextEdit()
+  const isTextEditEnabled = textEditState.isEnabled
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [isMarkupOpen, setIsMarkupOpen] = useState(false)
@@ -39,6 +58,17 @@ function AppContentInner() {
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false)
   const [isWatermarkOpen, setIsWatermarkOpen] = useState(false)
   const [isPageNumberOpen, setIsPageNumberOpen] = useState(false)
+  const [isSplitOpen, setIsSplitOpen] = useState(false)
+  const [isMergeOpen, setIsMergeOpen] = useState(false)
+  const [isSanitizeOpen, setIsSanitizeOpen] = useState(false)
+  const [isImagesToPdfOpen, setIsImagesToPdfOpen] = useState(false)
+  const [isPdfToImagesOpen, setIsPdfToImagesOpen] = useState(false)
+  const [isOCROpen, setIsOCROpen] = useState(false)
+  const [isCompressOpen, setIsCompressOpen] = useState(false)
+  const [isCompareOpen, setIsCompareOpen] = useState(false)
+  const [isPresentationOpen, setIsPresentationOpen] = useState(false)
+  const [isBookmarksOpen, setIsBookmarksOpen] = useState(false)
+  const [isPdfInfoOpen, setIsPdfInfoOpen] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -118,6 +148,9 @@ function AppContentInner() {
         setIsMarkupOpen(false)
         setIsFormOpen(false)
         setIsShortcutsOpen(false)
+        if (isTextEditEnabled) {
+          disableTextEdit()
+        }
         return
       }
 
@@ -226,7 +259,7 @@ function AppContentInner() {
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [document, currentPage, setCurrentPage, isMarkupOpen, isFormOpen, hasForm, isFormMode, zoom, setZoom, canUndo, canRedo, undo, redo, setActiveTool, deleteSelectedAnnotation, setIsFormMode])
+  }, [document, currentPage, setCurrentPage, isMarkupOpen, isFormOpen, hasForm, isFormMode, zoom, setZoom, canUndo, canRedo, undo, redo, setActiveTool, deleteSelectedAnnotation, setIsFormMode, isTextEditEnabled, disableTextEdit])
 
   useEffect(() => {
     if (annotations.length > 0 || transformations.size > 0 || pageOrder.length > 0 || blankPages.length > 0 || watermark !== null || pageNumberConfig !== null) {
@@ -282,9 +315,28 @@ function AppContentInner() {
         hasForm={hasForm}
         onWatermarkClick={() => setIsWatermarkOpen(true)}
         onPageNumberClick={() => setIsPageNumberOpen(true)}
+        onSplitClick={() => setIsSplitOpen(true)}
+        onMergeClick={() => setIsMergeOpen(true)}
+        onSanitizeClick={() => setIsSanitizeOpen(true)}
+        onImagesToPdfClick={() => setIsImagesToPdfOpen(true)}
+        onPdfToImagesClick={() => setIsPdfToImagesOpen(true)}
+        onOCRClick={() => setIsOCROpen(true)}
+        onCompressClick={() => setIsCompressOpen(true)}
+        onCompareClick={() => setIsCompareOpen(true)}
+        onPresentationClick={() => setIsPresentationOpen(true)}
+        onBookmarksClick={() => setIsBookmarksOpen(true)}
+        onPdfInfoClick={() => setIsPdfInfoOpen(true)}
         onExportClick={() => setIsExportOpen(true)}
         hasUnsavedChanges={hasUnsavedChanges}
         onKeyboardShortcutsClick={() => setIsShortcutsOpen(true)}
+        onTextEditClick={() => {
+          if (isTextEditEnabled) {
+            disableTextEdit()
+          } else {
+            enableTextEdit()
+          }
+        }}
+        isTextEditOpen={isTextEditEnabled}
       />
       
       <MarkupToolbar 
@@ -361,6 +413,72 @@ function AppContentInner() {
         onClose={() => setIsPageNumberOpen(false)}
       />
 
+      <SplitDialog
+        isOpen={isSplitOpen}
+        onClose={() => setIsSplitOpen(false)}
+        pdfBytes={getOriginalBytes()}
+        originalFilename={getFilename() || undefined}
+        pageCount={document?.numPages || 0}
+      />
+
+      <MergeDialog
+        isOpen={isMergeOpen}
+        onClose={() => setIsMergeOpen(false)}
+      />
+
+      <SanitizeDialog
+        isOpen={isSanitizeOpen}
+        onClose={() => setIsSanitizeOpen(false)}
+        pdfBytes={getOriginalBytes()}
+        originalFilename={getFilename() || undefined}
+      />
+
+      <ImagesToPdfDialog
+        isOpen={isImagesToPdfOpen}
+        onClose={() => setIsImagesToPdfOpen(false)}
+      />
+
+      <PdfToImagesDialog
+        isOpen={isPdfToImagesOpen}
+        onClose={() => setIsPdfToImagesOpen(false)}
+        pdfBytes={getOriginalBytes()}
+        pageCount={document?.numPages || 0}
+        filename={getFilename() || undefined}
+      />
+
+      <OCRDialog
+        isOpen={isOCROpen}
+        onClose={() => setIsOCROpen(false)}
+        pdfBytes={getOriginalBytes()}
+        pageCount={document?.numPages || 0}
+        originalFilename={getFilename() || undefined}
+      />
+
+      <CompressDialog
+        isOpen={isCompressOpen}
+        onClose={() => setIsCompressOpen(false)}
+      />
+
+      <CompareDialog
+        isOpen={isCompareOpen}
+        onClose={() => setIsCompareOpen(false)}
+      />
+
+      <PresentationMode
+        isOpen={isPresentationOpen}
+        onClose={() => setIsPresentationOpen(false)}
+      />
+
+      <BookmarksPanel
+        isOpen={isBookmarksOpen}
+        onClose={() => setIsBookmarksOpen(false)}
+      />
+
+      <PDFInfoPanel
+        isOpen={isPdfInfoOpen}
+        onClose={() => setIsPdfInfoOpen(false)}
+      />
+
       <KeyboardShortcutsDialog
         isOpen={isShortcutsOpen}
         onClose={() => setIsShortcutsOpen(false)}
@@ -369,15 +487,34 @@ function AppContentInner() {
   )
 }
 
+function TextEditProviderWithPdfBytes() {
+  const { getOriginalBytes } = usePDF()
+  return (
+    <TextEditProvider pdfBytes={getOriginalBytes()}>
+      <AppContentInner />
+    </TextEditProvider>
+  )
+}
+
 function AppContent() {
   const { document } = usePDF()
-  
+
   return (
     <PageManagementProvider numPages={document?.numPages ?? 0}>
       <FormProvider>
         <WatermarkProvider>
           <PageNumberProvider>
-            <AppContentInner />
+            <SplitMergeProvider>
+              <SecurityProvider>
+                <ConversionProvider>
+                  <OCRProvider>
+                    <AdvancedToolsProvider>
+                      <TextEditProviderWithPdfBytes />
+                    </AdvancedToolsProvider>
+                  </OCRProvider>
+                </ConversionProvider>
+              </SecurityProvider>
+            </SplitMergeProvider>
           </PageNumberProvider>
         </WatermarkProvider>
       </FormProvider>

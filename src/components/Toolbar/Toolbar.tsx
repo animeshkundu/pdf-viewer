@@ -1,8 +1,43 @@
-import { FolderOpen, MagnifyingGlassPlus, MagnifyingGlassMinus, Sidebar, CaretLeft, CaretRight, MagnifyingGlass, PencilLine, Download, Question, TextT, Stamp, NumberSquareOne } from '@phosphor-icons/react'
+import {
+  FolderOpen,
+  MagnifyingGlassPlus,
+  MagnifyingGlassMinus,
+  Sidebar,
+  CaretLeft,
+  CaretRight,
+  MagnifyingGlass,
+  PencilLine,
+  Download,
+  Question,
+  TextT,
+  Stamp,
+  NumberSquareOne,
+  Scissors,
+  GitMerge,
+  Wrench,
+  ShieldCheck,
+  Image,
+  FileImage,
+  TextAa,
+  FileArrowDown,
+  ArrowsLeftRight,
+  Presentation,
+  BookmarkSimple,
+  Info,
+  Cursor,
+} from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { usePDF } from '@/hooks/usePDF.tsx'
 import { ZOOM_LEVELS } from '@/types/pdf.types'
 import { useRef, useState } from 'react'
@@ -24,22 +59,48 @@ interface ToolbarProps {
   onKeyboardShortcutsClick?: () => void
   onWatermarkClick?: () => void
   onPageNumberClick?: () => void
+  onSplitClick?: () => void
+  onMergeClick?: () => void
+  onSanitizeClick?: () => void
+  onImagesToPdfClick?: () => void
+  onPdfToImagesClick?: () => void
+  onOCRClick?: () => void
+  onCompressClick?: () => void
+  onCompareClick?: () => void
+  onPresentationClick?: () => void
+  onBookmarksClick?: () => void
+  onPdfInfoClick?: () => void
+  onTextEditClick?: () => void
+  isTextEditOpen?: boolean
 }
 
-export function Toolbar({ 
-  onToggleSidebar, 
-  isSidebarOpen, 
-  onSearchClick, 
-  onMarkupClick, 
+export function Toolbar({
+  onToggleSidebar,
+  isSidebarOpen,
+  onSearchClick,
+  onMarkupClick,
   isMarkupOpen,
   onFormClick,
   isFormOpen,
   hasForm,
-  onExportClick, 
-  hasUnsavedChanges, 
+  onExportClick,
+  hasUnsavedChanges,
   onKeyboardShortcutsClick,
   onWatermarkClick,
-  onPageNumberClick 
+  onPageNumberClick,
+  onSplitClick,
+  onMergeClick,
+  onSanitizeClick,
+  onImagesToPdfClick,
+  onPdfToImagesClick,
+  onOCRClick,
+  onCompressClick,
+  onCompareClick,
+  onPresentationClick,
+  onBookmarksClick,
+  onPdfInfoClick,
+  onTextEditClick,
+  isTextEditOpen,
 }: ToolbarProps) {
   const { zoom, setZoom, document, loadDocument, currentPage, setCurrentPage } = usePDF()
   const { hasWatermark } = useWatermark()
@@ -269,7 +330,138 @@ export function Toolbar({
                   <TooltipContent>Add Page Numbers</TooltipContent>
                 </Tooltip>
               )}
-              
+
+              <div className="w-px h-6 bg-border/50 mx-1 hidden md:block" aria-hidden="true" />
+
+              {onSplitClick && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="default"
+                      onClick={onSplitClick}
+                      aria-label="Split PDF"
+                      className="gap-2 button-press hover:bg-muted transition-all duration-200"
+                    >
+                      <Scissors size={18} aria-hidden="true" />
+                      <span className="hidden sm:inline font-medium">Split</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Split PDF into multiple files</TooltipContent>
+                </Tooltip>
+              )}
+
+              {onMergeClick && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="default"
+                      onClick={onMergeClick}
+                      aria-label="Merge PDFs"
+                      className="gap-2 button-press hover:bg-muted transition-all duration-200"
+                    >
+                      <GitMerge size={18} aria-hidden="true" />
+                      <span className="hidden sm:inline font-medium">Merge</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Merge multiple PDFs into one</TooltipContent>
+                </Tooltip>
+              )}
+
+              {/* Tools Dropdown Menu */}
+              <DropdownMenu>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="default"
+                        className="gap-2 button-press hover:bg-muted transition-all duration-200"
+                        aria-label="More tools"
+                      >
+                        <Wrench size={18} aria-hidden="true" />
+                        <span className="hidden sm:inline font-medium">Tools</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent>More PDF tools</TooltipContent>
+                </Tooltip>
+                <DropdownMenuContent align="start" className="w-56">
+                  <DropdownMenuLabel>Edit</DropdownMenuLabel>
+                  {onTextEditClick && (
+                    <DropdownMenuItem onClick={onTextEditClick}>
+                      <Cursor className="mr-2 h-4 w-4" />
+                      {isTextEditOpen ? 'Exit Text Edit Mode' : 'Edit Text'}
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuLabel>Security</DropdownMenuLabel>
+                  {onSanitizeClick && (
+                    <DropdownMenuItem onClick={onSanitizeClick}>
+                      <ShieldCheck className="mr-2 h-4 w-4" />
+                      Sanitize PDF
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuLabel>Conversion</DropdownMenuLabel>
+                  {onImagesToPdfClick && (
+                    <DropdownMenuItem onClick={onImagesToPdfClick}>
+                      <Image className="mr-2 h-4 w-4" />
+                      Images to PDF
+                    </DropdownMenuItem>
+                  )}
+                  {onPdfToImagesClick && (
+                    <DropdownMenuItem onClick={onPdfToImagesClick}>
+                      <FileImage className="mr-2 h-4 w-4" />
+                      PDF to Images
+                    </DropdownMenuItem>
+                  )}
+                  {onOCRClick && (
+                    <DropdownMenuItem onClick={onOCRClick}>
+                      <TextAa className="mr-2 h-4 w-4" />
+                      OCR (Text Recognition)
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuLabel>Advanced</DropdownMenuLabel>
+                  {onCompressClick && (
+                    <DropdownMenuItem onClick={onCompressClick}>
+                      <FileArrowDown className="mr-2 h-4 w-4" />
+                      Compress Images
+                    </DropdownMenuItem>
+                  )}
+                  {onCompareClick && (
+                    <DropdownMenuItem onClick={onCompareClick}>
+                      <ArrowsLeftRight className="mr-2 h-4 w-4" />
+                      Compare PDFs
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuLabel>View</DropdownMenuLabel>
+                  {onPresentationClick && (
+                    <DropdownMenuItem onClick={onPresentationClick}>
+                      <Presentation className="mr-2 h-4 w-4" />
+                      Presentation Mode
+                    </DropdownMenuItem>
+                  )}
+                  {onBookmarksClick && (
+                    <DropdownMenuItem onClick={onBookmarksClick}>
+                      <BookmarkSimple className="mr-2 h-4 w-4" />
+                      Bookmarks
+                    </DropdownMenuItem>
+                  )}
+                  {onPdfInfoClick && (
+                    <DropdownMenuItem onClick={onPdfInfoClick}>
+                      <Info className="mr-2 h-4 w-4" />
+                      PDF Info
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <div className="w-px h-6 bg-border/50 mx-1 hidden md:block" aria-hidden="true" />
+
               {onExportClick && (
                 <Tooltip>
                   <TooltipTrigger asChild>
