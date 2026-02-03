@@ -240,14 +240,13 @@ test.describe('Export with Modifications', () => {
       await toolsBtn.waitFor({ state: 'visible', timeout: 10000 })
       await toolsBtn.click({ timeout: 10000 })
       await page.waitForTimeout(500)
-        const exitItem = page.getByRole('menuitem', { name: /Exit/i })
-        if (await exitItem.isVisible()) {
-          await exitItem.click()
-          await page.waitForTimeout(500)
-        }
+      const exitItem = page.getByRole('menuitem', { name: /Exit/i })
+      if (await exitItem.isVisible()) {
+        await exitItem.click()
+        await page.waitForTimeout(500)
       }
     }
-    
+
     // Export
     await page.keyboard.press('Control+s')
     await page.waitForTimeout(1000)

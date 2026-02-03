@@ -433,8 +433,7 @@ test.describe('OCR Feature - UI Integration', () => {
 
     await page.waitForTimeout(500)
 
-    // Dialog should be openable via keyboard
-    const dialog = page.getByRole('dialog').or(page.locator('[role="dialog"]'))
-    // May or may not open depending on implementation
+    // Dialog may or may not open depending on keyboard navigation implementation
+    // This test validates that keyboard navigation through Tools menu works
   })
 })
