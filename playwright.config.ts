@@ -2,28 +2,27 @@ import { defineConfig, devices } from '@playwright/test'
 
 /**
  * See https://playwright.dev/docs/test-configuration.
+ * Configured for sharded parallel execution in CI.
  */
 export default defineConfig({
   testDir: './e2e',
-  
+
   /* Run tests in files in parallel */
   fullyParallel: true,
-  
+
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
-  
+
   /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
-  
-  /* Opt out of parallel tests on CI. */
+
+  /* Workers per shard - 2 in CI for stability, unlimited locally */
   workers: process.env.CI ? 2 : undefined,
-  
-  /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: [
-    ['html'],
-    ['list'],
-    ['json', { outputFile: 'playwright-report/results.json' }],
-  ],
+
+  /* Reporter configuration - blob for CI sharding, html and json for reporting */
+  reporter: process.env.CI
+    ? [['blob'], ['list'], ['json', { outputFile: 'playwright-report/results.json' }]]
+    : [['html'], ['list'], ['json', { outputFile: 'playwright-report/results.json' }]],
   
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
