@@ -28,7 +28,7 @@ describe('SplitMergeService', () => {
   }
 
   beforeEach(() => {
-    service = new SplitMergeService()
+    service = SplitMergeService.getInstance()
   })
 
   describe('getPageCount', () => {

@@ -120,7 +120,7 @@ export class OCRService {
       throw new Error('OCR engine not initialized. Call initialize() first.')
     }
 
-    const result = await this.worker.recognize(imageData)
+    const result = await this.worker.recognize(imageData as Parameters<TesseractWorker['recognize']>[0])
     const { data } = result
 
     // Extract lines and words from the nested block structure
