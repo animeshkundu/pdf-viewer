@@ -238,12 +238,17 @@ test.describe('OCR Feature - Extract Text Mode', () => {
 
       if (await cancelButton.count() > 0 && await cancelButton.isVisible()) {
         await cancelButton.click()
-
-        // App should remain responsive
-        const toolsButton = page.getByRole('button', { name: /Tools/i })
-        await expect(toolsButton).toBeVisible({ timeout: 5000 })
+        await page.waitForTimeout(500)
       }
     }
+
+    // Close any remaining dialog by pressing Escape
+    await page.keyboard.press('Escape')
+    await page.waitForTimeout(500)
+
+    // App should remain responsive - Tools button should be visible
+    const toolsButton = page.getByRole('button', { name: /Tools/i })
+    await expect(toolsButton).toBeVisible({ timeout: 10000 })
   })
 })
 

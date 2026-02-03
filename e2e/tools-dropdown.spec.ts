@@ -58,8 +58,14 @@ test.describe('Tools Dropdown - Menu Interaction', () => {
     await toolsButton.click({ timeout: 10000 })
     await page.waitForTimeout(1000) // Increased for menu to open
     
-    // Click outside with better positioning
-    await page.locator('body').click({ position: { x: 10, y: 10 }, timeout: 10000 })
+    // Click outside to close menu - use canvas or main content area
+    const canvas = page.locator('canvas').first()
+    if (await canvas.isVisible()) {
+      await canvas.click({ position: { x: 10, y: 10 }, timeout: 10000, force: true })
+    } else {
+      // Fallback to pressing Escape
+      await page.keyboard.press('Escape')
+    }
     await page.waitForTimeout(1000)
   })
 
