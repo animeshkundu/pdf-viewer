@@ -73,9 +73,9 @@ test.describe('Watermark Feature - Complete Workflow', () => {
     await expect(page.getByText(/Color/i)).toBeVisible()
     await expect(page.getByText(/Position/i)).toBeVisible()
 
-    // Verify position options
+    // Verify position options (use exact match to avoid ambiguity with "Top Center", "Bottom Center")
     await expect(page.getByText(/Top Left/i)).toBeVisible()
-    await expect(page.getByText(/Center/i)).toBeVisible()
+    await expect(page.getByText('Center', { exact: true })).toBeVisible()
     await expect(page.getByText(/Diagonal/i)).toBeVisible()
   })
 
@@ -427,8 +427,8 @@ test.describe('Split PDF Feature - Complete Workflow', () => {
     const rangesRadio = page.getByLabel(/Split by page ranges/i)
     await rangesRadio.click()
 
-    // Enter range
-    const rangeInput = page.getByLabel(/Page Ranges/i)
+    // Enter range (use first() to avoid ambiguity)
+    const rangeInput = page.getByLabel(/Page Ranges/i).first()
     await rangeInput.fill('1-2, 3-5')
 
     // Set up download listener
@@ -492,8 +492,8 @@ test.describe('Split PDF Feature - Complete Workflow', () => {
     await splitButton.click()
     await page.waitForTimeout(FEATURE_TIMEOUTS.DIALOG_OPEN)
 
-    // Enter invalid range
-    const rangeInput = page.getByLabel(/Page Ranges/i)
+    // Enter invalid range (use first() to avoid ambiguity)
+    const rangeInput = page.getByLabel(/Page Ranges/i).first()
     await rangeInput.fill('1-999')
 
     // Click split
@@ -590,11 +590,18 @@ test.describe('Merge PDF Feature - Complete Workflow', () => {
     await fileInput.setInputFiles([pdfPath1, pdfPath2])
     await page.waitForTimeout(1000)
 
-    // Remove first file (click trash button)
-    const trashButtons = page.locator('button').filter({ has: page.locator('svg') })
-    // Find the trash button in the file list
-    const firstTrashButton = page.locator('[class*="rounded-md border"]').first().getByRole('button')
-    await firstTrashButton.click()
+    // Remove first file (click trash/remove button in the file list)
+    // Use semantic selector - find buttons with trash icon aria-label or delete name
+    const removeButtons = page.getByRole('button', { name: /remove|delete|trash/i })
+    if (await removeButtons.first().isVisible()) {
+      await removeButtons.first().click()
+    } else {
+      // Fallback: find by position in file list
+      const fileListItems = page.locator('[role="listitem"], .file-item, [data-file-item]')
+      const firstItem = fileListItems.first()
+      const removeBtn = firstItem.getByRole('button').first()
+      await removeBtn.click()
+    }
     await page.waitForTimeout(FEATURE_TIMEOUTS.SHORT)
 
     // File count should update

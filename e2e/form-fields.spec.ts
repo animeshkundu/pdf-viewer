@@ -32,6 +32,56 @@ async function uploadPdf(page: Page, fileName: string) {
   await page.waitForTimeout(2000)
 }
 
+/**
+ * Helper to find and click the form mode button
+ * The button is called "Forms" in the main toolbar, or "Fill Form" in the FormToolbar
+ * Returns true if form button was found and clicked, false otherwise
+ */
+async function enableFormMode(page: Page): Promise<boolean> {
+  // First try the main toolbar "Forms" button
+  const formsButton = page.getByRole('button', { name: /^Forms$/i })
+  if (await formsButton.isVisible()) {
+    await formsButton.click()
+    await page.waitForTimeout(FORM_TIMEOUTS.SHORT)
+    return true
+  }
+
+  // Then try "Fill Form" button in FormToolbar
+  const fillFormButton = page.getByRole('button', { name: /Fill Form/i })
+  if (await fillFormButton.isVisible()) {
+    await fillFormButton.click()
+    await page.waitForTimeout(FORM_TIMEOUTS.SHORT)
+    return true
+  }
+
+  // Also try pressing 'F' keyboard shortcut
+  await page.keyboard.press('f')
+  await page.waitForTimeout(FORM_TIMEOUTS.SHORT)
+
+  // Check if form mode was enabled
+  const formInputs = page.locator('.form-field-overlay input, .form-field input')
+  const hasFormInputs = await formInputs.count() > 0
+
+  return hasFormInputs
+}
+
+/**
+ * Check if the PDF has detected form fields
+ * Returns true if form fields are detected, false otherwise
+ */
+async function hasFormFields(page: Page): Promise<boolean> {
+  // Look for form-related indicators
+  const formsButton = page.getByRole('button', { name: /^Forms$/i })
+  const fillFormButton = page.getByRole('button', { name: /Fill Form/i })
+  const fieldIndicator = page.getByText(/field.*detected/i)
+
+  const hasFormsButton = await formsButton.isVisible().catch(() => false)
+  const hasFillFormButton = await fillFormButton.isVisible().catch(() => false)
+  const hasFieldIndicator = await fieldIndicator.count() > 0
+
+  return hasFormsButton || hasFillFormButton || hasFieldIndicator
+}
+
 // ============================================================================
 // FORM FIELD DETECTION
 // ============================================================================
@@ -97,28 +147,24 @@ test.describe('Form Mode Toggle', () => {
     await page.waitForLoadState('networkidle')
   })
 
-  test('should toggle form mode with Fill Form button', async ({ page }) => {
+  test('should toggle form mode with Forms button', async ({ page }) => {
     await uploadPdf(page, 'form-test.pdf')
     await page.waitForTimeout(FORM_TIMEOUTS.FORM_LOAD)
 
-    // Find Fill Form button
-    const fillFormButton = page.getByRole('button', { name: /Fill Form/i })
+    // Check if PDF has form fields
+    const hasFields = await hasFormFields(page)
 
-    if (await fillFormButton.isVisible()) {
-      // Click to enable form mode
-      await fillFormButton.click()
+    if (hasFields) {
+      // Enable form mode using helper
+      const enabled = await enableFormMode(page)
+      expect(enabled).toBe(true)
+
+      // Toggle off by pressing 'f' again or clicking the button
+      await page.keyboard.press('f')
       await page.waitForTimeout(FORM_TIMEOUTS.SHORT)
-
-      // Button should be in active/default state
-      const isActive = await fillFormButton.evaluate(el => {
-        return el.getAttribute('data-state') === 'on' ||
-          el.classList.contains('bg-primary') ||
-          el.getAttribute('aria-pressed') === 'true'
-      }).catch(() => false)
-
-      // Click again to disable
-      await fillFormButton.click()
-      await page.waitForTimeout(FORM_TIMEOUTS.SHORT)
+    } else {
+      // Skip test if no form fields detected - this is expected for some PDFs
+      test.skip()
     }
   })
 
@@ -151,11 +197,7 @@ test.describe('Text Input Fields', () => {
     await page.waitForTimeout(FORM_TIMEOUTS.FORM_LOAD)
 
     // Enable form mode if needed
-    const fillFormButton = page.getByRole('button', { name: /Fill Form/i })
-    if (await fillFormButton.isVisible()) {
-      await fillFormButton.click()
-      await page.waitForTimeout(FORM_TIMEOUTS.SHORT)
-    }
+    await enableFormMode(page)
 
     // Look for form field overlay inputs
     const formInputs = page.locator('.form-field-overlay input, input[aria-label]')
@@ -170,11 +212,7 @@ test.describe('Text Input Fields', () => {
     await page.waitForTimeout(FORM_TIMEOUTS.FORM_LOAD)
 
     // Enable form mode
-    const fillFormButton = page.getByRole('button', { name: /Fill Form/i })
-    if (await fillFormButton.isVisible()) {
-      await fillFormButton.click()
-      await page.waitForTimeout(FORM_TIMEOUTS.SHORT)
-    }
+    await enableFormMode(page)
 
     // Find first text input in form overlay
     const textInput = page.locator('.form-field-overlay input[type="text"], .form-field-overlay input:not([type])').first()
@@ -194,11 +232,7 @@ test.describe('Text Input Fields', () => {
     await page.waitForTimeout(FORM_TIMEOUTS.FORM_LOAD)
 
     // Enable form mode
-    const fillFormButton = page.getByRole('button', { name: /Fill Form/i })
-    if (await fillFormButton.isVisible()) {
-      await fillFormButton.click()
-      await page.waitForTimeout(FORM_TIMEOUTS.SHORT)
-    }
+    await enableFormMode(page)
 
     // Find and fill text input
     const textInput = page.locator('.form-field-overlay input').first()
@@ -218,11 +252,7 @@ test.describe('Text Input Fields', () => {
     await page.waitForTimeout(FORM_TIMEOUTS.FORM_LOAD)
 
     // Enable form mode
-    const fillFormButton = page.getByRole('button', { name: /Fill Form/i })
-    if (await fillFormButton.isVisible()) {
-      await fillFormButton.click()
-      await page.waitForTimeout(FORM_TIMEOUTS.SHORT)
-    }
+    await enableFormMode(page)
 
     // Focus first input
     const firstInput = page.locator('.form-field-overlay input').first()
@@ -257,11 +287,7 @@ test.describe('Checkbox Fields', () => {
     await page.waitForTimeout(FORM_TIMEOUTS.FORM_LOAD)
 
     // Enable form mode
-    const fillFormButton = page.getByRole('button', { name: /Fill Form/i })
-    if (await fillFormButton.isVisible()) {
-      await fillFormButton.click()
-      await page.waitForTimeout(FORM_TIMEOUTS.SHORT)
-    }
+    await enableFormMode(page)
 
     // Look for checkbox in form overlay
     const checkboxes = page.locator('.form-field-overlay [role="checkbox"], .form-field-overlay input[type="checkbox"]')
@@ -276,11 +302,7 @@ test.describe('Checkbox Fields', () => {
     await page.waitForTimeout(FORM_TIMEOUTS.FORM_LOAD)
 
     // Enable form mode
-    const fillFormButton = page.getByRole('button', { name: /Fill Form/i })
-    if (await fillFormButton.isVisible()) {
-      await fillFormButton.click()
-      await page.waitForTimeout(FORM_TIMEOUTS.SHORT)
-    }
+    await enableFormMode(page)
 
     // Find checkbox
     const checkbox = page.locator('.form-field-overlay [role="checkbox"]').first()
@@ -304,11 +326,7 @@ test.describe('Checkbox Fields', () => {
     await page.waitForTimeout(FORM_TIMEOUTS.FORM_LOAD)
 
     // Enable form mode
-    const fillFormButton = page.getByRole('button', { name: /Fill Form/i })
-    if (await fillFormButton.isVisible()) {
-      await fillFormButton.click()
-      await page.waitForTimeout(FORM_TIMEOUTS.SHORT)
-    }
+    await enableFormMode(page)
 
     // Find and check checkbox
     const checkbox = page.locator('.form-field-overlay [role="checkbox"]').first()
@@ -344,11 +362,9 @@ test.describe('Form Reset', () => {
     await page.waitForTimeout(FORM_TIMEOUTS.FORM_LOAD)
 
     // Enable form mode
-    const fillFormButton = page.getByRole('button', { name: /Fill Form/i })
-    if (await fillFormButton.isVisible()) {
-      await fillFormButton.click()
-      await page.waitForTimeout(FORM_TIMEOUTS.SHORT)
+    const formEnabled = await enableFormMode(page)
 
+    if (formEnabled) {
       // Make a change
       const textInput = page.locator('.form-field-overlay input').first()
       if (await textInput.isVisible()) {
@@ -372,11 +388,9 @@ test.describe('Form Reset', () => {
     await page.waitForTimeout(FORM_TIMEOUTS.FORM_LOAD)
 
     // Enable form mode
-    const fillFormButton = page.getByRole('button', { name: /Fill Form/i })
-    if (await fillFormButton.isVisible()) {
-      await fillFormButton.click()
-      await page.waitForTimeout(FORM_TIMEOUTS.SHORT)
+    const formEnabled = await enableFormMode(page)
 
+    if (formEnabled) {
       // Make a change
       const textInput = page.locator('.form-field-overlay input').first()
       if (await textInput.isVisible()) {
@@ -409,11 +423,7 @@ test.describe('Form Accessibility', () => {
     await page.waitForTimeout(FORM_TIMEOUTS.FORM_LOAD)
 
     // Enable form mode
-    const fillFormButton = page.getByRole('button', { name: /Fill Form/i })
-    if (await fillFormButton.isVisible()) {
-      await fillFormButton.click()
-      await page.waitForTimeout(FORM_TIMEOUTS.SHORT)
-    }
+    await enableFormMode(page)
 
     // Check that form inputs have aria-label
     const formInputs = page.locator('.form-field-overlay input[aria-label], .form-field-overlay [role="checkbox"][aria-label]')
@@ -432,11 +442,7 @@ test.describe('Form Accessibility', () => {
     await page.waitForTimeout(FORM_TIMEOUTS.FORM_LOAD)
 
     // Enable form mode
-    const fillFormButton = page.getByRole('button', { name: /Fill Form/i })
-    if (await fillFormButton.isVisible()) {
-      await fillFormButton.click()
-      await page.waitForTimeout(FORM_TIMEOUTS.SHORT)
-    }
+    await enableFormMode(page)
 
     // Check for aria-required attribute on form fields
     const requiredFields = page.locator('.form-field-overlay [aria-required="true"]')
@@ -462,11 +468,9 @@ test.describe('Form Data Export', () => {
     await page.waitForTimeout(FORM_TIMEOUTS.FORM_LOAD)
 
     // Enable form mode
-    const fillFormButton = page.getByRole('button', { name: /Fill Form/i })
-    if (await fillFormButton.isVisible()) {
-      await fillFormButton.click()
-      await page.waitForTimeout(FORM_TIMEOUTS.SHORT)
+    const formEnabled = await enableFormMode(page)
 
+    if (formEnabled) {
       // Fill in form data
       const textInput = page.locator('.form-field-overlay input').first()
       if (await textInput.isVisible()) {
@@ -510,11 +514,9 @@ test.describe('Form Field Edge Cases', () => {
     await page.waitForTimeout(FORM_TIMEOUTS.FORM_LOAD)
 
     // Enable form mode
-    const fillFormButton = page.getByRole('button', { name: /Fill Form/i })
-    if (await fillFormButton.isVisible()) {
-      await fillFormButton.click()
-      await page.waitForTimeout(FORM_TIMEOUTS.SHORT)
+    const formEnabled = await enableFormMode(page)
 
+    if (formEnabled) {
       // Look for read-only inputs (if any)
       const readOnlyInputs = page.locator('.form-field-overlay input[disabled]')
       const readOnlyCount = await readOnlyInputs.count()
@@ -532,11 +534,9 @@ test.describe('Form Field Edge Cases', () => {
     await page.waitForTimeout(FORM_TIMEOUTS.FORM_LOAD)
 
     // Enable form mode
-    const fillFormButton = page.getByRole('button', { name: /Fill Form/i })
-    if (await fillFormButton.isVisible()) {
-      await fillFormButton.click()
-      await page.waitForTimeout(FORM_TIMEOUTS.SHORT)
+    const formEnabled = await enableFormMode(page)
 
+    if (formEnabled) {
       // Find text input with maxlength
       const inputWithMaxLength = page.locator('.form-field-overlay input[maxlength]').first()
 
@@ -562,11 +562,9 @@ test.describe('Form Field Edge Cases', () => {
     await page.waitForTimeout(FORM_TIMEOUTS.FORM_LOAD)
 
     // Enable form mode
-    const fillFormButton = page.getByRole('button', { name: /Fill Form/i })
-    if (await fillFormButton.isVisible()) {
-      await fillFormButton.click()
-      await page.waitForTimeout(FORM_TIMEOUTS.SHORT)
+    const formEnabled = await enableFormMode(page)
 
+    if (formEnabled) {
       // Fill in a field
       const textInput = page.locator('.form-field-overlay input').first()
       if (await textInput.isVisible()) {
