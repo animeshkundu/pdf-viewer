@@ -304,7 +304,7 @@ test.describe('UX - Responsive Behavior', () => {
     await expect(toolbar).toBeVisible()
     
     // Most buttons should be visible
-    const openButton = page.getByRole('button', { name: /Open File/i })
+    const openButton = page.getByRole('button', { name: /Open PDF file/i })
     await expect(openButton).toBeVisible()
   })
 

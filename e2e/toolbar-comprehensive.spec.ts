@@ -27,7 +27,7 @@ test.describe('Toolbar - File Operations', () => {
     await page.goto('/')
     await uploadPdfAndWaitForLoad(page)
     
-    const openButton = page.getByRole('button', { name: /Open File/i })
+    const openButton = page.getByRole('button', { name: /Open PDF file/i })
     await expect(openButton).toBeVisible()
   })
 
@@ -35,7 +35,7 @@ test.describe('Toolbar - File Operations', () => {
     await page.goto('/')
     await uploadPdfAndWaitForLoad(page)
     
-    const openButton = page.getByRole('button', { name: /Open File/i })
+    const openButton = page.getByRole('button', { name: /Open PDF file/i })
     await expect(openButton).toBeVisible()
     
     // Check that clicking the button triggers the file input
@@ -434,9 +434,9 @@ test.describe('Toolbar - Tooltips', () => {
     await page.goto('/')
     await uploadPdfAndWaitForLoad(page)
     
-    const openButton = page.getByRole('button', { name: /Open File/i })
+    const openButton = page.getByRole('button', { name: /Open PDF file/i })
     await openButton.hover()
-    await page.waitForTimeout(500)
+    await page.waitForTimeout(700)
     
     // Tooltip should appear
     const tooltip = page.getByText(/Open PDF file/)
