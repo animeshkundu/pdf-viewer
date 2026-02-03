@@ -45,19 +45,23 @@ test.describe('Search Feature Tests', () => {
     const searchInput = page.getByPlaceholder('Search in document...')
     await searchInput.waitFor({ state: 'visible', timeout: 10000 })
 
-    // Try closing with close button first (more reliable)
-    const closeButton = page.getByRole('button', { name: /Close search/i })
-    if (await closeButton.count() > 0 && await closeButton.isVisible()) {
-      await closeButton.click()
-    } else {
-      // Fall back to Escape key
-      await page.keyboard.press('Escape')
-    }
-    await page.waitForTimeout(1000)
+    // Close search with Escape key
+    await page.keyboard.press('Escape')
 
-    // Search input should be hidden or the search panel should be collapsed
-    const isHidden = await searchInput.isHidden().catch(() => true)
-    expect(isHidden || await page.locator('[data-search-open="false"]').count() > 0).toBeTruthy()
+    // Wait for the CSS transition to complete (200ms transition + buffer)
+    await page.waitForTimeout(1500)
+
+    // The search bar uses CSS visibility - check if effectively closed
+    // by verifying the input is no longer interactive (has pointer-events: none on container)
+    const isInputFocusable = await searchInput.evaluate(el => {
+      const container = el.closest('[class*="absolute"]')
+      if (!container) return true
+      const style = getComputedStyle(container)
+      return style.pointerEvents !== 'none' && style.opacity !== '0'
+    }).catch(() => false)
+
+    // Search is closed when input container is not focusable
+    expect(isInputFocusable).toBeFalsy()
   })
 
   test('searches for text and finds results', async ({ page }) => {

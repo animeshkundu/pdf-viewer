@@ -67,18 +67,23 @@ test.describe('Complete User Workflows', () => {
     await page.keyboard.press('Enter')
     await page.waitForTimeout(1000)
     
-    // Step 6: Close search - try close button first, then Escape
-    const closeButton = page.getByRole('button', { name: /Close search/i })
-    if (await closeButton.isVisible().catch(() => false)) {
-      await closeButton.click()
-    } else {
-      await page.keyboard.press('Escape')
-    }
-    await page.waitForTimeout(500)
+    // Step 6: Close search with Escape key
+    await page.keyboard.press('Escape')
 
-    // Verify search closed or collapsed
-    const isSearchHidden = await searchInput.isHidden().catch(() => true)
-    expect(isSearchHidden).toBeTruthy()
+    // Wait for the CSS transition to complete (200ms transition + buffer)
+    await page.waitForTimeout(1500)
+
+    // The search bar uses CSS visibility - check if effectively closed
+    // by verifying the input container is no longer interactive
+    const isInputFocusable = await searchInput.evaluate(el => {
+      const container = el.closest('[class*="absolute"]')
+      if (!container) return true
+      const style = getComputedStyle(container)
+      return style.pointerEvents !== 'none' && style.opacity !== '0'
+    }).catch(() => false)
+
+    // Search is closed when input container is not focusable
+    expect(isInputFocusable).toBeFalsy()
   })
 
   test('Workflow: Load PDF → Add annotations → Save → Verify persistence', async ({ page }) => {
