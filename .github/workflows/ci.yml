@@ -177,7 +177,7 @@ jobs:
           if [ -f "playwright-report/results.json" ]; then
             echo "## E2E Test Results" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
-            npx playwright show-report --reporter=json | jq -r '.stats | "- Total tests: \(.expected + .unexpected + .flaky + .skipped)\n- Passed: \(.expected)\n- Failed: \(.unexpected)\n- Flaky: \(.flaky)\n- Skipped: \(.skipped)"' >> $GITHUB_STEP_SUMMARY || echo "Test summary generation failed" >> $GITHUB_STEP_SUMMARY
+            jq -r '.stats | "- Total tests: \(.expected + .unexpected + .flaky + .skipped)\n- Passed: \(.expected)\n- Failed: \(.unexpected)\n- Flaky: \(.flaky)\n- Skipped: \(.skipped)"' < playwright-report/results.json >> $GITHUB_STEP_SUMMARY || echo "Test summary generation failed" >> $GITHUB_STEP_SUMMARY
           fi
 
       - name: Upload E2E test results

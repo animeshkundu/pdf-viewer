@@ -16,13 +16,24 @@ async function uploadPDF(page: Page, filename: string) {
   const fileInput = page.locator('input[type="file"]').first()
   const pdfPath = path.join(__dirname, 'fixtures', filename)
   await fileInput.setInputFiles(pdfPath)
+  
+  // Wait for PDF to be rendered - look for the canvas element
+  await page.waitForSelector('canvas[data-testid="pdf-canvas"], canvas.pdf-canvas, canvas', { 
+    state: 'visible',
+    timeout: 10000 
+  })
   await page.waitForLoadState('networkidle')
-  await page.waitForTimeout(2000) // Wait for PDF rendering
 }
 
 // Helper to wait for dialog
-async function waitForDialog(page: Page, timeout = 1000) {
-  await page.waitForTimeout(timeout)
+async function waitForDialog(page: Page, timeout = 3000) {
+  await page.waitForSelector('[role="dialog"]', { 
+    state: 'visible',
+    timeout 
+  }).catch(() => {
+    // Fallback to timeout if dialog selector not found
+    return page.waitForTimeout(timeout)
+  })
 }
 
 test.describe('Complete User Workflows', () => {
