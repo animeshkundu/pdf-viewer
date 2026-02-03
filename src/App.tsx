@@ -443,7 +443,7 @@ function AppContentInner() {
         onClose={() => setIsPdfToImagesOpen(false)}
         pdfBytes={getOriginalBytes()}
         pageCount={document?.numPages || 0}
-        originalFilename={getFilename() || undefined}
+        filename={getFilename() || undefined}
       />
 
       <OCRDialog
