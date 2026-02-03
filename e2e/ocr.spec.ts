@@ -180,8 +180,8 @@ test.describe('OCR Feature - Extract Text Mode', () => {
     await uploadPdf(page, 'sample.pdf')
     await openOCRDialog(page)
 
-    // Look for a start/process/run button
-    const startButton = page.getByRole('button', { name: /start|process|run|extract|ocr/i })
+    // Look for the OCR action button (either "Make Searchable" or "Extract Text")
+    const startButton = page.getByRole('button', { name: /Make Searchable|Extract Text/i })
     await expect(startButton).toBeVisible({ timeout: 5000 })
   })
 
@@ -198,8 +198,8 @@ test.describe('OCR Feature - Extract Text Mode', () => {
       await extractTextOption.click()
     }
 
-    // Find and click start button
-    const startButton = page.getByRole('button', { name: /start|process|run|extract/i }).first()
+    // Find and click start button (either "Make Searchable" or "Extract Text")
+    const startButton = page.getByRole('button', { name: /Make Searchable|Extract Text/i }).first()
 
     if (await startButton.count() > 0 && await startButton.isEnabled()) {
       await startButton.click()
@@ -224,8 +224,8 @@ test.describe('OCR Feature - Extract Text Mode', () => {
     await uploadPdf(page, 'multi-page-test.pdf')
     await openOCRDialog(page)
 
-    // Start OCR
-    const startButton = page.getByRole('button', { name: /start|process|run|extract/i }).first()
+    // Start OCR (button text is "Make Searchable" or "Extract Text")
+    const startButton = page.getByRole('button', { name: /Make Searchable|Extract Text/i }).first()
 
     if (await startButton.count() > 0 && await startButton.isEnabled()) {
       await startButton.click()
@@ -281,8 +281,8 @@ test.describe('OCR Feature - Make Searchable Mode', () => {
       await makeSearchableOption.click()
     }
 
-    // Start OCR
-    const startButton = page.getByRole('button', { name: /start|process|run|make searchable/i }).first()
+    // Start OCR (button text is "Make Searchable" or "Extract Text")
+    const startButton = page.getByRole('button', { name: /Make Searchable|Extract Text/i }).first()
 
     if (await startButton.count() > 0 && await startButton.isEnabled()) {
       // Set up download listener
@@ -342,8 +342,8 @@ test.describe('OCR Feature - Error Handling', () => {
     await uploadPdf(page, 'sample.pdf')
     await openOCRDialog(page)
 
-    // Interact with dialog
-    const startButton = page.getByRole('button', { name: /start|process|run|extract/i }).first()
+    // Interact with dialog (button text is "Make Searchable" or "Extract Text")
+    const startButton = page.getByRole('button', { name: /Make Searchable|Extract Text/i }).first()
 
     if (await startButton.count() > 0 && await startButton.isEnabled()) {
       await startButton.click()
@@ -393,8 +393,8 @@ test.describe('OCR Feature - UI Integration', () => {
     await uploadPdf(page, 'sample.pdf')
     await openOCRDialog(page)
 
-    // Start OCR
-    const startButton = page.getByRole('button', { name: /start|process|run|extract/i }).first()
+    // Start OCR (button text is "Make Searchable" or "Extract Text")
+    const startButton = page.getByRole('button', { name: /Make Searchable|Extract Text/i }).first()
 
     if (await startButton.count() > 0 && await startButton.isEnabled()) {
       await startButton.click()
