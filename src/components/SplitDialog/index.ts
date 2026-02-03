@@ -1,0 +1,1 @@
+export { SplitDialog } from './SplitDialog'

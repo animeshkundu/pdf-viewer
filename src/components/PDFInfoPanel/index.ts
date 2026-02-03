@@ -1,0 +1,1 @@
+export { PDFInfoPanel } from './PDFInfoPanel'
