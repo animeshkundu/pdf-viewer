@@ -24,6 +24,7 @@ import {
   Presentation,
   BookmarkSimple,
   Info,
+  Cursor,
 } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -69,6 +70,8 @@ interface ToolbarProps {
   onPresentationClick?: () => void
   onBookmarksClick?: () => void
   onPdfInfoClick?: () => void
+  onTextEditClick?: () => void
+  isTextEditOpen?: boolean
 }
 
 export function Toolbar({
@@ -96,6 +99,8 @@ export function Toolbar({
   onPresentationClick,
   onBookmarksClick,
   onPdfInfoClick,
+  onTextEditClick,
+  isTextEditOpen,
 }: ToolbarProps) {
   const { zoom, setZoom, document, loadDocument, currentPage, setCurrentPage } = usePDF()
   const { hasWatermark } = useWatermark()
@@ -383,6 +388,14 @@ export function Toolbar({
                   <TooltipContent>More PDF tools</TooltipContent>
                 </Tooltip>
                 <DropdownMenuContent align="start" className="w-56">
+                  <DropdownMenuLabel>Edit</DropdownMenuLabel>
+                  {onTextEditClick && (
+                    <DropdownMenuItem onClick={onTextEditClick}>
+                      <Cursor className="mr-2 h-4 w-4" />
+                      {isTextEditOpen ? 'Exit Text Edit Mode' : 'Edit Text'}
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuSeparator />
                   <DropdownMenuLabel>Security</DropdownMenuLabel>
                   {onSanitizeClick && (
                     <DropdownMenuItem onClick={onSanitizeClick}>

@@ -183,13 +183,18 @@ export class OCRService {
 
     this.updateProgress('loading', 0, 'Loading PDF...')
 
+    // Copy the buffer to avoid detached ArrayBuffer issues
+    // pdf.js may transfer the buffer, making it unavailable for pdf-lib
+    const pdfBytesForPdfJs = pdfBytes.slice(0)
+    const pdfBytesForPdfLib = pdfBytes.slice(0)
+
     // Load source PDF with pdf.js for rendering
-    const loadingTask = pdfjsLib.getDocument({ data: pdfBytes })
+    const loadingTask = pdfjsLib.getDocument({ data: pdfBytesForPdfJs })
     const pdfDoc = await loadingTask.promise
     const pageCount = pdfDoc.numPages
 
     // Load source PDF with pdf-lib for modification
-    const pdfLibDoc = await PDFDocument.load(pdfBytes)
+    const pdfLibDoc = await PDFDocument.load(pdfBytesForPdfLib)
 
     let totalConfidence = 0
     let processedPages = 0
@@ -303,8 +308,11 @@ export class OCRService {
 
     this.updateProgress('loading', 0, 'Loading PDF...')
 
+    // Copy the buffer to avoid detached ArrayBuffer issues
+    const pdfBytesCopy = pdfBytes.slice(0)
+
     // Load PDF with pdf.js for rendering
-    const loadingTask = pdfjsLib.getDocument({ data: pdfBytes })
+    const loadingTask = pdfjsLib.getDocument({ data: pdfBytesCopy })
     const pdfDoc = await loadingTask.promise
     const pageCount = pdfDoc.numPages
 

@@ -11,6 +11,7 @@ import { SecurityProvider } from './hooks/useSecurity'
 import { ConversionProvider } from './hooks/useConversion'
 import { OCRProvider } from './hooks/useOCR'
 import { AdvancedToolsProvider } from './hooks/useAdvancedTools'
+import { TextEditProvider, useTextEdit } from './hooks/useTextEdit'
 import { useUnsavedChanges } from './hooks/useUnsavedChanges'
 import { Toolbar } from './components/Toolbar/Toolbar'
 import { MarkupToolbar } from './components/MarkupToolbar/MarkupToolbar'
@@ -47,6 +48,8 @@ function AppContentInner() {
   const { hasForm, isFormMode, setIsFormMode } = useForm()
   const { watermark } = useWatermark()
   const { pageNumberConfig } = usePageNumber()
+  const { state: textEditState, enableTextEdit, disableTextEdit } = useTextEdit()
+  const isTextEditEnabled = textEditState.isEnabled
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [isMarkupOpen, setIsMarkupOpen] = useState(false)
@@ -145,6 +148,9 @@ function AppContentInner() {
         setIsMarkupOpen(false)
         setIsFormOpen(false)
         setIsShortcutsOpen(false)
+        if (isTextEditEnabled) {
+          disableTextEdit()
+        }
         return
       }
 
@@ -253,7 +259,7 @@ function AppContentInner() {
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [document, currentPage, setCurrentPage, isMarkupOpen, isFormOpen, hasForm, isFormMode, zoom, setZoom, canUndo, canRedo, undo, redo, setActiveTool, deleteSelectedAnnotation, setIsFormMode])
+  }, [document, currentPage, setCurrentPage, isMarkupOpen, isFormOpen, hasForm, isFormMode, zoom, setZoom, canUndo, canRedo, undo, redo, setActiveTool, deleteSelectedAnnotation, setIsFormMode, isTextEditEnabled, disableTextEdit])
 
   useEffect(() => {
     if (annotations.length > 0 || transformations.size > 0 || pageOrder.length > 0 || blankPages.length > 0 || watermark !== null || pageNumberConfig !== null) {
@@ -323,6 +329,14 @@ function AppContentInner() {
         onExportClick={() => setIsExportOpen(true)}
         hasUnsavedChanges={hasUnsavedChanges}
         onKeyboardShortcutsClick={() => setIsShortcutsOpen(true)}
+        onTextEditClick={() => {
+          if (isTextEditEnabled) {
+            disableTextEdit()
+          } else {
+            enableTextEdit()
+          }
+        }}
+        isTextEditOpen={isTextEditEnabled}
       />
       
       <MarkupToolbar 
@@ -473,6 +487,15 @@ function AppContentInner() {
   )
 }
 
+function TextEditProviderWithPdfBytes() {
+  const { getOriginalBytes } = usePDF()
+  return (
+    <TextEditProvider pdfBytes={getOriginalBytes()}>
+      <AppContentInner />
+    </TextEditProvider>
+  )
+}
+
 function AppContent() {
   const { document } = usePDF()
 
@@ -486,7 +509,7 @@ function AppContent() {
                 <ConversionProvider>
                   <OCRProvider>
                     <AdvancedToolsProvider>
-                      <AppContentInner />
+                      <TextEditProviderWithPdfBytes />
                     </AdvancedToolsProvider>
                   </OCRProvider>
                 </ConversionProvider>

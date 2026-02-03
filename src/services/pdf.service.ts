@@ -35,7 +35,8 @@ export class PDFService {
       this.clearCache()
       
       const arrayBuffer = await file.arrayBuffer()
-      this.originalBytes = arrayBuffer
+      // Store a copy BEFORE pdf.js potentially transfers/detaches the original
+      this.originalBytes = arrayBuffer.slice(0)
       this.filename = file.name
       const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer })
 

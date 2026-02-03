@@ -3,12 +3,16 @@ import type { PDFPageProxy } from 'pdfjs-dist'
 import { usePDF } from '@/hooks/usePDF.tsx'
 import { usePageManagement } from '@/hooks/usePageManagement'
 import { useGestures } from '@/hooks/useGestures'
+import { useTextEdit } from '@/hooks/useTextEdit'
 import { PDFCanvas } from './PDFCanvas'
+import { TextEditLayer } from '@/components/TextEditLayer'
 import { pdfService } from '@/services/pdf.service'
 
 export function PDFViewer() {
   const { document, zoom, currentPage, setCurrentPage, setZoom } = usePDF()
   const { pageOrder, isDeleted, getRotation } = usePageManagement()
+  const { state: textEditState } = useTextEdit()
+  const isTextEditEnabled = textEditState.isEnabled
   const [pages, setPages] = useState<PDFPageProxy[]>([])
   const [visiblePages, setVisiblePages] = useState<Set<number>>(new Set())
   const containerRef = useRef<HTMLDivElement>(null)
@@ -243,13 +247,23 @@ export function PDFViewer() {
               className="relative shadow-2xl rounded-lg overflow-hidden transition-shadow duration-300 hover:shadow-3xl"
             >
               {isVisible ? (
-                <PDFCanvas
-                  page={page}
-                  scale={effectiveZoom}
-                  pageNumber={pageNum}
-                />
+                <>
+                  <PDFCanvas
+                    page={page}
+                    scale={effectiveZoom}
+                    pageNumber={pageNum}
+                  />
+                  {isTextEditEnabled && (
+                    <TextEditLayer
+                      pageNum={pageNum}
+                      scale={effectiveZoom}
+                      containerWidth={page.getViewport({ scale: effectiveZoom, rotation }).width}
+                      containerHeight={page.getViewport({ scale: effectiveZoom, rotation }).height}
+                    />
+                  )}
+                </>
               ) : (
-                <div 
+                <div
                   className="bg-white shadow-xl"
                   style={{
                     width: page.getViewport({ scale: effectiveZoom, rotation }).width,
