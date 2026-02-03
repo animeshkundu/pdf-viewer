@@ -2,6 +2,8 @@
 # Description: Full validation pipeline for the PDF Viewer/Editor project
 # Usage: ./scripts/validate.sh
 #
+# If you get a permission denied error, run: chmod +x scripts/validate.sh
+#
 # This script runs all validation checks:
 # 1. ESLint for code quality
 # 2. TypeScript for type checking
