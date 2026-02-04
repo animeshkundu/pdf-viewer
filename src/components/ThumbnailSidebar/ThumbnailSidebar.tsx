@@ -284,9 +284,9 @@ export function ThumbnailSidebar({ isOpen, onClose }: ThumbnailSidebarProps) {
   }
 
   return (
-    <div className="border-r border-border/60 bg-gradient-to-b from-muted/30 to-muted/10 flex flex-col h-full w-full backdrop-blur-sm">
+    <div data-testid="thumbnail-sidebar" className="border-r border-border/60 bg-gradient-to-b from-muted/30 to-muted/10 flex flex-col h-full w-full backdrop-blur-sm">
       <div className="flex items-center justify-between px-4 py-4 border-b border-border/60 bg-white/50">
-        <h2 className="text-sm font-bold text-foreground tracking-wide uppercase">
+        <h2 data-testid="pages-heading" className="text-sm font-bold text-foreground tracking-wide uppercase">
           Pages <span className="text-xs font-normal text-muted-foreground ml-1">({visiblePageCount})</span>
         </h2>
         <div className="flex items-center gap-1">

@@ -126,7 +126,7 @@ export function MergeDialog({ isOpen, onClose }: MergeDialogProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg" data-testid="merge-dialog">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <GitMerge className="w-5 h-5" />
@@ -191,6 +191,7 @@ export function MergeDialog({ isOpen, onClose }: MergeDialogProps) {
                         className="h-8 w-8"
                         onClick={() => removeMergeFile(file.id)}
                         disabled={isProcessing}
+                        aria-label={`Remove ${file.name}`}
                       >
                         <Trash className="w-4 h-4" />
                       </Button>
