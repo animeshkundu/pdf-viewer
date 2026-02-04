@@ -104,6 +104,9 @@ async function exportAndReimport(page: Page): Promise<string> {
 
 /**
  * Open Tools menu and click a menu item
+ * NOTE: Only use for items that are actually in the Tools dropdown:
+ * - Edit Text, Sanitize PDF, Images to PDF, PDF to Images, OCR,
+ * - Compress Images, Compare PDFs, Presentation Mode, Bookmarks, PDF Info
  */
 async function openToolsMenuItem(page: Page, itemName: RegExp): Promise<void> {
   const toolsButton = page.getByRole('button', { name: /Tools/i })
@@ -113,6 +116,56 @@ async function openToolsMenuItem(page: Page, itemName: RegExp): Promise<void> {
   const menuItem = page.getByRole('menuitem', { name: itemName })
   await menuItem.click()
   await page.waitForTimeout(TIMEOUTS.SHORT)
+}
+
+/**
+ * Click a toolbar button (for buttons directly on toolbar like Watermark, Page Numbers)
+ */
+async function clickToolbarButton(page: Page, buttonName: RegExp): Promise<void> {
+  const button = page.getByRole('button', { name: buttonName })
+  await button.click()
+  await page.waitForTimeout(TIMEOUTS.SHORT)
+}
+
+/**
+ * Open thumbnail sidebar if not already open
+ */
+async function openThumbnailSidebar(page: Page): Promise<void> {
+  // Check if sidebar is already open by looking for thumbnails
+  const thumbnails = page.locator('.thumbnail-sidebar, [data-sidebar="thumbnails"]')
+  if (!(await thumbnails.isVisible())) {
+    // Try keyboard shortcut or button to open sidebar
+    const sidebarButton = page.getByRole('button', { name: /Thumbnails|Sidebar|Pages/i })
+    if (await sidebarButton.isVisible()) {
+      await sidebarButton.click()
+    } else {
+      // Try keyboard shortcut
+      await page.keyboard.press('t')
+    }
+    await page.waitForTimeout(TIMEOUTS.DEFAULT)
+  }
+}
+
+/**
+ * Right-click on a thumbnail to open context menu
+ */
+async function openThumbnailContextMenu(page: Page, pageNumber: number): Promise<void> {
+  await openThumbnailSidebar(page)
+
+  // Find the thumbnail for the specific page
+  const thumbnail = page.locator(`[data-page="${pageNumber}"], .thumbnail:nth-child(${pageNumber})`).first()
+
+  if (await thumbnail.isVisible()) {
+    await thumbnail.click({ button: 'right' })
+    await page.waitForTimeout(TIMEOUTS.SHORT)
+  } else {
+    // Fallback: find any thumbnail and right-click
+    const anyThumbnail = page.locator('.thumbnail, [data-thumbnail]').first()
+    if (await anyThumbnail.isVisible()) {
+      await anyThumbnail.click({ button: 'right' })
+      await page.waitForTimeout(TIMEOUTS.SHORT)
+    }
+  }
 }
 
 /**
@@ -164,31 +217,51 @@ async function getPageCount(page: Page): Promise<number> {
 }
 
 /**
- * Rotate the current page
+ * Rotate the current page via thumbnail sidebar context menu
  */
-async function rotatePage(page: Page, direction: 'cw' | 'ccw' = 'cw'): Promise<void> {
-  // Open page operations or use keyboard shortcut
-  const rotateButton = direction === 'cw'
-    ? page.getByRole('button', { name: /Rotate.*Right|Rotate.*Clockwise/i })
-    : page.getByRole('button', { name: /Rotate.*Left|Rotate.*Counter/i })
+async function rotatePage(page: Page, pageNumber: number = 1, direction: 'cw' | 'ccw' = 'cw'): Promise<void> {
+  // Open thumbnail context menu
+  await openThumbnailContextMenu(page, pageNumber)
 
-  if (await rotateButton.isVisible()) {
-    await rotateButton.click()
+  // Click the appropriate rotate option
+  const rotateMenuItemName = direction === 'cw'
+    ? /Rotate.*Right|Rotate.*Clockwise/i
+    : /Rotate.*Left|Rotate.*Counter/i
+
+  const rotateMenuItem = page.getByRole('menuitem', { name: rotateMenuItemName })
+  if (await rotateMenuItem.isVisible()) {
+    await rotateMenuItem.click()
+    await page.waitForTimeout(TIMEOUTS.DEFAULT)
   } else {
-    // Try through Tools menu
-    await openToolsMenuItem(page, /Page Management/i)
-    await page.waitForTimeout(TIMEOUTS.SHORT)
-
-    const rotateOption = direction === 'cw'
-      ? page.getByRole('button', { name: /Rotate.*90/i })
-      : page.getByRole('button', { name: /Rotate.*-90|Rotate.*270/i })
-
-    if (await rotateOption.isVisible()) {
-      await rotateOption.click()
+    // Fallback: try button with similar name
+    const rotateButton = page.getByRole('button', { name: rotateMenuItemName })
+    if (await rotateButton.isVisible()) {
+      await rotateButton.click()
+      await page.waitForTimeout(TIMEOUTS.DEFAULT)
     }
   }
+}
 
-  await page.waitForTimeout(TIMEOUTS.DEFAULT)
+/**
+ * Delete the current page via thumbnail sidebar context menu
+ */
+async function deletePage(page: Page, pageNumber: number = 1): Promise<void> {
+  // Open thumbnail context menu
+  await openThumbnailContextMenu(page, pageNumber)
+
+  // Click delete option
+  const deleteMenuItem = page.getByRole('menuitem', { name: /Delete.*Page/i })
+  if (await deleteMenuItem.isVisible()) {
+    await deleteMenuItem.click()
+    await page.waitForTimeout(TIMEOUTS.SHORT)
+
+    // Handle confirmation dialog if present
+    const confirmButton = page.getByRole('button', { name: /Delete|Confirm|Yes/i })
+    if (await confirmButton.isVisible()) {
+      await confirmButton.click()
+    }
+    await page.waitForTimeout(TIMEOUTS.DEFAULT)
+  }
 }
 
 // ============================================================================
@@ -298,23 +371,8 @@ test.describe('Page Management Round-Trip Persistence', () => {
       return
     }
 
-    // 2. Delete a page via Tools > Page Management
-    await openToolsMenuItem(page, /Page Management/i)
-    await page.waitForTimeout(TIMEOUTS.DEFAULT)
-
-    // Look for delete page button or option
-    const deleteButton = page.getByRole('button', { name: /Delete.*Page|Remove.*Page/i })
-    if (await deleteButton.isVisible()) {
-      await deleteButton.click()
-      await page.waitForTimeout(TIMEOUTS.DEFAULT)
-
-      // Confirm deletion if dialog appears
-      const confirmButton = page.getByRole('button', { name: /Confirm|Yes|Delete/i })
-      if (await confirmButton.isVisible()) {
-        await confirmButton.click()
-        await page.waitForTimeout(TIMEOUTS.DEFAULT)
-      }
-    }
+    // 2. Delete a page via thumbnail sidebar context menu
+    await deletePage(page, 1)
 
     // 3. Export and re-import
     const tempFile = await exportAndReimport(page)
@@ -333,44 +391,27 @@ test.describe('Page Management Round-Trip Persistence', () => {
     // 1. Upload PDF
     await uploadPdf(page, 'simple-test.pdf')
 
-    // 2. Open page management
-    await openToolsMenuItem(page, /Page Management/i)
-    await page.waitForTimeout(TIMEOUTS.DEFAULT)
+    // Get initial canvas dimensions
+    const canvas = page.locator('canvas').first()
+    const initialBox = await canvas.boundingBox()
 
-    // Look for the page management dialog/panel
-    const dialog = page.locator('[role="dialog"], .page-management-panel')
+    // 2. Rotate page via thumbnail sidebar context menu
+    await rotatePage(page, 1, 'cw')
 
-    // Find rotate button
-    const rotateButton = page.getByRole('button', { name: /Rotate/i }).first()
+    // 3. Export and re-import
+    const tempFile = await exportAndReimport(page)
 
-    if (await rotateButton.isVisible()) {
-      // Click rotate (90 degrees clockwise)
-      await rotateButton.click()
-      await page.waitForTimeout(TIMEOUTS.DEFAULT)
+    // 4. Verify rotation persisted by checking the PDF was re-loaded successfully
+    const reloadedCanvas = page.locator('canvas').first()
+    const finalBox = await reloadedCanvas.boundingBox()
 
-      // Close the dialog if needed
-      const closeButton = page.getByRole('button', { name: /Close|Done|Apply/i })
-      if (await closeButton.isVisible()) {
-        await closeButton.click()
-        await page.waitForTimeout(TIMEOUTS.DEFAULT)
-      }
+    // The rotation is applied - we can verify by checking the export was successful
+    // and the file can be re-loaded
+    expect(finalBox).not.toBeNull()
 
-      // 3. Export and re-import
-      const tempFile = await exportAndReimport(page)
-
-      // 4. Verify rotation persisted by checking canvas dimensions or transform
-      // After rotation, width and height should be swapped
-      const canvas = page.locator('canvas').first()
-      const dimensions = await canvas.boundingBox()
-
-      // The rotation is applied - we can verify by checking the export was successful
-      // and the file can be re-loaded
-      expect(dimensions).not.toBeNull()
-
-      // Cleanup
-      if (fs.existsSync(tempFile)) {
-        fs.unlinkSync(tempFile)
-      }
+    // Cleanup
+    if (fs.existsSync(tempFile)) {
+      fs.unlinkSync(tempFile)
     }
   })
 })
@@ -534,8 +575,8 @@ test.describe('Overlay Round-Trip Persistence', () => {
     // 1. Upload PDF
     await uploadPdf(page, 'watermark-test.pdf')
 
-    // 2. Open watermark dialog via Tools menu
-    await openToolsMenuItem(page, /Watermark/i)
+    // 2. Open watermark dialog via toolbar button
+    await clickToolbarButton(page, /Watermark/i)
     await page.waitForTimeout(TIMEOUTS.DEFAULT)
 
     // 3. Configure watermark
@@ -579,8 +620,8 @@ test.describe('Overlay Round-Trip Persistence', () => {
     // 1. Upload multi-page PDF
     await uploadPdf(page, 'multi-page-test.pdf')
 
-    // 2. Open page numbers dialog via Tools menu
-    await openToolsMenuItem(page, /Page Numbers/i)
+    // 2. Open page numbers dialog via toolbar button
+    await clickToolbarButton(page, /Page Numbers/i)
     await page.waitForTimeout(TIMEOUTS.DEFAULT)
 
     // 3. Enable page numbers
@@ -743,22 +784,8 @@ test.describe('Combined Operations Round-Trip Persistence', () => {
     // 1. Upload PDF
     await uploadPdf(page, 'text-edit-test.pdf')
 
-    // 2. First, rotate the page
-    await openToolsMenuItem(page, /Page Management/i)
-    await page.waitForTimeout(TIMEOUTS.DEFAULT)
-
-    const rotateButton = page.getByRole('button', { name: /Rotate/i }).first()
-    if (await rotateButton.isVisible()) {
-      await rotateButton.click()
-      await page.waitForTimeout(TIMEOUTS.DEFAULT)
-
-      // Close page management
-      const closeButton = page.getByRole('button', { name: /Close|Done/i })
-      if (await closeButton.isVisible()) {
-        await closeButton.click()
-        await page.waitForTimeout(TIMEOUTS.SHORT)
-      }
-    }
+    // 2. First, rotate the page via thumbnail sidebar context menu
+    await rotatePage(page, 1, 'cw')
 
     // 3. Then, edit text
     await enterTextEditMode(page)
@@ -876,8 +903,8 @@ test.describe('Combined Operations Round-Trip Persistence', () => {
     // 1. Upload multi-page PDF
     await uploadPdf(page, 'multi-page-test.pdf')
 
-    // 2. Add watermark
-    await openToolsMenuItem(page, /Watermark/i)
+    // 2. Add watermark via toolbar button
+    await clickToolbarButton(page, /Watermark/i)
     await page.waitForTimeout(TIMEOUTS.DEFAULT)
 
     const watermarkInput = page.getByLabel(/Text/i).first()
@@ -894,8 +921,8 @@ test.describe('Combined Operations Round-Trip Persistence', () => {
       await page.waitForTimeout(TIMEOUTS.SHORT)
     }
 
-    // 3. Add page numbers
-    await openToolsMenuItem(page, /Page Numbers/i)
+    // 3. Add page numbers via toolbar button
+    await clickToolbarButton(page, /Page Numbers/i)
     await page.waitForTimeout(TIMEOUTS.DEFAULT)
 
     const enableToggle = page.getByRole('checkbox').or(page.getByRole('switch')).first()
@@ -914,21 +941,8 @@ test.describe('Combined Operations Round-Trip Persistence', () => {
       await page.waitForTimeout(TIMEOUTS.SHORT)
     }
 
-    // 4. Rotate page
-    await openToolsMenuItem(page, /Page Management/i)
-    await page.waitForTimeout(TIMEOUTS.DEFAULT)
-
-    const rotateButton = page.getByRole('button', { name: /Rotate/i }).first()
-    if (await rotateButton.isVisible()) {
-      await rotateButton.click()
-      await page.waitForTimeout(TIMEOUTS.DEFAULT)
-
-      const closeButton = page.getByRole('button', { name: /Close|Done/i })
-      if (await closeButton.isVisible()) {
-        await closeButton.click()
-        await page.waitForTimeout(TIMEOUTS.SHORT)
-      }
-    }
+    // 4. Rotate page via thumbnail sidebar context menu
+    await rotatePage(page, 1, 'cw')
 
     // 5. Export and re-import
     const tempFile = await exportAndReimport(page)
@@ -960,8 +974,8 @@ test.describe('Edge Case Persistence Tests', () => {
     // 1. Upload PDF
     await uploadPdf(page, 'simple-test.pdf')
 
-    // 2. Make a change
-    await openToolsMenuItem(page, /Watermark/i)
+    // 2. Make a change via toolbar Watermark button
+    await clickToolbarButton(page, /Watermark/i)
     await page.waitForTimeout(TIMEOUTS.DEFAULT)
 
     const watermarkInput = page.getByLabel(/Text/i).first()
@@ -981,8 +995,8 @@ test.describe('Edge Case Persistence Tests', () => {
     // 3. First export and re-import
     const tempFile1 = await exportAndReimport(page)
 
-    // 4. Make another change
-    await openToolsMenuItem(page, /Watermark/i)
+    // 4. Make another change via toolbar Watermark button
+    await clickToolbarButton(page, /Watermark/i)
     await page.waitForTimeout(TIMEOUTS.DEFAULT)
 
     const watermarkInput2 = page.getByLabel(/Text/i).first()
