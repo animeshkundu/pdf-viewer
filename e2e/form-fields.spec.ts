@@ -34,27 +34,20 @@ async function uploadPdf(page: Page, fileName: string) {
 
 /**
  * Helper to find and click the form mode button
- * The button is called "Forms" in the main toolbar, or "Fill Form" in the FormToolbar
+ * The button has aria-label "Toggle form filling (F)" and text "Forms"
  * Returns true if form button was found and clicked, false otherwise
  */
 async function enableFormMode(page: Page): Promise<boolean> {
   // First try the main toolbar "Forms" button
-  const formsButton = page.getByRole('button', { name: /^Forms$/i })
+  // aria-label is "Toggle form filling (F)" or text is "Forms"
+  const formsButton = page.getByRole('button', { name: /form filling|^Forms$/i })
   if (await formsButton.isVisible()) {
     await formsButton.click()
     await page.waitForTimeout(FORM_TIMEOUTS.SHORT)
     return true
   }
 
-  // Then try "Fill Form" button in FormToolbar
-  const fillFormButton = page.getByRole('button', { name: /Fill Form/i })
-  if (await fillFormButton.isVisible()) {
-    await fillFormButton.click()
-    await page.waitForTimeout(FORM_TIMEOUTS.SHORT)
-    return true
-  }
-
-  // Also try pressing 'F' keyboard shortcut
+  // Try pressing 'F' keyboard shortcut
   await page.keyboard.press('f')
   await page.waitForTimeout(FORM_TIMEOUTS.SHORT)
 

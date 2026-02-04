@@ -194,8 +194,9 @@ async function exitTextEditMode(page: Page): Promise<void> {
  * The button is "Forms" in toolbar (only shown when form detected), not "Fill Form"
  */
 async function enableFormMode(page: Page): Promise<boolean> {
-  // First try "Forms" button in main toolbar
-  const formsButton = page.getByRole('button', { name: /^Forms$/i })
+  // First try Forms button in main toolbar
+  // aria-label is "Toggle form filling (F)" or text is "Forms"
+  const formsButton = page.getByRole('button', { name: /form filling|^Forms$/i })
   if (await formsButton.isVisible()) {
     await formsButton.click()
     await page.waitForTimeout(TIMEOUTS.DEFAULT)
