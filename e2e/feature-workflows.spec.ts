@@ -69,9 +69,10 @@ test.describe('Watermark Feature - Complete Workflow', () => {
     await expect(page.getByLabel(/Watermark Text/i)).toBeVisible()
     await expect(page.getByText(/Font Size/i)).toBeVisible()
     await expect(page.getByText(/Opacity/i)).toBeVisible()
-    await expect(page.getByText(/Rotation/i)).toBeVisible()
-    await expect(page.getByText(/Color/i)).toBeVisible()
-    await expect(page.getByText(/Position/i)).toBeVisible()
+    await expect(page.getByText(/Rotation/i).first()).toBeVisible()
+    await expect(page.getByText(/Color/i).first()).toBeVisible()
+    // Position label may appear twice, use first()
+    await expect(page.getByText(/Position/i).first()).toBeVisible()
 
     // Verify position options (use exact match to avoid ambiguity with "Top Center", "Bottom Center")
     await expect(page.getByText(/Top Left/i)).toBeVisible()
@@ -237,11 +238,11 @@ test.describe('Page Numbers Feature - Complete Workflow', () => {
     const dialog = page.getByRole('dialog')
     await expect(dialog).toBeVisible()
 
-    // Verify all controls are present
-    await expect(page.getByText(/Position/i)).toBeVisible()
+    // Verify all controls are present (use first() for elements that may appear multiple times)
+    await expect(page.getByText(/Position/i).first()).toBeVisible()
     await expect(page.getByLabel(/Format/i)).toBeVisible()
-    await expect(page.getByText(/Font Size/i)).toBeVisible()
-    await expect(page.getByText(/Color/i)).toBeVisible()
+    await expect(page.getByText(/Font Size/i).first()).toBeVisible()
+    await expect(page.getByText(/Color/i).first()).toBeVisible()
     await expect(page.getByLabel(/Start From/i)).toBeVisible()
   })
 
@@ -426,9 +427,11 @@ test.describe('Split PDF Feature - Complete Workflow', () => {
     // Select ranges mode (should be default)
     const rangesRadio = page.getByLabel(/Split by page ranges/i)
     await rangesRadio.click()
+    await page.waitForTimeout(FEATURE_TIMEOUTS.SHORT)
 
-    // Enter range (use first() to avoid ambiguity)
-    const rangeInput = page.getByLabel(/Page Ranges/i).first()
+    // Enter range - use ID selector since getByLabel resolves ambiguously
+    const rangeInput = page.locator('#rangeInput')
+    await rangeInput.waitFor({ state: 'visible', timeout: 5000 })
     await rangeInput.fill('1-2, 3-5')
 
     // Set up download listener
@@ -461,9 +464,11 @@ test.describe('Split PDF Feature - Complete Workflow', () => {
     // Select every N mode
     const everyNRadio = page.getByLabel(/Split every N pages/i)
     await everyNRadio.click()
+    await page.waitForTimeout(FEATURE_TIMEOUTS.SHORT)
 
-    // Set pages per file
-    const pagesPerFileInput = page.getByLabel(/Pages per file/i)
+    // Set pages per file - use ID selector for reliability
+    const pagesPerFileInput = page.locator('#everyN')
+    await pagesPerFileInput.waitFor({ state: 'visible', timeout: 5000 })
     await pagesPerFileInput.clear()
     await pagesPerFileInput.fill('2')
 
@@ -492,8 +497,16 @@ test.describe('Split PDF Feature - Complete Workflow', () => {
     await splitButton.click()
     await page.waitForTimeout(FEATURE_TIMEOUTS.DIALOG_OPEN)
 
-    // Enter invalid range (use first() to avoid ambiguity)
-    const rangeInput = page.getByLabel(/Page Ranges/i).first()
+    // Ranges mode should be default, but let's click it to be sure
+    const rangesRadio = page.getByLabel(/Split by page ranges/i)
+    if (await rangesRadio.isVisible()) {
+      await rangesRadio.click()
+      await page.waitForTimeout(FEATURE_TIMEOUTS.SHORT)
+    }
+
+    // Enter invalid range - use ID selector
+    const rangeInput = page.locator('#rangeInput')
+    await rangeInput.waitFor({ state: 'visible', timeout: 5000 })
     await rangeInput.fill('1-999')
 
     // Click split
