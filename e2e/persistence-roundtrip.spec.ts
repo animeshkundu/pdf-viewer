@@ -190,6 +190,28 @@ async function exitTextEditMode(page: Page): Promise<void> {
 }
 
 /**
+ * Enable form mode if available
+ * The button is "Forms" in toolbar (only shown when form detected), not "Fill Form"
+ */
+async function enableFormMode(page: Page): Promise<boolean> {
+  // First try "Forms" button in main toolbar
+  const formsButton = page.getByRole('button', { name: /^Forms$/i })
+  if (await formsButton.isVisible()) {
+    await formsButton.click()
+    await page.waitForTimeout(TIMEOUTS.DEFAULT)
+    return true
+  }
+
+  // Try keyboard shortcut 'f'
+  await page.keyboard.press('f')
+  await page.waitForTimeout(TIMEOUTS.DEFAULT)
+
+  // Check if form fields are now visible
+  const formFields = page.locator('.form-field-overlay input, .form-field input')
+  return (await formFields.count()) > 0
+}
+
+/**
  * Get the current page count from the page indicator
  */
 async function getPageCount(page: Page): Promise<number> {
@@ -676,45 +698,46 @@ test.describe('Form Field Round-Trip Persistence', () => {
     await uploadPdf(page, 'form-test.pdf')
 
     // 2. Enable form mode
-    const fillFormButton = page.getByRole('button', { name: /Fill Form|Form Mode/i })
-    if (await fillFormButton.isVisible()) {
-      await fillFormButton.click()
-      await page.waitForTimeout(TIMEOUTS.DEFAULT)
+    const formEnabled = await enableFormMode(page)
+    if (!formEnabled) {
+      test.skip()
+      return
+    }
 
-      // 3. Fill in form fields
-      const testValue = 'ROUNDTRIP_FORM_' + Date.now()
-      const textInputs = page.locator('.form-field-overlay input[type="text"], .form-field input')
-      const inputCount = await textInputs.count()
+    // 3. Fill in form fields
+    const testValue = 'ROUNDTRIP_FORM_' + Date.now()
+    const textInputs = page.locator('.form-field-overlay input[type="text"], .form-field input')
+    const inputCount = await textInputs.count()
 
-      if (inputCount > 0) {
-        await textInputs.first().fill(testValue)
-        await textInputs.first().blur()
-        await page.waitForTimeout(TIMEOUTS.SHORT)
+    if (inputCount === 0) {
+      test.skip()
+      return
+    }
 
-        // 4. Export and re-import
-        const tempFile = await exportAndReimport(page)
+    await textInputs.first().fill(testValue)
+    await textInputs.first().blur()
+    await page.waitForTimeout(TIMEOUTS.SHORT)
 
-        // 5. Enable form mode again
-        const fillFormButton2 = page.getByRole('button', { name: /Fill Form|Form Mode/i })
-        if (await fillFormButton2.isVisible()) {
-          await fillFormButton2.click()
-          await page.waitForTimeout(TIMEOUTS.DEFAULT)
+    // 4. Export and re-import
+    const tempFile = await exportAndReimport(page)
 
-          // 6. Verify form values persisted
-          const verifyInputs = page.locator('.form-field-overlay input[type="text"], .form-field input')
-          const verifyCount = await verifyInputs.count()
+    // 5. Enable form mode again
+    const formEnabled2 = await enableFormMode(page)
 
-          if (verifyCount > 0) {
-            const value = await verifyInputs.first().inputValue()
-            expect(value).toContain('ROUNDTRIP_FORM_')
-          }
-        }
+    if (formEnabled2) {
+      // 6. Verify form values persisted
+      const verifyInputs = page.locator('.form-field-overlay input[type="text"], .form-field input')
+      const verifyCount = await verifyInputs.count()
 
-        // Cleanup
-        if (fs.existsSync(tempFile)) {
-          fs.unlinkSync(tempFile)
-        }
+      if (verifyCount > 0) {
+        const value = await verifyInputs.first().inputValue()
+        expect(value).toContain('ROUNDTRIP_FORM_')
       }
+    }
+
+    // Cleanup
+    if (fs.existsSync(tempFile)) {
+      fs.unlinkSync(tempFile)
     }
   })
 
@@ -723,47 +746,48 @@ test.describe('Form Field Round-Trip Persistence', () => {
     await uploadPdf(page, 'form-test.pdf')
 
     // 2. Enable form mode
-    const fillFormButton = page.getByRole('button', { name: /Fill Form|Form Mode/i })
-    if (await fillFormButton.isVisible()) {
-      await fillFormButton.click()
-      await page.waitForTimeout(TIMEOUTS.DEFAULT)
+    const formEnabled = await enableFormMode(page)
+    if (!formEnabled) {
+      test.skip()
+      return
+    }
 
-      // 3. Find and check a checkbox
-      const checkboxes = page.locator('.form-field-overlay input[type="checkbox"], .form-field input[type="checkbox"]')
-      const checkboxCount = await checkboxes.count()
+    // 3. Find and check a checkbox
+    const checkboxes = page.locator('.form-field-overlay input[type="checkbox"], .form-field input[type="checkbox"]')
+    const checkboxCount = await checkboxes.count()
 
-      if (checkboxCount > 0) {
-        // Toggle checkbox
-        const checkbox = checkboxes.first()
-        const wasChecked = await checkbox.isChecked()
-        await checkbox.click()
-        await page.waitForTimeout(TIMEOUTS.SHORT)
+    if (checkboxCount === 0) {
+      test.skip()
+      return
+    }
 
-        // Verify it changed
-        const nowChecked = await checkbox.isChecked()
-        expect(nowChecked).toBe(!wasChecked)
+    // Toggle checkbox
+    const checkbox = checkboxes.first()
+    const wasChecked = await checkbox.isChecked()
+    await checkbox.click()
+    await page.waitForTimeout(TIMEOUTS.SHORT)
 
-        // 4. Export and re-import
-        const tempFile = await exportAndReimport(page)
+    // Verify it changed
+    const nowChecked = await checkbox.isChecked()
+    expect(nowChecked).toBe(!wasChecked)
 
-        // 5. Enable form mode and verify
-        const fillFormButton2 = page.getByRole('button', { name: /Fill Form|Form Mode/i })
-        if (await fillFormButton2.isVisible()) {
-          await fillFormButton2.click()
-          await page.waitForTimeout(TIMEOUTS.DEFAULT)
+    // 4. Export and re-import
+    const tempFile = await exportAndReimport(page)
 
-          const verifyCheckboxes = page.locator('.form-field-overlay input[type="checkbox"], .form-field input[type="checkbox"]')
-          if (await verifyCheckboxes.first().isVisible()) {
-            const persistedChecked = await verifyCheckboxes.first().isChecked()
-            expect(persistedChecked).toBe(!wasChecked)
-          }
-        }
+    // 5. Enable form mode and verify
+    const formEnabled2 = await enableFormMode(page)
 
-        // Cleanup
-        if (fs.existsSync(tempFile)) {
-          fs.unlinkSync(tempFile)
-        }
+    if (formEnabled2) {
+      const verifyCheckboxes = page.locator('.form-field-overlay input[type="checkbox"], .form-field input[type="checkbox"]')
+      if (await verifyCheckboxes.first().isVisible()) {
+        const persistedChecked = await verifyCheckboxes.first().isChecked()
+        expect(persistedChecked).toBe(!wasChecked)
       }
+    }
+
+    // Cleanup
+    if (fs.existsSync(tempFile)) {
+      fs.unlinkSync(tempFile)
     }
   })
 })
@@ -830,11 +854,8 @@ test.describe('Combined Operations Round-Trip Persistence', () => {
     await uploadPdf(page, 'form-test.pdf')
 
     // 2. Fill form
-    const fillFormButton = page.getByRole('button', { name: /Fill Form|Form Mode/i })
-    if (await fillFormButton.isVisible()) {
-      await fillFormButton.click()
-      await page.waitForTimeout(TIMEOUTS.DEFAULT)
-
+    const formEnabled = await enableFormMode(page)
+    if (formEnabled) {
       const textInputs = page.locator('.form-field-overlay input[type="text"]')
       if (await textInputs.first().isVisible()) {
         await textInputs.first().fill('COMBO_FORM_VALUE')
@@ -878,12 +899,9 @@ test.describe('Combined Operations Round-Trip Persistence', () => {
     const loadedCanvas = page.locator('canvas').first()
     await expect(loadedCanvas).toBeVisible()
 
-    // Check form value
-    const fillFormButton2 = page.getByRole('button', { name: /Fill Form|Form Mode/i })
-    if (await fillFormButton2.isVisible()) {
-      await fillFormButton2.click()
-      await page.waitForTimeout(TIMEOUTS.DEFAULT)
-
+    // Check form value if form mode available
+    const formEnabled2 = await enableFormMode(page)
+    if (formEnabled2) {
       const verifyInputs = page.locator('.form-field-overlay input[type="text"]')
       if (await verifyInputs.first().isVisible()) {
         const value = await verifyInputs.first().inputValue()
@@ -1035,11 +1053,8 @@ test.describe('Edge Case Persistence Tests', () => {
     await uploadPdf(page, 'form-test.pdf')
 
     // 2. Enable form mode and fill a field
-    const fillFormButton = page.getByRole('button', { name: /Fill Form/i })
-    if (await fillFormButton.isVisible()) {
-      await fillFormButton.click()
-      await page.waitForTimeout(TIMEOUTS.DEFAULT)
-
+    const formEnabled = await enableFormMode(page)
+    if (formEnabled) {
       const textInputs = page.locator('.form-field-overlay input[type="text"]')
       if (await textInputs.first().isVisible()) {
         await textInputs.first().fill('ALL_OPTIONS_TEST')
