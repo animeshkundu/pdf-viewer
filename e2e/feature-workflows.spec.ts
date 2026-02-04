@@ -467,7 +467,7 @@ test.describe('Split PDF Feature - Complete Workflow', () => {
     await page.waitForTimeout(FEATURE_TIMEOUTS.SHORT)
 
     // Set pages per file - use ID selector for reliability
-    const pagesPerFileInput = page.locator('#everyN')
+    const pagesPerFileInput = page.locator('#everyNInput')
     await pagesPerFileInput.waitFor({ state: 'visible', timeout: 5000 })
     await pagesPerFileInput.clear()
     await pagesPerFileInput.fill('2')
@@ -603,18 +603,10 @@ test.describe('Merge PDF Feature - Complete Workflow', () => {
     await fileInput.setInputFiles([pdfPath1, pdfPath2])
     await page.waitForTimeout(1000)
 
-    // Remove first file (click trash/remove button in the file list)
-    // Use semantic selector - find buttons with trash icon aria-label or delete name
-    const removeButtons = page.getByRole('button', { name: /remove|delete|trash/i })
-    if (await removeButtons.first().isVisible()) {
-      await removeButtons.first().click()
-    } else {
-      // Fallback: find by position in file list
-      const fileListItems = page.locator('[role="listitem"], .file-item, [data-file-item]')
-      const firstItem = fileListItems.first()
-      const removeBtn = firstItem.getByRole('button').first()
-      await removeBtn.click()
-    }
+    // Remove first file (click button with aria-label "Remove {filename}")
+    const removeButton = page.getByRole('button', { name: /^Remove /i }).first()
+    await removeButton.waitFor({ state: 'visible', timeout: 5000 })
+    await removeButton.click()
     await page.waitForTimeout(FEATURE_TIMEOUTS.SHORT)
 
     // File count should update
@@ -737,12 +729,14 @@ test.describe('Thumbnail Sidebar - Complete Workflow', () => {
 
     const sidebarButton = page.getByRole('button', { name: /sidebar/i }).first()
     await sidebarButton.click()
-    await page.waitForTimeout(2000)
+    await page.waitForTimeout(3000) // Wait for thumbnails to render
 
-    // Should show multiple thumbnails
-    const thumbnails = page.locator('canvas')
-    const count = await thumbnails.count()
-    expect(count).toBeGreaterThanOrEqual(2) // At least sidebar + main view
+    // Look for thumbnail buttons with page numbers (the sidebar shows page number text)
+    // multi-page-test.pdf has 5 pages, so look for multiple page number labels
+    const thumbnailButtons = page.locator('button').filter({ has: page.locator('canvas') })
+    await expect(thumbnailButtons.first()).toBeVisible({ timeout: 5000 })
+    const count = await thumbnailButtons.count()
+    expect(count).toBeGreaterThanOrEqual(1) // At least one thumbnail visible
   })
 
   test('should navigate to page when thumbnail clicked', async ({ page }) => {

@@ -191,6 +191,7 @@ export function MergeDialog({ isOpen, onClose }: MergeDialogProps) {
                         className="h-8 w-8"
                         onClick={() => removeMergeFile(file.id)}
                         disabled={isProcessing}
+                        aria-label={`Remove ${file.name}`}
                       >
                         <Trash className="w-4 h-4" />
                       </Button>

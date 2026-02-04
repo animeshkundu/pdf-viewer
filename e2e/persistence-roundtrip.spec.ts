@@ -74,8 +74,8 @@ async function exportAndReimport(page: Page): Promise<string> {
   await page.keyboard.press('Control+s')
   await page.waitForTimeout(TIMEOUTS.SHORT)
 
-  // Wait for export dialog to appear
-  const exportDialog = page.locator('[role="dialog"]')
+  // Wait for export dialog to appear - look for dialog containing Export button
+  const exportDialog = page.locator('[role="dialog"]').filter({ has: page.getByRole('button', { name: /Export PDF/i }) })
   await exportDialog.waitFor({ state: 'visible', timeout: TIMEOUTS.DEFAULT })
 
   // Click the Export PDF button in the dialog
@@ -123,6 +123,7 @@ async function openToolsMenuItem(page: Page, itemName: RegExp): Promise<void> {
  */
 async function clickToolbarButton(page: Page, buttonName: RegExp): Promise<void> {
   const button = page.getByRole('button', { name: buttonName })
+  await button.waitFor({ state: 'visible', timeout: TIMEOUTS.LONG })
   await button.click()
   await page.waitForTimeout(TIMEOUTS.SHORT)
 }

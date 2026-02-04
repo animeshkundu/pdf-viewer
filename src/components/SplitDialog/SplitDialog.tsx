@@ -186,9 +186,9 @@ export function SplitDialog({
             </div>
 
             <div className="flex items-start space-x-3">
-              <RadioGroupItem value="everyN" id="everyN" />
+              <RadioGroupItem value="everyN" id="everyN-radio" />
               <div className="space-y-1">
-                <Label htmlFor="everyN" className="cursor-pointer">
+                <Label htmlFor="everyN-radio" className="cursor-pointer">
                   Split every N pages
                 </Label>
                 <p className="text-sm text-muted-foreground">
@@ -230,9 +230,9 @@ export function SplitDialog({
 
           {splitMode === 'everyN' && (
             <div className="space-y-2">
-              <Label htmlFor="everyN">Pages per file</Label>
+              <Label htmlFor="everyNInput">Pages per file</Label>
               <Input
-                id="everyN"
+                id="everyNInput"
                 type="number"
                 min={1}
                 max={pageCount}
