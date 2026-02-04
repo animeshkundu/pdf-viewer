@@ -174,8 +174,8 @@ jobs:
           echo "Downloaded build artifacts:"
           ls -lah dist/
 
-      - name: Run E2E tests (shard ${{ matrix.shard }}/4)
-        run: npx playwright test --shard=${{ matrix.shard }}/4
+      - name: Run E2E tests (shard ${{ matrix.shard }}/8)
+        run: npx playwright test --shard=${{ matrix.shard }}/8
 
       - name: Upload blob report
         uses: actions/upload-artifact@v4
