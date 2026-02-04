@@ -229,6 +229,57 @@ jobs:
           path: playwright-report/
           retention-days: 7
 
+  screenshots:
+    name: Capture UI Screenshots
+    runs-on: ubuntu-latest
+    needs: [build]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Create screenshots directory
+        run: mkdir -p screenshots
+
+      - name: Capture interface screenshots
+        run: npx playwright test e2e/screenshots.spec.ts --reporter=list
+        continue-on-error: true
+
+      - name: List captured screenshots
+        run: |
+          echo "## Captured Screenshots" >> $GITHUB_STEP_SUMMARY
+          if [ -d "screenshots" ]; then
+            ls -la screenshots/
+            echo "Total: $(ls -1 screenshots/*.png 2>/dev/null | wc -l) screenshots captured"
+          else
+            echo "No screenshots directory found"
+          fi
+
+      - name: Upload screenshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-screenshots
+          path: screenshots/
+          retention-days: 30
+          if-no-files-found: warn
+
   deploy:
     name: Deploy to GitHub Pages
     runs-on: ubuntu-latest
