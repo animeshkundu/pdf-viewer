@@ -128,10 +128,10 @@ To recreate or update test fixtures:
 
 ```bash
 # Create basic fixtures
-node create-test-pdfs.js
+node scripts/create-test-pdfs.js
 
 # Create additional specialized fixtures
-node create-additional-fixtures.js
+node scripts/create-additional-fixtures.js
 ```
 
 ## Running Tests
