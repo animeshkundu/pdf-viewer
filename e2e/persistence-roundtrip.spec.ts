@@ -605,38 +605,44 @@ test.describe('Overlay Round-Trip Persistence', () => {
 
     // 3. Configure watermark
     const watermarkInput = page.getByLabel(/Watermark.*Text|Text/i).first()
-    if (await watermarkInput.isVisible()) {
-      const watermarkText = 'PERSISTENCE_WATERMARK'
-      await watermarkInput.clear()
-      await watermarkInput.fill(watermarkText)
-      await page.waitForTimeout(TIMEOUTS.SHORT)
+    try {
+      await watermarkInput.waitFor({ state: 'visible', timeout: 5000 })
+    } catch {
+      // Dialog might not have text input, skip test
+      test.skip(true, 'Watermark dialog not available')
+      return
+    }
 
-      // Apply watermark
-      const applyButton = page.getByRole('button', { name: /Apply|Add|Save/i })
-      if (await applyButton.isVisible()) {
-        await applyButton.click()
-        await page.waitForTimeout(TIMEOUTS.DEFAULT)
-      }
+    const watermarkText = 'PERSISTENCE_WATERMARK'
+    await watermarkInput.clear()
+    await watermarkInput.fill(watermarkText)
+    await page.waitForTimeout(TIMEOUTS.SHORT)
 
-      // Close dialog
-      const closeButton = page.getByRole('button', { name: /Close|Done/i })
-      if (await closeButton.isVisible()) {
-        await closeButton.click()
-        await page.waitForTimeout(TIMEOUTS.SHORT)
-      }
+    // Apply watermark
+    const applyButton = page.getByRole('button', { name: /Apply|Add|Save/i })
+    try {
+      await applyButton.waitFor({ state: 'visible', timeout: 5000 })
+      await applyButton.click()
+      await page.waitForTimeout(TIMEOUTS.DEFAULT)
+    } catch {
+      // Continue without explicit apply - some dialogs auto-apply
+    }
 
-      // 4. Export and re-import
-      const tempFile = await exportAndReimport(page)
+    // Close dialog with Escape (more reliable than finding Close button)
+    await page.keyboard.press('Escape')
+    await page.waitForTimeout(TIMEOUTS.SHORT)
 
-      // 5. Verify watermark is baked into the PDF
-      // Since watermark becomes part of the PDF, we verify the PDF loads
-      const loadedCanvas = page.locator('canvas').first()
-      await expect(loadedCanvas).toBeVisible()
+    // 4. Export and re-import
+    const tempFile = await exportAndReimport(page)
 
-      // Cleanup
-      if (fs.existsSync(tempFile)) {
-        fs.unlinkSync(tempFile)
-      }
+    // 5. Verify watermark is baked into the PDF
+    // Since watermark becomes part of the PDF, we verify the PDF loads
+    const loadedCanvas = page.locator('canvas').first()
+    await expect(loadedCanvas).toBeVisible()
+
+    // Cleanup
+    if (fs.existsSync(tempFile)) {
+      fs.unlinkSync(tempFile)
     }
   })
 
