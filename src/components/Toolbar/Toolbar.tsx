@@ -213,6 +213,7 @@ export function Toolbar({
                     onClick={onToggleSidebar}
                     aria-label={isSidebarOpen ? 'Hide sidebar' : 'Show sidebar'}
                     aria-pressed={isSidebarOpen}
+                    data-testid="sidebar-toggle"
                     className={cn(
                       "button-press transition-all duration-200",
                       isSidebarOpen && "bg-muted text-primary"
@@ -274,6 +275,7 @@ export function Toolbar({
                       onClick={onFormClick}
                       aria-label="Toggle form filling (F)"
                       aria-pressed={isFormOpen}
+                      data-testid="forms-toggle"
                       className={cn(
                         'gap-2 button-press transition-all duration-200',
                         isFormOpen && 'bg-accent text-accent-foreground shadow-md hover:shadow-lg'
@@ -296,6 +298,7 @@ export function Toolbar({
                       onClick={onWatermarkClick}
                       aria-label="Add watermark"
                       aria-pressed={hasWatermark}
+                      data-testid="watermark-button"
                       className={cn(
                         'gap-2 button-press transition-all duration-200',
                         hasWatermark && 'bg-secondary text-secondary-foreground shadow-sm'
@@ -318,6 +321,7 @@ export function Toolbar({
                       onClick={onPageNumberClick}
                       aria-label="Add page numbers"
                       aria-pressed={hasPageNumbers}
+                      data-testid="page-numbers-button"
                       className={cn(
                         'gap-2 button-press transition-all duration-200',
                         hasPageNumbers && 'bg-secondary text-secondary-foreground shadow-sm'
@@ -341,6 +345,7 @@ export function Toolbar({
                       size="default"
                       onClick={onSplitClick}
                       aria-label="Split PDF"
+                      data-testid="split-button"
                       className="gap-2 button-press hover:bg-muted transition-all duration-200"
                     >
                       <Scissors size={18} aria-hidden="true" />
@@ -359,6 +364,7 @@ export function Toolbar({
                       size="default"
                       onClick={onMergeClick}
                       aria-label="Merge PDFs"
+                      data-testid="merge-button"
                       className="gap-2 button-press hover:bg-muted transition-all duration-200"
                     >
                       <GitMerge size={18} aria-hidden="true" />
@@ -379,6 +385,7 @@ export function Toolbar({
                         size="default"
                         className="gap-2 button-press hover:bg-muted transition-all duration-200"
                         aria-label="More tools"
+                        data-testid="tools-button"
                       >
                         <Wrench size={18} aria-hidden="true" />
                         <span className="hidden sm:inline font-medium">Tools</span>
@@ -470,6 +477,7 @@ export function Toolbar({
                       size="default"
                       onClick={onExportClick}
                       aria-label="Export PDF (Ctrl/Cmd+S)"
+                      data-testid="export-button"
                       className="gap-2 button-press hover:bg-muted transition-all duration-200"
                     >
                       <Download size={18} weight="bold" aria-hidden="true" />
