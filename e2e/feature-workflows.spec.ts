@@ -44,6 +44,27 @@ async function openToolsMenuItem(page: Page, menuItemName: RegExp) {
   await page.waitForTimeout(FEATURE_TIMEOUTS.SHORT)
 }
 
+// Helper to ensure sidebar is open (it may be open by default)
+async function ensureSidebarOpen(page: Page) {
+  const sidebar = page.locator('[data-testid="thumbnail-sidebar"]')
+  const pagesHeading = page.locator('[data-testid="pages-heading"]')
+
+  // Wait a moment for sidebar to potentially render
+  await page.waitForTimeout(500)
+
+  const isSidebarOpen = await sidebar.or(pagesHeading).isVisible().catch(() => false)
+
+  if (!isSidebarOpen) {
+    // Sidebar is closed - click toggle to open it
+    const sidebarButton = page.locator('[data-testid="sidebar-toggle"]')
+    await sidebarButton.click()
+    await page.waitForTimeout(1000)
+
+    // Verify it opened
+    await sidebar.or(pagesHeading).waitFor({ state: 'visible', timeout: 5000 })
+  }
+}
+
 // ============================================================================
 // WATERMARK FEATURE - COMPLETE WORKFLOW
 // ============================================================================
@@ -716,19 +737,10 @@ test.describe('Thumbnail Sidebar - Complete Workflow', () => {
   test('should open thumbnail sidebar', async ({ page }) => {
     await uploadPdf(page, 'multi-page-test.pdf')
 
-    // Use test ID for reliable sidebar toggle, with fallback to aria-label
-    let sidebarButton = page.locator('[data-testid="sidebar-toggle"]')
-    try {
-      await sidebarButton.waitFor({ state: 'visible', timeout: 5000 })
-    } catch {
-      // Fallback to aria-label selector
-      sidebarButton = page.getByRole('button', { name: /Show sidebar|Hide sidebar/i })
-      await sidebarButton.waitFor({ state: 'visible', timeout: 5000 })
-    }
-    await sidebarButton.click()
-    await page.waitForTimeout(1000)
+    // Ensure sidebar is open (may be open by default after loading document)
+    await ensureSidebarOpen(page)
 
-    // Sidebar should be visible - check for heading or sidebar container
+    // Verify sidebar is visible
     const pagesHeading = page.locator('[data-testid="pages-heading"]')
     const sidebarContainer = page.locator('[data-testid="thumbnail-sidebar"]')
     await expect(pagesHeading.or(sidebarContainer)).toBeVisible({ timeout: 5000 })
@@ -737,18 +749,13 @@ test.describe('Thumbnail Sidebar - Complete Workflow', () => {
   test('should display all page thumbnails', async ({ page }) => {
     await uploadPdf(page, 'multi-page-test.pdf')
 
-    // Open sidebar using test ID with fallback
-    let sidebarButton = page.locator('[data-testid="sidebar-toggle"]')
-    try {
-      await sidebarButton.waitFor({ state: 'visible', timeout: 5000 })
-    } catch {
-      sidebarButton = page.getByRole('button', { name: /Show sidebar|Hide sidebar/i })
-      await sidebarButton.waitFor({ state: 'visible', timeout: 5000 })
-    }
-    await sidebarButton.click()
-    await page.waitForTimeout(3000) // Wait for thumbnails to render
+    // Ensure sidebar is open
+    await ensureSidebarOpen(page)
 
-    // Verify sidebar opened - check for container or heading
+    // Wait for thumbnails to render
+    await page.waitForTimeout(2000)
+
+    // Verify sidebar is visible
     const sidebar = page.locator('[data-testid="thumbnail-sidebar"]')
     const pagesHeading = page.locator('[data-testid="pages-heading"]')
     await expect(sidebar.or(pagesHeading)).toBeVisible({ timeout: 5000 })
@@ -761,9 +768,8 @@ test.describe('Thumbnail Sidebar - Complete Workflow', () => {
   test('should navigate to page when thumbnail clicked', async ({ page }) => {
     await uploadPdf(page, 'multi-page-test.pdf')
 
-    const sidebarButton = page.locator('[data-testid="sidebar-toggle"]')
-    await sidebarButton.click()
-    await page.waitForTimeout(2000)
+    await ensureSidebarOpen(page)
+    await page.waitForTimeout(1000)
 
     // Get current page
     const pageInput = page.locator('input[aria-label*="Current page"]')
@@ -783,9 +789,8 @@ test.describe('Thumbnail Sidebar - Complete Workflow', () => {
   test('should select page with Ctrl+Click', async ({ page }) => {
     await uploadPdf(page, 'multi-page-test.pdf')
 
-    const sidebarButton = page.locator('[data-testid="sidebar-toggle"]')
-    await sidebarButton.click()
-    await page.waitForTimeout(2000)
+    await ensureSidebarOpen(page)
+    await page.waitForTimeout(1000)
 
     // Ctrl+Click to select a thumbnail
     const thumbnailButtons = page.locator('[draggable="true"]')
@@ -803,9 +808,8 @@ test.describe('Thumbnail Sidebar - Complete Workflow', () => {
   test('should show context menu on right-click', async ({ page }) => {
     await uploadPdf(page, 'page-management-test.pdf')
 
-    const sidebarButton = page.locator('[data-testid="sidebar-toggle"]')
-    await sidebarButton.click()
-    await page.waitForTimeout(2000)
+    await ensureSidebarOpen(page)
+    await page.waitForTimeout(1000)
 
     // Right-click on a thumbnail
     const thumbnailButtons = page.locator('[draggable="true"]')
@@ -826,9 +830,8 @@ test.describe('Thumbnail Sidebar - Complete Workflow', () => {
   test('should rotate page via context menu', async ({ page }) => {
     await uploadPdf(page, 'page-management-test.pdf')
 
-    const sidebarButton = page.locator('[data-testid="sidebar-toggle"]')
-    await sidebarButton.click()
-    await page.waitForTimeout(2000)
+    await ensureSidebarOpen(page)
+    await page.waitForTimeout(1000)
 
     // Right-click on a thumbnail
     const thumbnailButtons = page.locator('[draggable="true"]')
@@ -853,17 +856,19 @@ test.describe('Thumbnail Sidebar - Complete Workflow', () => {
   test('should close sidebar with close button', async ({ page }) => {
     await uploadPdf(page, 'multi-page-test.pdf')
 
-    const sidebarButton = page.locator('[data-testid="sidebar-toggle"]')
-    await sidebarButton.click()
-    await page.waitForTimeout(1000)
+    // First ensure sidebar is open
+    await ensureSidebarOpen(page)
+    await page.waitForTimeout(500)
 
-    // Find close button (X icon)
-    const closeButton = page.locator('button').filter({ has: page.locator('[class*="X"]') }).first()
+    // Find close button within the sidebar (X icon)
+    const sidebar = page.locator('[data-testid="thumbnail-sidebar"]')
+    const closeButton = sidebar.locator('button').filter({ has: page.locator('svg') }).last()
     if (await closeButton.isVisible()) {
       await closeButton.click()
       await page.waitForTimeout(500)
 
-      // Sidebar toggle button should work again
+      // Sidebar should no longer be visible
+      const sidebarButton = page.locator('[data-testid="sidebar-toggle"]')
       await expect(sidebarButton).toBeEnabled()
     }
   })
