@@ -48,21 +48,26 @@ async function openToolsMenuItem(page: Page, menuItemName: RegExp) {
 async function ensureSidebarOpen(page: Page) {
   const sidebar = page.locator('[data-testid="thumbnail-sidebar"]')
   const pagesHeading = page.locator('[data-testid="pages-heading"]')
+  const sidebarButton = page.locator('[data-testid="sidebar-toggle"]')
 
-  // Wait a moment for sidebar to potentially render
-  await page.waitForTimeout(500)
+  // First, wait for the sidebar toggle button to be visible
+  // This confirms the document is loaded (button only shows when document exists)
+  await sidebarButton.waitFor({ state: 'visible', timeout: 10000 })
 
-  const isSidebarOpen = await sidebar.or(pagesHeading).isVisible().catch(() => false)
+  // Now check if sidebar is already visible (it opens by default when document loads)
+  const isSidebarVisible = await sidebar.or(pagesHeading).isVisible().catch(() => false)
 
-  if (!isSidebarOpen) {
-    // Sidebar is closed - click toggle to open it
-    const sidebarButton = page.locator('[data-testid="sidebar-toggle"]')
-    await sidebarButton.click()
-    await page.waitForTimeout(1000)
-
-    // Verify it opened
-    await sidebar.or(pagesHeading).waitFor({ state: 'visible', timeout: 5000 })
+  if (isSidebarVisible) {
+    // Sidebar is already open, nothing to do
+    return
   }
+
+  // Sidebar is closed - click toggle to open it
+  await sidebarButton.click()
+  await page.waitForTimeout(1000)
+
+  // Verify it opened
+  await sidebar.or(pagesHeading).waitFor({ state: 'visible', timeout: 10000 })
 }
 
 // ============================================================================
