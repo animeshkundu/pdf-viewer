@@ -117,7 +117,7 @@ export function ExportDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md" data-testid="export-dialog">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Download className="w-5 h-5" />
@@ -288,6 +288,7 @@ export function ExportDialog({
           <Button
             onClick={handleExport}
             disabled={isExporting || !originalPdfBytes}
+            data-testid="export-dialog-submit"
           >
             {isExporting ? (
               <>

@@ -95,7 +95,7 @@ export function WatermarkDialog({ isOpen, onClose }: WatermarkDialogProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto" data-testid="watermark-dialog">
         <DialogHeader>
           <DialogTitle>Add Watermark</DialogTitle>
           <DialogDescription>

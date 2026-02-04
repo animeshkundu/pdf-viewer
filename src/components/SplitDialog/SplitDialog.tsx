@@ -156,7 +156,7 @@ export function SplitDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md" data-testid="split-dialog">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Scissors className="w-5 h-5" />
