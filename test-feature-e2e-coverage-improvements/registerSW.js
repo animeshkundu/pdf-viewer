@@ -1,1 +1,1 @@
-if('serviceWorker' in navigator) {window.addEventListener('load', () => {navigator.serviceWorker.register('/pdf-viewer/test-21-merge/sw.js', { scope: '/pdf-viewer/test-21-merge/' })})}
+if('serviceWorker' in navigator) {window.addEventListener('load', () => {navigator.serviceWorker.register('/pdf-viewer/test-feature-e2e-coverage-improvements/sw.js', { scope: '/pdf-viewer/test-feature-e2e-coverage-improvements/' })})}
