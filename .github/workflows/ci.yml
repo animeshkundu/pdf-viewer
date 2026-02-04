@@ -138,11 +138,11 @@ jobs:
     name: E2E Tests (Shard ${{ matrix.shard }}/${{ strategy.job-total }})
     runs-on: ubuntu-latest
     needs: [build]
-    timeout-minutes: 30
+    timeout-minutes: 15  # Target: each shard completes within 7 mins, 15 min buffer for safety
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4]
+        shard: [1, 2, 3, 4, 5, 6, 7, 8]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
