@@ -8,8 +8,18 @@ import { PDFCanvas } from './PDFCanvas'
 import { TextEditLayer } from '@/components/TextEditLayer'
 import { pdfService } from '@/services/pdf.service'
 
+export const RESTORE_SCROLL_SUPPRESS_MS = 1000
+
 export function PDFViewer() {
-  const { document, zoom, currentPage, setCurrentPage, setZoom } = usePDF()
+  const {
+    document,
+    zoom,
+    currentPage,
+    pendingScrollPage,
+    consumePendingScroll,
+    setCurrentPage,
+    setZoom,
+  } = usePDF()
   const { pageOrder, isDeleted, getRotation } = usePageManagement()
   const { state: textEditState } = useTextEdit()
   const isTextEditEnabled = textEditState.isEnabled
@@ -22,6 +32,14 @@ export function PDFViewer() {
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const initialPinchZoomRef = useRef(zoom)
   const hasCalculatedInitialZoom = useRef(false)
+
+  useEffect(() => {
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current)
+      scrollTimeoutRef.current = null
+    }
+    isUserScrollingRef.current = true
+  }, [document])
 
   const calculateEffectiveZoom = useCallback((page: PDFPageProxy | null): number => {
     if (!page || !containerRef.current) return 1.0
@@ -99,6 +117,33 @@ export function PDFViewer() {
 
     loadPages()
   }, [document])
+
+  useEffect(() => {
+    if (pendingScrollPage === null || pages.length === 0) {
+      return
+    }
+
+    const pageElement = pageRefs.current.get(pendingScrollPage)
+    if (!pageElement) {
+      return
+    }
+
+    isUserScrollingRef.current = false
+    pageElement.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    })
+
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current)
+    }
+
+    scrollTimeoutRef.current = setTimeout(() => {
+      isUserScrollingRef.current = true
+    }, RESTORE_SCROLL_SUPPRESS_MS)
+
+    consumePendingScroll()
+  }, [consumePendingScroll, pages, pendingScrollPage])
 
   const updateCurrentPage = useCallback((entries: IntersectionObserverEntry[]) => {
     if (!isUserScrollingRef.current) return

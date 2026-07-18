@@ -1,8 +1,17 @@
-import { createContext, useContext, useState, useCallback, ReactNode } from 'react'
+import {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useEffect,
+  useRef,
+  ReactNode,
+} from 'react'
 import type { PDFDocumentProxy } from 'pdfjs-dist'
 import { pdfService } from '@/services/pdf.service'
 import { annotationService } from '@/services/annotation.service'
 import { pageManagementService } from '@/services/page-management.service'
+import { positionStore } from '@/services/position.service'
 import { searchService } from '@/services/search.service'
 import { toast } from 'sonner'
 
@@ -10,12 +19,14 @@ interface PDFContextValue {
   document: PDFDocumentProxy | null
   file: File | null
   currentPage: number
+  pendingScrollPage: number | null
   zoom: number | 'fit-width' | 'fit-page'
   isLoading: boolean
   loadProgress: number
   error: string | null
   
   loadDocument: (file: File) => Promise<void>
+  consumePendingScroll: () => void
   setCurrentPage: (page: number) => void
   setZoom: (zoom: number | 'fit-width' | 'fit-page') => void
   cleanup: () => void
@@ -29,12 +40,16 @@ export function PDFProvider({ children }: { children: ReactNode }) {
   const [document, setDocument] = useState<PDFDocumentProxy | null>(null)
   const [file, setFile] = useState<File | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
+  const [pendingScrollPage, setPendingScrollPage] = useState<number | null>(null)
   const [zoom, setZoom] = useState<number | 'fit-width' | 'fit-page'>('fit-width')
   const [isLoading, setIsLoading] = useState(false)
   const [loadProgress, setLoadProgress] = useState(0)
   const [error, setError] = useState<string | null>(null)
+  const activeDocIdRef = useRef<string | null>(null)
 
   const loadDocument = useCallback(async (newFile: File) => {
+    activeDocIdRef.current = null
+    setPendingScrollPage(null)
     setIsLoading(true)
     setError(null)
     setLoadProgress(0)
@@ -46,12 +61,21 @@ export function PDFProvider({ children }: { children: ReactNode }) {
       const doc = await pdfService.loadDocument(newFile, (progress) => {
         setLoadProgress(progress)
       })
-      
+
+      const docId = await positionStore.deriveDocumentId(
+        pdfService.getOriginalBytes()
+      )
+      const restoredPage = docId
+        ? positionStore.getPosition(docId, doc.numPages)
+        : 1
+
       pageManagementService.initialize(doc.numPages)
-      
+
+      activeDocIdRef.current = docId
       setDocument(doc)
       setFile(newFile)
-      setCurrentPage(1)
+      setCurrentPage(restoredPage)
+      setPendingScrollPage(restoredPage)
       setIsLoading(false)
       setLoadProgress(100)
       
@@ -67,6 +91,8 @@ export function PDFProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const cleanup = useCallback(() => {
+    activeDocIdRef.current = null
+    setPendingScrollPage(null)
     pdfService.cleanup()
     annotationService.clearAnnotations()
     searchService.cleanup()
@@ -77,6 +103,22 @@ export function PDFProvider({ children }: { children: ReactNode }) {
     setZoom('fit-width')
     setError(null)
   }, [])
+
+  const consumePendingScroll = useCallback(() => {
+    setPendingScrollPage(null)
+  }, [])
+
+  useEffect(() => {
+    if (activeDocIdRef.current === null || isLoading || document === null) {
+      return
+    }
+
+    positionStore.savePosition(
+      activeDocIdRef.current,
+      currentPage,
+      document.numPages
+    )
+  }, [currentPage, document, isLoading])
 
   const getOriginalBytes = useCallback(() => {
     return pdfService.getOriginalBytes()
@@ -90,11 +132,13 @@ export function PDFProvider({ children }: { children: ReactNode }) {
     document,
     file,
     currentPage,
+    pendingScrollPage,
     zoom,
     isLoading,
     loadProgress,
     error,
     loadDocument,
+    consumePendingScroll,
     setCurrentPage,
     setZoom,
     cleanup,

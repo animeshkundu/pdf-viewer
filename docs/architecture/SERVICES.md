@@ -468,6 +468,15 @@ interface SearchOptions {
 
 ## Additional Services
 
+### position.service.ts
+Persists the latest viewed page for up to 50 documents in browser
+`localStorage`. It identifies documents with a full-byte SHA-256 digest,
+restores pages with range clamping, and treats unavailable or corrupt storage
+as non-fatal. Once restoration completes, `PDFProvider` exposes a one-shot
+`pendingScrollPage` signal; `PDFViewer` consumes it after the matching page ref
+is ready and resets scroll suppression for each document. Resume state remains
+page-only and does not include an intra-page offset.
+
 ### watermark.service.ts
 Applies text or image watermarks to PDF pages.
 
