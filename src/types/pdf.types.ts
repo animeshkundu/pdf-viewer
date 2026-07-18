@@ -8,6 +8,13 @@ export interface PDFDocumentState {
   error: string | null
 }
 
+export interface DocumentPosition {
+  page: number
+  updatedAt: number
+}
+
+export type PositionStoreMap = Record<string, DocumentPosition>
+
 export interface PageDimensions {
   width: number
   height: number
