@@ -35,7 +35,7 @@ export class ExportService {
   }
 
   async exportPDF(
-    originalPdfBytes: ArrayBuffer,
+    originalPdfBytes: ArrayBuffer | Uint8Array,
     annotations: Annotation[],
     transformations: Map<number, PageTransformation>,
     pageOrder: number[],

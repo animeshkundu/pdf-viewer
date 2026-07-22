@@ -205,7 +205,7 @@ This document provides a comprehensive overview of the E2E test coverage for the
 - ✅ Keyboard shortcuts
 - ✅ Performance
 - ✅ Error handling
-- ⚠️ Actual text editing (requires complex text selection simulation)
+- ✅ Permanent text edit export/re-import round trip
 
 **Document Manipulation**:
 - ✅ Watermarks
@@ -301,10 +301,9 @@ npm run e2e:debug
 
 ## Known Limitations
 
-1. **Text Selection Simulation**: Some text editing tests are skipped because they require complex text selection simulation that's difficult in E2E testing
-2. **Drag and Drop File Upload**: Skipped due to complexity of simulating file system drag and drop in browser tests
-3. **Touch Gestures**: Limited testing of touch-specific interactions
-4. **Actual Text Editing**: Detailed text editing workflows require text selection which is complex to simulate
+1. **Drag and Drop File Upload**: Skipped due to complexity of simulating file system drag and drop in browser tests
+2. **Touch Gestures**: Limited testing of touch-specific interactions
+3. **Text Formatting Variants**: The strict round-trip test covers character replacement; the complete font/style matrix is not exercised in E2E
 
 ## Future Enhancements
 

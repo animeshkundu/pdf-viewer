@@ -1,3 +1,5 @@
+import type { MuPDFEditOperation } from './mupdf.types'
+
 /**
  * Text editing types for PDF text manipulation
  */
@@ -41,20 +43,37 @@ export interface TextBlock {
   bounds: TextBounds
   /** Original PDF coordinates (unscaled) for MuPDF operations */
   pdfBounds: TextBounds
+  /** First glyph origin and writing direction in MuPDF page coordinates */
+  pdfOrigin: [number, number]
+  direction: [number, number]
   text: string
   lines: TextLine[]
   style: TextStyle
+  /** Original unscaled style used for PDF content generation */
+  pdfStyle: TextStyle
+  /** Viewport used to map edited PDF bounds back onto the rendered page */
+  viewport?: TextPageViewport
+}
+
+/** Display viewport used to map MuPDF page coordinates onto the rendered page */
+export interface TextPageViewport {
+  scale: number
+  rotation: number
+  pageWidth: number
+  pageHeight: number
 }
 
 /** A text edit operation */
 export interface TextEdit {
   id: string
+  blockId: string
   pageNum: number
   originalText: string
   newText: string
   originalBounds: TextBounds
   newBounds: TextBounds
   style: TextStyle
+  operation: MuPDFEditOperation
   timestamp: number
 }
 
@@ -64,6 +83,7 @@ export interface PageTextState {
   blocks: TextBlock[]
   edits: TextEdit[]
   isLoading: boolean
+  displayKey?: string
   error?: string
 }
 
@@ -92,14 +112,21 @@ export interface TextEditProgress {
 export interface TextEditContextType {
   state: TextEditState
   enableTextEdit: () => Promise<void>
-  disableTextEdit: () => Promise<void>
-  extractTextBlocks: (pageNum: number, scale?: number) => Promise<TextBlock[]>
+  disableTextEdit: () => void
+  extractTextBlocks: (
+    pageNum: number,
+    scale?: number,
+    rotation?: number,
+    pageWidth?: number,
+    pageHeight?: number
+  ) => Promise<TextBlock[]>
   selectBlock: (blockId: string | null) => void
   startEditing: (blockId: string) => void
   cancelEditing: () => void
   applyEdit: (newText: string, newStyle: TextStyle) => Promise<void>
-  undo: () => void
-  redo: () => void
+  getDocumentBytes: () => Promise<ArrayBuffer>
+  undo: () => Promise<void>
+  redo: () => Promise<void>
   canUndo: boolean
   canRedo: boolean
 }

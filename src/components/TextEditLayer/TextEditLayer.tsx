@@ -8,12 +8,20 @@
 import { useTextBlocks, useTextEdit, useEditingBlock } from '@/hooks/useTextEdit'
 import { TextBlock } from './TextBlock'
 import { TextEditor } from './TextEditor'
+import { getRotatedContentStyle, getTextRotation } from './text-rotation'
+import { textBoundsToDisplay } from '@/services/text-edit.service'
+import { toast } from 'sonner'
+import { Fragment } from 'react'
+import type { TextStyle, TextPageViewport } from '@/types/text-edit.types'
 
 interface TextEditLayerProps {
   pageNum: number
   scale: number
   containerWidth: number
   containerHeight: number
+  rotation: number
+  pageWidth: number
+  pageHeight: number
 }
 
 export function TextEditLayer({
@@ -21,18 +29,47 @@ export function TextEditLayer({
   scale,
   containerWidth,
   containerHeight,
+  rotation,
+  pageWidth,
+  pageHeight,
 }: TextEditLayerProps) {
   const { state, selectBlock, startEditing, cancelEditing, applyEdit } = useTextEdit()
-  const { blocks, isLoading } = useTextBlocks(pageNum, scale)
+  const { blocks, isLoading } = useTextBlocks(
+    pageNum,
+    scale,
+    rotation,
+    pageWidth,
+    pageHeight
+  )
   const editingBlock = useEditingBlock()
+  const viewport: TextPageViewport = { scale, rotation, pageWidth, pageHeight }
+  const edits = state.pendingEdits.filter((edit) => edit.pageNum === pageNum)
+  const editsByBlock = new Map(edits.map((edit) => [edit.blockId, edit]))
+  const editingEdit = editingBlock ? editsByBlock.get(editingBlock.id) : undefined
+  const editorBlock = editingBlock && editingBlock.pageNum === pageNum
+    ? editingEdit
+      ? {
+          ...editingBlock,
+          text: editingEdit.newText,
+          bounds: textBoundsToDisplay(editingEdit.operation.newBounds, viewport),
+          style: {
+            ...editingEdit.style,
+            fontSize: editingEdit.operation.style.fontSize * scale,
+          },
+          pdfStyle: {
+            ...editingEdit.style,
+            fontSize: editingEdit.operation.style.fontSize,
+          },
+        }
+      : editingBlock
+    : null
 
-  // Don't render if text editing is not enabled
-  if (!state.isEnabled) {
+  if (!state.isEnabled && edits.length === 0) {
     return null
   }
 
   // Show loading indicator
-  if (isLoading && blocks.length === 0) {
+  if (state.isEnabled && isLoading && blocks.length === 0) {
     return (
       <div
         className="absolute inset-0 flex items-center justify-center bg-black/5"
@@ -48,18 +85,19 @@ export function TextEditLayer({
 
   const handleBlockClick = (blockId: string) => {
     selectBlock(blockId)
+    startEditing(blockId)
   }
 
   const handleBlockDoubleClick = (blockId: string) => {
     startEditing(blockId)
   }
 
-  const handleEditorSave = async (newText: string, newStyle: any) => {
+  const handleEditorSave = async (newText: string, newStyle: TextStyle) => {
     try {
       await applyEdit(newText, newStyle)
     } catch (error) {
       console.error('Failed to apply edit:', error)
-      // TODO: Show error toast
+      toast.error('Failed to apply text edit')
     }
   }
 
@@ -80,26 +118,80 @@ export function TextEditLayer({
       style={{
         width: containerWidth,
         height: containerHeight,
-        pointerEvents: 'auto',
+        pointerEvents: state.isEnabled ? 'auto' : 'none',
+        zIndex: 40,
       }}
       onClick={handleOverlayClick}
     >
-      {/* Text blocks */}
-      {blocks.map((block) => (
+      {edits.map((edit) => {
+        const originalBounds = textBoundsToDisplay(edit.operation.originalBounds, viewport)
+        const replacementBounds = textBoundsToDisplay(edit.operation.newBounds, viewport)
+        const contentStyle = getRotatedContentStyle(
+          replacementBounds,
+          getTextRotation(edit.operation.direction, rotation)
+        )
+
+        return (
+          <Fragment key={edit.id}>
+            <div
+              className="absolute bg-white pointer-events-none"
+              style={{
+                left: originalBounds.x,
+                top: originalBounds.y,
+                width: originalBounds.width,
+                height: originalBounds.height,
+              }}
+              aria-hidden="true"
+            />
+            {edit.newText && (
+              <div
+                className="absolute overflow-visible pointer-events-none"
+                style={{
+                  left: replacementBounds.x,
+                  top: replacementBounds.y,
+                  width: replacementBounds.width,
+                  height: replacementBounds.height,
+                }}
+              >
+                <span
+                  className="absolute block whitespace-pre overflow-hidden"
+                  style={{
+                    ...contentStyle,
+                    fontFamily: edit.style.fontFamily,
+                    fontSize: edit.operation.style.fontSize * scale,
+                    fontWeight: edit.style.fontWeight,
+                    fontStyle: edit.style.fontStyle,
+                    color: edit.style.color,
+                    textAlign: edit.style.textAlign,
+                    lineHeight: 1.2,
+                  }}
+                >
+                  {edit.newText}
+                </span>
+              </div>
+            )}
+          </Fragment>
+        )
+      })}
+
+      {state.isEnabled && blocks.map((block) => (
         <TextBlock
           key={block.id}
           block={block}
           isSelected={state.selectedBlockId === block.id}
           isEditing={state.editingBlockId === block.id}
+          displayText={editsByBlock.get(block.id)?.newText ?? block.text}
           onClick={() => handleBlockClick(block.id)}
           onDoubleClick={() => handleBlockDoubleClick(block.id)}
         />
       ))}
 
       {/* Text editor */}
-      {editingBlock && (
+      {editorBlock && (
         <TextEditor
-          block={editingBlock}
+          key={editorBlock.id}
+          block={editorBlock}
+          rotation={rotation}
           onSave={handleEditorSave}
           onCancel={handleEditorCancel}
         />

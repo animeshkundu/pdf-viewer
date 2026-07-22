@@ -1,24 +1,27 @@
 # PDF Editing Implementation Plan
 
+> **Historical document:** The original feasibility assessment below predates
+> the MuPDF WebAssembly integration. ADR-012 now defines the implemented
+> permanent text-run editing architecture and supersedes statements here that
+> existing text cannot be edited client-side.
+
 ## Overview
 
 Based on comprehensive research (see `PDF_EDITING_RESEARCH.md`), this document outlines the implementation plan for adding **practical PDF editing capabilities** without introducing side effects or technical debt.
 
 ## Key Insight
 
-**True PDF content editing (modifying existing text/images) is not feasible in a client-side web app** without:
-- Complex content stream parsing (months of work)
-- Server-side processing
-- Risk of PDF corruption
-- Poor user experience
-
-**Instead**: Focus on high-value, feasible features that users actually need.
+MuPDF now supplies the content parsing and redaction primitives that were absent
+when this plan was written. Existing text runs can be replaced client-side by
+removing the original run, creating a replacement appearance, and baking it into
+page content before export. Image replacement and paragraph reflow remain out of
+scope.
 
 ## What Users Want vs. What's Possible
 
 | User Request | What They Really Need | Our Solution |
 |--------------|----------------------|--------------|
-| "Edit text" | Fix typos, change words | ❌ Not feasible. Offer: Text box overlay tool (already have!) |
+| "Edit text" | Fix typos, change words | ✅ Permanent run replacement via MuPDF |
 | "Fill forms" | Complete PDF forms | ✅ Phase 10: Form Filling |
 | "Remove images" | Delete/replace images | ⚠️ Partial: Cover with white/replacement (Phase 12) |
 | "Black out info" | Redact sensitive data | ✅ Phase 11: Redaction tool |

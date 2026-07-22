@@ -217,7 +217,7 @@ Conversion pipeline:
 ## Technical Constraints
 
 ### pdf-lib Limitations
-1. **No text editing**: Cannot modify existing PDF text, only add new text
+1. **No native text editing**: pdf-lib cannot modify existing text; MuPDF-edited bytes are composed before this pipeline
 2. **Font embedding**: Limited to standard 14 fonts + custom embeds (adds size)
 3. **Form fields**: Cannot create interactive form fields
 4. **JavaScript actions**: Cannot embed PDF JavaScript

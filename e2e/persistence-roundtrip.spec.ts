@@ -17,6 +17,8 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import fs from 'fs'
 import os from 'os'
+import * as mupdf from 'mupdf'
+import { PDFDocument } from 'pdf-lib'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -132,19 +134,15 @@ async function clickToolbarButton(page: Page, buttonName: RegExp): Promise<void>
  * Open thumbnail sidebar if not already open
  */
 async function openThumbnailSidebar(page: Page): Promise<void> {
-  // Check if sidebar is already open by looking for thumbnails
-  const thumbnails = page.locator('.thumbnail-sidebar, [data-sidebar="thumbnails"]')
-  if (!(await thumbnails.isVisible())) {
-    // Try keyboard shortcut or button to open sidebar
-    const sidebarButton = page.getByRole('button', { name: /Thumbnails|Sidebar|Pages/i })
-    if (await sidebarButton.isVisible()) {
-      await sidebarButton.click()
-    } else {
-      // Try keyboard shortcut
-      await page.keyboard.press('t')
-    }
-    await page.waitForTimeout(TIMEOUTS.DEFAULT)
+  const sidebarToggle = page.getByTestId('sidebar-toggle')
+  await expect(sidebarToggle).toBeVisible()
+  if (await sidebarToggle.getAttribute('aria-pressed') !== 'true') {
+    await sidebarToggle.click()
   }
+  await page.waitForTimeout(TIMEOUTS.DEFAULT)
+
+  const firstThumbnail = page.locator('[data-thumbnail]').first()
+  await expect(firstThumbnail).toBeVisible()
 }
 
 /**
@@ -154,19 +152,11 @@ async function openThumbnailContextMenu(page: Page, pageNumber: number): Promise
   await openThumbnailSidebar(page)
 
   // Find the thumbnail for the specific page
-  const thumbnail = page.locator(`[data-page="${pageNumber}"], .thumbnail:nth-child(${pageNumber})`).first()
+  const thumbnail = page.locator(`[data-thumbnail][data-page="${pageNumber}"]`).first()
 
-  if (await thumbnail.isVisible()) {
-    await thumbnail.click({ button: 'right' })
-    await page.waitForTimeout(TIMEOUTS.SHORT)
-  } else {
-    // Fallback: find any thumbnail and right-click
-    const anyThumbnail = page.locator('.thumbnail, [data-thumbnail]').first()
-    if (await anyThumbnail.isVisible()) {
-      await anyThumbnail.click({ button: 'right' })
-      await page.waitForTimeout(TIMEOUTS.SHORT)
-    }
-  }
+  await expect(thumbnail).toBeVisible()
+  await thumbnail.click({ button: 'right' })
+  await page.waitForTimeout(TIMEOUTS.SHORT)
 }
 
 /**
@@ -182,12 +172,8 @@ async function enterTextEditMode(page: Page): Promise<void> {
  * Exit text edit mode
  */
 async function exitTextEditMode(page: Page): Promise<void> {
-  // Find and click the Exit Edit Mode button
-  const exitButton = page.getByRole('button', { name: /Exit|Done|Close/i })
-  if (await exitButton.isVisible()) {
-    await exitButton.click()
-    await page.waitForTimeout(TIMEOUTS.DEFAULT)
-  }
+  await openToolsMenuItem(page, /Exit Text Edit Mode/i)
+  await page.waitForTimeout(TIMEOUTS.DEFAULT)
 }
 
 /**
@@ -253,17 +239,9 @@ async function rotatePage(page: Page, pageNumber: number = 1, direction: 'cw' | 
     : /Rotate.*Left|Rotate.*Counter/i
 
   const rotateMenuItem = page.getByRole('menuitem', { name: rotateMenuItemName })
-  if (await rotateMenuItem.isVisible()) {
-    await rotateMenuItem.click()
-    await page.waitForTimeout(TIMEOUTS.DEFAULT)
-  } else {
-    // Fallback: try button with similar name
-    const rotateButton = page.getByRole('button', { name: rotateMenuItemName })
-    if (await rotateButton.isVisible()) {
-      await rotateButton.click()
-      await page.waitForTimeout(TIMEOUTS.DEFAULT)
-    }
-  }
+  await expect(rotateMenuItem).toBeVisible()
+  await rotateMenuItem.click()
+  await page.waitForTimeout(TIMEOUTS.DEFAULT)
 }
 
 /**
@@ -299,74 +277,94 @@ test.describe('Text Editing Round-Trip Persistence', () => {
   })
 
   test('edited text persists through export/re-import cycle', async ({ page }) => {
-    // 1. Upload a PDF with editable text
-    await uploadPdf(page, 'text-edit-test.pdf')
+    const annotatedSource = path.join(os.tmpdir(), `text-edit-source-${Date.now()}.pdf`)
+    const fixtureBytes = fs.readFileSync(path.join(__dirname, 'fixtures', 'text-edit-test.pdf'))
+    const fixtureDocument = await PDFDocument.load(fixtureBytes)
+    const preservedField = fixtureDocument.getForm().createTextField('preserved-field')
+    preservedField.setText('PRESERVE_WIDGET')
+    preservedField.addToPage(fixtureDocument.getPage(0), {
+      x: 450,
+      y: 40,
+      width: 120,
+      height: 20,
+    })
+    const fixtureWithWidget = await fixtureDocument.save()
+    const sourceDocument = mupdf.Document.openDocument(
+      fixtureWithWidget,
+      'application/pdf'
+    ).asPDF()
+    if (!sourceDocument) throw new Error('Text edit fixture is not a PDF')
+    const sourcePage = sourceDocument.loadPage(0)
+    const sourceNote = sourcePage.createAnnotation('Text')
+    sourceNote.setRect([500, 700, 520, 720])
+    sourceNote.setContents('PRESERVE_NATIVE_ANNOTATION')
+    sourceNote.setAuthor('Round-trip test')
+    sourceNote.update()
+    const sourceBuffer = sourceDocument.saveToBuffer('garbage=4')
+    fs.writeFileSync(annotatedSource, sourceBuffer.asUint8Array())
+    sourceBuffer.destroy()
+    sourceNote.destroy()
+    sourcePage.destroy()
+    sourceDocument.destroy()
+
+    await uploadPdfFromPath(page, annotatedSource)
 
     // 2. Enter text edit mode
     await enterTextEditMode(page)
 
     // 3. Find and click on a text block
     const textBlocks = page.locator('.text-block-overlay, [data-text-block], .editable-text')
-    const blockCount = await textBlocks.count()
-
-    // Skip if no text blocks found (graceful handling)
-    if (blockCount === 0) {
-      test.skip()
-      return
-    }
+    await expect(textBlocks.first()).toBeVisible({ timeout: TIMEOUTS.LONG })
+    expect(await textBlocks.count()).toBeGreaterThan(0)
 
     // Click on first text block
     await textBlocks.first().click()
-    await page.waitForTimeout(TIMEOUTS.SHORT)
-
-    // Double-click to enter edit mode
-    await textBlocks.first().dblclick()
-    await page.waitForTimeout(TIMEOUTS.SHORT)
 
     // Find the text input/textarea
     const textInput = page.locator('.text-editor input, .text-editor textarea, [contenteditable="true"]').first()
+    await expect(textInput).toBeVisible()
+    const originalText = await textInput.inputValue()
+    const editedText = `PERSISTENCE_TEST_${Date.now()}`
+    await textInput.fill(editedText)
+    await textInput.press('Control+Enter')
+    await expect(textInput).not.toBeVisible({ timeout: TIMEOUTS.DEFAULT })
 
-    if (await textInput.isVisible()) {
-      // Get original text
-      const originalText = await textInput.inputValue().catch(() => '')
+    await exitTextEditMode(page)
+    const tempFile = await exportAndReimport(page)
 
-      // Edit the text - append "EDITED" to make it unique
-      const editedText = 'PERSISTENCE_TEST_' + Date.now()
-      await textInput.clear()
-      await textInput.fill(editedText)
+    try {
+      const savedDocument = mupdf.Document.openDocument(
+        fs.readFileSync(tempFile),
+        'application/pdf'
+      )
+      const savedPage = savedDocument.loadPage(0) as mupdf.PDFPage
+      const savedStructuredText = savedPage.toStructuredText()
+      const savedText = savedStructuredText.asText()
+      expect(savedText).toContain(editedText)
+      expect(savedText).not.toContain(originalText)
+      const savedAnnotations = savedPage.getAnnotations()
+      expect(savedAnnotations).toHaveLength(1)
+      expect(savedAnnotations[0].getContents()).toBe('PRESERVE_NATIVE_ANNOTATION')
+      savedAnnotations.forEach((annotation) => annotation.destroy())
+      const savedWidgets = savedPage.getWidgets()
+      expect(savedWidgets).toHaveLength(1)
+      savedWidgets.forEach((widget) => widget.destroy())
+      savedStructuredText.destroy()
+      savedPage.destroy()
+      savedDocument.destroy()
 
-      // Confirm the edit
-      await page.keyboard.press('Tab')
-      await page.waitForTimeout(TIMEOUTS.DEFAULT)
-
-      // Exit edit mode
-      await exitTextEditMode(page)
-
-      // 4. Export and re-import
-      const tempFile = await exportAndReimport(page)
-
-      // 5. Enter text edit mode again to verify
       await enterTextEditMode(page)
-
-      // 6. Find the edited text
-      const verifyBlocks = page.locator('.text-block-overlay, [data-text-block], .editable-text')
-      const verifyCount = await verifyBlocks.count()
-
-      let foundEditedText = false
-      for (let i = 0; i < verifyCount; i++) {
-        const blockText = await verifyBlocks.nth(i).textContent()
-        if (blockText && blockText.includes('PERSISTENCE_TEST_')) {
-          foundEditedText = true
-          break
-        }
+      const verifyBlocks = page.locator('[data-text-block]')
+      await expect(verifyBlocks.filter({ hasText: editedText })).toBeVisible({ timeout: TIMEOUTS.LONG })
+      if (originalText.trim()) {
+        await expect(verifyBlocks.filter({ hasText: originalText })).toHaveCount(0)
       }
-
-      // Verify the edit persisted
-      expect(foundEditedText).toBe(true)
-
-      // Cleanup temp file
+    } finally {
       if (fs.existsSync(tempFile)) {
         fs.unlinkSync(tempFile)
+      }
+      if (fs.existsSync(annotatedSource)) {
+        fs.unlinkSync(annotatedSource)
       }
     }
   })
@@ -811,47 +809,43 @@ test.describe('Combined Operations Round-Trip Persistence', () => {
   })
 
   test('text edit + rotation both persist through export/re-import', async ({ page }) => {
-    // This test verifies that combining operations doesn't cause state corruption
-
-    // 1. Upload PDF
     await uploadPdf(page, 'text-edit-test.pdf')
-
-    // 2. First, rotate the page via thumbnail sidebar context menu
     await rotatePage(page, 1, 'cw')
+    const rotatedCanvas = await page.locator('canvas').first().boundingBox()
+    if (!rotatedCanvas) throw new Error('Rotated PDF canvas was not visible')
+    expect(rotatedCanvas.width).toBeGreaterThan(rotatedCanvas.height)
 
-    // 3. Then, edit text
     await enterTextEditMode(page)
-
     const textBlocks = page.locator('.text-block-overlay, [data-text-block]')
-    const blockCount = await textBlocks.count()
+    await expect(textBlocks.first()).toBeVisible({ timeout: TIMEOUTS.LONG })
+    await textBlocks.first().click()
+    const textInput = page.locator('.text-editor textarea').first()
+    await expect(textInput).toBeVisible()
+    const combinedText = `COMBINED_TEST_${Date.now()}`
+    await textInput.fill(combinedText)
+    await textInput.press('Control+Enter')
+    await exitTextEditMode(page)
 
-    if (blockCount > 0) {
-      await textBlocks.first().dblclick()
-      await page.waitForTimeout(TIMEOUTS.SHORT)
-
-      const textInput = page.locator('.text-editor input, .text-editor textarea, [contenteditable="true"]').first()
-      if (await textInput.isVisible()) {
-        const combinedText = 'COMBINED_TEST_' + Date.now()
-        await textInput.clear()
-        await textInput.fill(combinedText)
-        await page.keyboard.press('Tab')
-        await page.waitForTimeout(TIMEOUTS.DEFAULT)
-      }
-
-      await exitTextEditMode(page)
-    }
-
-    // 4. Export and re-import
     const tempFile = await exportAndReimport(page)
 
-    // 5. Verify both changes persisted
-    // The PDF should load successfully with rotated page and edited text
-    const loadedCanvas = page.locator('canvas').first()
-    await expect(loadedCanvas).toBeVisible()
+    try {
+      const exportedDocument = await PDFDocument.load(fs.readFileSync(tempFile))
+      expect(exportedDocument.getPage(0).getRotation().angle).toBe(90)
 
-    // Cleanup
-    if (fs.existsSync(tempFile)) {
-      fs.unlinkSync(tempFile)
+      const savedDocument = mupdf.Document.openDocument(
+        fs.readFileSync(tempFile),
+        'application/pdf'
+      )
+      const savedPage = savedDocument.loadPage(0)
+      const savedStructuredText = savedPage.toStructuredText()
+      expect(savedStructuredText.asText()).toContain(combinedText)
+      savedStructuredText.destroy()
+      savedPage.destroy()
+      savedDocument.destroy()
+    } finally {
+      if (fs.existsSync(tempFile)) {
+        fs.unlinkSync(tempFile)
+      }
     }
   })
 
@@ -951,21 +945,10 @@ test.describe('Combined Operations Round-Trip Persistence', () => {
     await clickToolbarButton(page, /Page Numbers/i)
     await page.waitForTimeout(TIMEOUTS.DEFAULT)
 
-    const enableToggle = page.getByRole('checkbox').or(page.getByRole('switch')).first()
-    if (await enableToggle.isVisible()) {
-      if (!(await enableToggle.isChecked())) {
-        await enableToggle.click()
-      }
-
-      const applyButton = page.getByRole('button', { name: /Apply|Add/i })
-      if (await applyButton.isVisible()) {
-        await applyButton.click()
-        await page.waitForTimeout(TIMEOUTS.DEFAULT)
-      }
-
-      await page.keyboard.press('Escape')
-      await page.waitForTimeout(TIMEOUTS.SHORT)
-    }
+    const applyPageNumbersButton = page.getByRole('button', { name: /Apply Page Numbers/i })
+    await expect(applyPageNumbersButton).toBeVisible()
+    await applyPageNumbersButton.click()
+    await page.waitForTimeout(TIMEOUTS.DEFAULT)
 
     // 4. Rotate page via thumbnail sidebar context menu
     await rotatePage(page, 1, 'cw')

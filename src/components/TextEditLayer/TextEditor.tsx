@@ -9,16 +9,18 @@ import { useState, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { TextEditToolbar } from '../TextEditToolbar/TextEditToolbar'
 import type { TextBlock, TextStyle } from '@/types/text-edit.types'
+import { getRotatedContentStyle, getTextRotation } from './text-rotation'
 
 interface TextEditorProps {
   block: TextBlock
-  onSave: (newText: string, newStyle: TextStyle) => void
+  rotation: number
+  onSave: (newText: string, newStyle: TextStyle) => Promise<void>
   onCancel: () => void
 }
 
-export function TextEditor({ block, onSave, onCancel }: TextEditorProps) {
+export function TextEditor({ block, rotation, onSave, onCancel }: TextEditorProps) {
   const [text, setText] = useState(block.text)
-  const [style, setStyle] = useState<TextStyle>(block.style)
+  const [style, setStyle] = useState<TextStyle>(block.pdfStyle)
   const [isSaving, setIsSaving] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -30,26 +32,8 @@ export function TextEditor({ block, onSave, onCancel }: TextEditorProps) {
     }
   }, [])
 
-  // Handle keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Escape to cancel
-      if (e.key === 'Escape') {
-        e.preventDefault()
-        onCancel()
-      }
-      // Ctrl/Cmd + Enter to save
-      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-        e.preventDefault()
-        handleSave()
-      }
-    }
-
-    document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [text, style, onCancel])
-
   const handleSave = async () => {
+    if (isSaving) return
     setIsSaving(true)
     try {
       await onSave(text, style)
@@ -62,67 +46,84 @@ export function TextEditor({ block, onSave, onCancel }: TextEditorProps) {
     setStyle((prev) => ({ ...prev, ...updates }))
   }
 
-  // Calculate editor dimensions (minimum size, can grow)
-  const minWidth = Math.max(block.bounds.width, 200)
-  const minHeight = Math.max(block.bounds.height, 100)
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Escape') {
+      e.preventDefault()
+      onCancel()
+    } else if (e.key === 'Tab' || ((e.ctrlKey || e.metaKey) && e.key === 'Enter')) {
+      e.preventDefault()
+      void handleSave()
+    }
+  }
+
+  const isDirty =
+    text !== block.text ||
+    style.fontFamily !== block.pdfStyle.fontFamily ||
+    style.fontSize !== block.pdfStyle.fontSize ||
+    style.fontWeight !== block.pdfStyle.fontWeight ||
+    style.fontStyle !== block.pdfStyle.fontStyle ||
+    style.color !== block.pdfStyle.color ||
+    style.textAlign !== block.pdfStyle.textAlign
+  const contentStyle = getRotatedContentStyle(
+    block.bounds,
+    getTextRotation(block.direction, rotation)
+  )
+  const scale = block.viewport?.scale ?? (
+    block.pdfStyle.fontSize > 0 ? block.style.fontSize / block.pdfStyle.fontSize : 1
+  )
 
   return (
     <div
-      className="absolute z-50 bg-white rounded-lg shadow-xl border border-gray-200"
+      className="text-editor absolute z-50"
       style={{
-        left: block.bounds.x - 1,
-        top: block.bounds.y - 40, // Account for toolbar
-        minWidth,
+        left: block.bounds.x,
+        top: block.bounds.y,
+        width: block.bounds.width,
+        height: block.bounds.height,
       }}
       onClick={(e) => e.stopPropagation()}
     >
-      {/* Toolbar */}
-      <TextEditToolbar style={style} onChange={handleStyleChange} />
+      <textarea
+        ref={textareaRef}
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        onKeyDown={handleKeyDown}
+        className="editable-text absolute resize-none overflow-hidden border-2 border-blue-500 bg-white p-0 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+        style={{
+          ...contentStyle,
+          fontFamily: style.fontFamily,
+          fontSize: `${style.fontSize * scale}px`,
+          fontWeight: style.fontWeight,
+          fontStyle: style.fontStyle,
+          color: style.color,
+          textAlign: style.textAlign,
+          lineHeight: 1,
+        }}
+        aria-label="Edit PDF text run"
+        spellCheck={false}
+      />
 
-      {/* Textarea */}
-      <div className="p-2">
-        <textarea
-          ref={textareaRef}
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          className="w-full p-2 resize-both overflow-auto border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          style={{
-            fontFamily: style.fontFamily,
-            fontSize: `${style.fontSize}px`,
-            fontWeight: style.fontWeight,
-            fontStyle: style.fontStyle,
-            color: style.color,
-            textAlign: style.textAlign,
-            minWidth: minWidth - 16,
-            minHeight: minHeight,
-            lineHeight: 1.4,
-          }}
-          placeholder="Enter text..."
-        />
-      </div>
+      <div className="absolute left-0 top-full mt-1 min-w-max rounded-lg border border-gray-200 bg-white shadow-xl">
+        <TextEditToolbar style={style} onChange={handleStyleChange} />
 
-      {/* Actions */}
-      <div className="flex justify-between items-center px-3 py-2 border-t border-gray-100 bg-gray-50 rounded-b-lg">
-        <span className="text-xs text-gray-500">
-          Press <kbd className="px-1 py-0.5 bg-gray-200 rounded text-[10px]">Esc</kbd> to cancel,{' '}
-          <kbd className="px-1 py-0.5 bg-gray-200 rounded text-[10px]">Ctrl+Enter</kbd> to save
-        </span>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onCancel}
-            disabled={isSaving}
-          >
-            Cancel
-          </Button>
-          <Button
-            size="sm"
-            onClick={handleSave}
-            disabled={isSaving || text === block.text}
-          >
-            {isSaving ? 'Saving...' : 'Apply'}
-          </Button>
+        <div className="flex items-center justify-between gap-4 border-t border-gray-100 bg-gray-50 px-3 py-2">
+          <span className="text-xs text-gray-500">
+            <kbd className="rounded bg-gray-200 px-1 py-0.5 text-[10px]">Esc</kbd> cancel
+            {' · '}
+            <kbd className="rounded bg-gray-200 px-1 py-0.5 text-[10px]">Tab</kbd> apply
+          </span>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={onCancel} disabled={isSaving}>
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => void handleSave()}
+              disabled={isSaving || !isDirty}
+            >
+              {isSaving ? 'Applying...' : 'Apply'}
+            </Button>
+          </div>
         </div>
       </div>
     </div>
