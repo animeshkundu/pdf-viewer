@@ -12,6 +12,7 @@ interface TextBlockProps {
   block: TextBlockType
   isSelected: boolean
   isEditing: boolean
+  displayText: string
   onClick: () => void
   onDoubleClick: () => void
 }
@@ -20,15 +21,11 @@ export function TextBlock({
   block,
   isSelected,
   isEditing,
+  displayText,
   onClick,
   onDoubleClick,
 }: TextBlockProps) {
   const [isHovered, setIsHovered] = useState(false)
-
-  // Don't show block if it's being edited
-  if (isEditing) {
-    return null
-  }
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -38,6 +35,14 @@ export function TextBlock({
   const handleDoubleClick = (e: React.MouseEvent) => {
     e.stopPropagation()
     onDoubleClick()
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      e.stopPropagation()
+      onClick()
+    }
   }
 
   // Determine border and background styles
@@ -53,8 +58,12 @@ export function TextBlock({
   }
 
   return (
-    <div
-      className="absolute cursor-pointer transition-colors duration-150"
+    <button
+      type="button"
+      className="text-block-overlay absolute cursor-text transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500"
+      data-text-block={block.id}
+      tabIndex={isEditing ? -1 : 0}
+      aria-label={`Edit text: ${displayText}`}
       style={{
         left: block.bounds.x,
         top: block.bounds.y,
@@ -63,30 +72,22 @@ export function TextBlock({
         border: `2px solid ${borderColor}`,
         backgroundColor,
         borderRadius: '2px',
+        pointerEvents: isEditing ? 'none' : 'auto',
       }}
       onClick={handleClick}
       onDoubleClick={handleDoubleClick}
+      onKeyDown={handleKeyDown}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      title="Double-click to edit"
+      title="Click to edit text"
     >
-      {/* Selection indicator */}
-      {isSelected && (
-        <div className="absolute -top-6 left-0 bg-blue-500 text-white text-xs px-2 py-0.5 rounded-t whitespace-nowrap">
-          Double-click to edit
-        </div>
-      )}
+      <span className="sr-only">{displayText}</span>
 
-      {/* Resize handles (for selected blocks) */}
       {isSelected && (
-        <>
-          {/* Corner handles */}
-          <div className="absolute -top-1 -left-1 w-2.5 h-2.5 bg-blue-500 rounded-full cursor-nw-resize" />
-          <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-blue-500 rounded-full cursor-ne-resize" />
-          <div className="absolute -bottom-1 -left-1 w-2.5 h-2.5 bg-blue-500 rounded-full cursor-sw-resize" />
-          <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 bg-blue-500 rounded-full cursor-se-resize" />
-        </>
+        <span className="absolute -top-6 left-0 bg-blue-500 text-white text-xs px-2 py-0.5 rounded-t whitespace-nowrap">
+          Editing text
+        </span>
       )}
-    </div>
+    </button>
   )
 }

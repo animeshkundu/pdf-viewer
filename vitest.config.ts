@@ -10,6 +10,10 @@ export default defineConfig({
     setupFiles: './src/setupTests.ts',
     include: ['src/**/*.{test,spec}.{ts,tsx}'],
     exclude: ['node_modules', 'dist', 'e2e', 'coverage', 'playwright-report'],
+    reporters: ['default', 'json'],
+    outputFile: {
+      json: 'playwright-report/results.json',
+    },
     coverage: {
       provider: 'istanbul',
       reporter: ['text', 'json', 'html', 'lcov'],

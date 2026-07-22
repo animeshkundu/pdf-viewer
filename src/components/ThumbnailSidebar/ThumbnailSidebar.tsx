@@ -112,6 +112,8 @@ function Thumbnail({
       onInsertAfter={onInsertAfter}
     >
       <button
+        data-thumbnail
+        data-page={pageNumber}
         draggable
         onDragStart={() => onDragStart(pageNumber)}
         onDragOver={onDragOver}

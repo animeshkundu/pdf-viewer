@@ -82,7 +82,12 @@ class MuPDFService implements MuPDFServiceInterface {
 
         this.worker.onerror = (error) => {
           console.error('MuPDF Worker error:', error)
-          reject(new Error(`Worker error: ${error.message}`))
+          const workerError = new Error(`Worker error: ${error.message}`)
+          this.rejectPending(workerError)
+          this.worker?.terminate()
+          this.worker = null
+          this._isInitialized = false
+          reject(workerError)
         }
 
         // Initialize the worker
@@ -170,11 +175,16 @@ class MuPDFService implements MuPDFServiceInterface {
    */
   terminate(): void {
     if (this.worker) {
+      this.rejectPending(new Error('MuPDF worker terminated'))
       this.worker.terminate()
       this.worker = null
       this._isInitialized = false
-      this.pending.clear()
     }
+  }
+
+  private rejectPending(error: Error): void {
+    this.pending.forEach(({ reject }) => reject(error))
+    this.pending.clear()
   }
 }
 

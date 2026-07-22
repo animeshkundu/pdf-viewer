@@ -1,4 +1,4 @@
-import { Toaster } from 'sonner'
+import { Toaster, toast } from 'sonner'
 import { PDFProvider, usePDF } from './hooks/usePDF.tsx'
 import { SearchProvider } from './hooks/useSearch.tsx'
 import { AnnotationProvider, useAnnotations } from './hooks/useAnnotations.tsx'
@@ -48,7 +48,15 @@ function AppContentInner() {
   const { hasForm, isFormMode, setIsFormMode } = useForm()
   const { watermark } = useWatermark()
   const { pageNumberConfig } = usePageNumber()
-  const { state: textEditState, enableTextEdit, disableTextEdit } = useTextEdit()
+  const {
+    state: textEditState,
+    enableTextEdit,
+    disableTextEdit,
+    undo: undoTextEdit,
+    redo: redoTextEdit,
+    canUndo: canUndoTextEdit,
+    canRedo: canRedoTextEdit,
+  } = useTextEdit()
   const isTextEditEnabled = textEditState.isEnabled
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
@@ -118,7 +126,15 @@ function AppContentInner() {
       }
 
       if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'Z') {
+        if (isTyping) return
         e.preventDefault()
+        if (isTextEditEnabled && canRedoTextEdit) {
+          void redoTextEdit().catch((error) => {
+            console.error('Failed to redo text edit:', error)
+            toast.error('Failed to redo text edit')
+          })
+          return
+        }
         if (canRedo) {
           redo()
         }
@@ -126,7 +142,15 @@ function AppContentInner() {
       }
 
       if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
+        if (isTyping) return
         e.preventDefault()
+        if (isTextEditEnabled && canUndoTextEdit) {
+          void undoTextEdit().catch((error) => {
+            console.error('Failed to undo text edit:', error)
+            toast.error('Failed to undo text edit')
+          })
+          return
+        }
         if (canUndo) {
           undo()
         }
@@ -259,13 +283,13 @@ function AppContentInner() {
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [document, currentPage, setCurrentPage, isMarkupOpen, isFormOpen, hasForm, isFormMode, zoom, setZoom, canUndo, canRedo, undo, redo, setActiveTool, deleteSelectedAnnotation, setIsFormMode, isTextEditEnabled, disableTextEdit])
+  }, [document, currentPage, setCurrentPage, isMarkupOpen, isFormOpen, hasForm, isFormMode, zoom, setZoom, canUndo, canRedo, undo, redo, setActiveTool, deleteSelectedAnnotation, setIsFormMode, isTextEditEnabled, disableTextEdit, canUndoTextEdit, canRedoTextEdit, undoTextEdit, redoTextEdit])
 
   useEffect(() => {
-    if (annotations.length > 0 || transformations.size > 0 || pageOrder.length > 0 || blankPages.length > 0 || watermark !== null || pageNumberConfig !== null) {
+    if (annotations.length > 0 || transformations.size > 0 || pageOrder.length > 0 || blankPages.length > 0 || watermark !== null || pageNumberConfig !== null || textEditState.historyIndex >= 0) {
       markAsModified()
     }
-  }, [annotations, transformations, pageOrder, blankPages, watermark, pageNumberConfig, markAsModified])
+  }, [annotations, transformations, pageOrder, blankPages, watermark, pageNumberConfig, textEditState.history, textEditState.historyIndex, markAsModified])
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -276,11 +300,6 @@ function AppContentInner() {
         e.target.value = ''
       }
     }
-  }
-
-  const handleExportComplete = () => {
-    markAsSaved()
-    setIsExportOpen(false)
   }
 
   return (
@@ -333,7 +352,10 @@ function AppContentInner() {
           if (isTextEditEnabled) {
             disableTextEdit()
           } else {
-            enableTextEdit()
+            void enableTextEdit().catch((error) => {
+              console.error('Failed to enable text editing:', error)
+              toast.error('Failed to enable text editing')
+            })
           }
         }}
         isTextEditOpen={isTextEditEnabled}
@@ -392,7 +414,8 @@ function AppContentInner() {
 
       <ExportDialog
         isOpen={isExportOpen}
-        onClose={handleExportComplete}
+        onClose={() => setIsExportOpen(false)}
+        onExportComplete={markAsSaved}
         originalFilename={getFilename() || undefined}
         originalPdfBytes={getOriginalBytes()}
         annotations={annotations}

@@ -55,6 +55,14 @@ export function TextEditProvider({ children, pdfBytes }: TextEditProviderProps) 
     return () => textEditService.setProgressCallback(() => {})
   }, [])
 
+  useEffect(() => {
+    textEditService.setDocument(pdfBytes ?? null)
+  }, [pdfBytes])
+
+  useEffect(() => {
+    return () => textEditService.dispose()
+  }, [])
+
   /**
    * Enable text editing mode
    */
@@ -68,15 +76,21 @@ export function TextEditProvider({ children, pdfBytes }: TextEditProviderProps) 
   /**
    * Disable text editing mode
    */
-  const disableTextEdit = useCallback(async () => {
-    await textEditService.disable()
+  const disableTextEdit = useCallback(() => {
+    textEditService.disable()
   }, [])
 
   /**
    * Extract text blocks from a page
    */
-  const extractTextBlocks = useCallback(async (pageNum: number, scale = 1): Promise<TextBlock[]> => {
-    return textEditService.extractTextBlocks(pageNum, scale)
+  const extractTextBlocks = useCallback(async (
+    pageNum: number,
+    scale = 1,
+    rotation = 0,
+    pageWidth = 0,
+    pageHeight = 0
+  ): Promise<TextBlock[]> => {
+    return textEditService.extractTextBlocks(pageNum, scale, rotation, pageWidth, pageHeight)
   }, [])
 
   /**
@@ -120,15 +134,22 @@ export function TextEditProvider({ children, pdfBytes }: TextEditProviderProps) 
   /**
    * Undo last edit
    */
-  const undo = useCallback(() => {
-    textEditService.undo()
+  const getDocumentBytes = useCallback(async () => {
+    if (!pdfBytes) {
+      throw new Error('No PDF document loaded')
+    }
+    return textEditService.getDocumentBytes(pdfBytes)
+  }, [pdfBytes])
+
+  const undo = useCallback(async () => {
+    await textEditService.undo()
   }, [])
 
   /**
    * Redo last undone edit
    */
-  const redo = useCallback(() => {
-    textEditService.redo()
+  const redo = useCallback(async () => {
+    await textEditService.redo()
   }, [])
 
   // Computed values
@@ -144,6 +165,7 @@ export function TextEditProvider({ children, pdfBytes }: TextEditProviderProps) 
     startEditing,
     cancelEditing,
     applyEdit,
+    getDocumentBytes,
     undo,
     redo,
     canUndo,
@@ -175,7 +197,13 @@ export function useTextEdit(): TextEditContextType {
  *
  * Hook to get text blocks for a specific page.
  */
-export function useTextBlocks(pageNum: number, scale: number = 1): {
+export function useTextBlocks(
+  pageNum: number,
+  scale = 1,
+  rotation = 0,
+  pageWidth = 0,
+  pageHeight = 0
+): {
   blocks: TextBlock[]
   isLoading: boolean
   error: string | undefined
@@ -206,24 +234,40 @@ export function useTextBlocks(pageNum: number, scale: number = 1): {
     if (!state.isEnabled) return
 
     setIsLoading(true)
+    setBlocks([])
     setError(undefined)
 
     try {
-      const newBlocks = await extractTextBlocks(pageNum, scale)
+      const newBlocks = await extractTextBlocks(
+        pageNum,
+        scale,
+        rotation,
+        pageWidth,
+        pageHeight
+      )
       setBlocks(newBlocks)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to extract text')
     } finally {
       setIsLoading(false)
     }
-  }, [state.isEnabled, pageNum, scale, extractTextBlocks])
+  }, [
+    state.isEnabled,
+    pageNum,
+    scale,
+    rotation,
+    pageWidth,
+    pageHeight,
+    extractTextBlocks,
+    state.historyIndex,
+  ])
 
-  // Auto-extract on mount if enabled
+  // Recompute display bounds whenever the PDF.js viewport changes.
   useEffect(() => {
-    if (state.isEnabled && blocks.length === 0 && !isLoading && !error) {
-      refresh()
+    if (state.isEnabled) {
+      void refresh()
     }
-  }, [state.isEnabled, blocks.length, isLoading, error, refresh])
+  }, [state.isEnabled, refresh])
 
   return { blocks, isLoading, error, refresh }
 }

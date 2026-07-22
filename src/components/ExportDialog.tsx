@@ -8,18 +8,22 @@ import { Progress } from '@/components/ui/progress'
 import { Download, FileText, CheckCircle, Warning, Stamp, NumberSquareOne } from '@phosphor-icons/react'
 import { exportService, ExportProgress } from '@/services/export.service'
 import { formService } from '@/services/form.service'
+import { useTextEdit } from '@/hooks/useTextEdit'
 import { toast } from 'sonner'
 import type { BlankPage } from '@/types/page-management.types'
+import type { PageTransformation } from '@/types/page-management.types'
 import type { Watermark } from '@/types/watermark.types'
 import type { PageNumberConfig } from '@/types/page-number.types'
+import type { Annotation } from '@/types/annotation.types'
 
 interface ExportDialogProps {
   isOpen: boolean
   onClose: () => void
+  onExportComplete?: () => void
   originalFilename?: string
   originalPdfBytes: ArrayBuffer | null
-  annotations: any[]
-  transformations: Map<number, any>
+  annotations: Annotation[]
+  transformations: Map<number, PageTransformation>
   pageOrder: number[]
   blankPages: BlankPage[]
   watermark: Watermark | null
@@ -29,6 +33,7 @@ interface ExportDialogProps {
 export function ExportDialog({
   isOpen,
   onClose,
+  onExportComplete,
   originalFilename,
   originalPdfBytes,
   annotations,
@@ -38,6 +43,7 @@ export function ExportDialog({
   watermark,
   pageNumberConfig,
 }: ExportDialogProps) {
+  const { state: textEditState, getDocumentBytes } = useTextEdit()
   const [filename, setFilename] = useState(() => 
     exportService.generateFilename(originalFilename)
   )
@@ -62,8 +68,9 @@ export function ExportDialog({
     exportService.setProgressCallback(setExportProgress)
 
     try {
+      const basePdfBytes = await getDocumentBytes()
       const blob = await exportService.exportPDF(
-        originalPdfBytes,
+        basePdfBytes,
         annotations,
         transformations,
         pageOrder,
@@ -80,6 +87,7 @@ export function ExportDialog({
 
       await exportService.downloadPDF(blob, filename)
       setExportComplete(true)
+      onExportComplete?.()
       toast.success('PDF exported successfully!')
 
       setTimeout(() => {
@@ -114,6 +122,7 @@ export function ExportDialog({
   const isReordered = pageOrder.some((pageNum, index) => pageNum !== index + 1)
   const hasFormFields = formService.hasFields()
   const formFieldCount = formService.getAllFields().length
+  const textEditCount = textEditState.pendingEdits.length
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -147,6 +156,12 @@ export function ExportDialog({
                 <div className="flex items-center gap-2">
                   <FileText className="w-4 h-4" />
                   <span>{annotationCount} annotation{annotationCount !== 1 ? 's' : ''}</span>
+                </div>
+              )}
+              {textEditCount > 0 && (
+                <div className="flex items-center gap-2">
+                  <FileText className="w-4 h-4" />
+                  <span>{textEditCount} permanent text edit{textEditCount !== 1 ? 's' : ''}</span>
                 </div>
               )}
               {redactionCount > 0 && (
@@ -191,7 +206,7 @@ export function ExportDialog({
                   <span>Custom page order</span>
                 </div>
               )}
-              {!annotationCount && !hasFormFields && !hasTransformations && !isReordered && !blankPageCount && (
+              {!annotationCount && !textEditCount && !hasFormFields && !hasTransformations && !isReordered && !blankPageCount && (
                 <div className="text-muted-foreground">No changes to apply</div>
               )}
             </div>

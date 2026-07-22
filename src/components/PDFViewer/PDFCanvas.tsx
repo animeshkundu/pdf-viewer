@@ -9,6 +9,8 @@ import { WatermarkOverlay } from '@/components/WatermarkOverlay/WatermarkOverlay
 import { PageNumberOverlay } from '@/components/PageNumberOverlay/PageNumberOverlay'
 import { usePageManagement } from '@/hooks/usePageManagement'
 import { usePDF } from '@/hooks/usePDF.tsx'
+import { useTextEdit } from '@/hooks/useTextEdit'
+import { TextEditLayer } from '@/components/TextEditLayer'
 
 interface PDFCanvasProps {
   page: PDFPageProxy
@@ -23,7 +25,9 @@ export function PDFCanvas({ page, scale, pageNumber }: PDFCanvasProps) {
   const renderRequestRef = useRef<number | null>(null)
   const { getRotation } = usePageManagement()
   const { document } = usePDF()
+  const { state: textEditState } = useTextEdit()
   const rotation = getRotation(pageNumber)
+  const displayRotation = ((page.rotate + rotation) % 360 + 360) % 360
 
   useEffect(() => {
     const renderPage = async () => {
@@ -36,9 +40,9 @@ export function PDFCanvas({ page, scale, pageNumber }: PDFCanvasProps) {
       renderRequestRef.current = requestAnimationFrame(async () => {
         setIsRendering(true)
         try {
-          const viewport = page.getViewport({ scale, rotation })
+          const viewport = page.getViewport({ scale, rotation: displayRotation })
           setDimensions({ width: viewport.width, height: viewport.height })
-          await pdfService.renderPage(page, scale, canvasRef.current!, rotation)
+          await pdfService.renderPage(page, scale, canvasRef.current!, displayRotation)
         } catch (error) {
           console.error('Error rendering page:', error)
         } finally {
@@ -55,9 +59,10 @@ export function PDFCanvas({ page, scale, pageNumber }: PDFCanvasProps) {
         cancelAnimationFrame(renderRequestRef.current)
       }
     }
-  }, [page, scale, pageNumber, rotation, isRendering])
+  }, [page, scale, pageNumber, displayRotation, isRendering])
 
-  const viewport = page.getViewport({ scale, rotation })
+  const viewport = page.getViewport({ scale, rotation: displayRotation })
+  const sourceViewport = page.getViewport({ scale: 1, rotation: page.rotate })
   
   return (
     <div className="relative flex items-center justify-center p-4">
@@ -104,6 +109,17 @@ export function PDFCanvas({ page, scale, pageNumber }: PDFCanvasProps) {
           pageWidth={viewport.width / scale}
           pageHeight={viewport.height / scale}
         />
+        {(textEditState.isEnabled || textEditState.pendingEdits.some((edit) => edit.pageNum === pageNumber)) && (
+          <TextEditLayer
+            pageNum={pageNumber}
+            scale={scale}
+            rotation={rotation}
+            pageWidth={sourceViewport.width}
+            pageHeight={sourceViewport.height}
+            containerWidth={dimensions.width || viewport.width}
+            containerHeight={dimensions.height || viewport.height}
+          />
+        )}
       </div>
     </div>
   )

@@ -11,6 +11,7 @@ export interface MuPDFSpan {
   size: number
   color: number // Packed RGB value
   bbox: MuPDFBBox
+  origin: [number, number]
   text: string
 }
 
@@ -22,14 +23,22 @@ export interface MuPDFLine {
   spans: MuPDFSpan[]
 }
 
-/** A text or image block */
-export interface MuPDFBlock {
-  type: 'text' | 'image'
+/** A text block */
+export interface MuPDFTextBlock {
+  type: 'text'
   bbox: MuPDFBBox
-  lines?: MuPDFLine[] // Only for text blocks
+  lines: MuPDFLine[]
 }
 
-/** Structured text output from toStructuredText().asJSON() */
+/** A non-text block retained for compatibility with structured text output */
+export interface MuPDFImageBlock {
+  type: 'image'
+  bbox: MuPDFBBox
+}
+
+export type MuPDFBlock = MuPDFTextBlock | MuPDFImageBlock
+
+/** Structured text output assembled from MuPDF's text walker */
 export interface MuPDFStructuredText {
   blocks: MuPDFBlock[]
 }
@@ -72,6 +81,8 @@ export interface MuPDFDocumentInfo {
 /** Edit operation sent to worker */
 export interface MuPDFEditOperation {
   pageNum: number
+  origin: [number, number]
+  direction: [number, number]
   originalBounds: {
     x: number
     y: number
@@ -88,7 +99,10 @@ export interface MuPDFEditOperation {
   style: {
     fontFamily: string
     fontSize: number
+    fontWeight: 'normal' | 'bold'
+    fontStyle: 'normal' | 'italic'
     color: string
+    textAlign: 'left' | 'center' | 'right'
   }
 }
 
