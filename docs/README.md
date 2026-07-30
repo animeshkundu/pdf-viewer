@@ -6,6 +6,25 @@ This directory contains comprehensive architecture and design documentation for 
 
 ---
 
+## ⚠️ For AI Agents: Start Here
+
+**MUST READ before making any changes:**
+
+### [agent-instructions/](./agent-instructions/)
+Critical protocol files for AI-enabled development:
+- [00-core-philosophy.md](./agent-instructions/00-core-philosophy.md) - Docs=Code, CEO Model, First Principles
+- [01-research-and-web.md](./agent-instructions/01-research-and-web.md) - Research requirements
+- [02-testing-and-validation.md](./agent-instructions/02-testing-and-validation.md) - 90% coverage mandate
+- [03-tooling-and-pipelines.md](./agent-instructions/03-tooling-and-pipelines.md) - Automation standards
+
+### [specs/](./specs/)
+**Specification-first development**: Write specs here BEFORE implementing features.
+
+### [adrs/](./adrs/)
+**AI-enabled ADR structure**: Document architectural decisions using the template.
+
+---
+
 ## Core Documentation
 
 ### Architecture
