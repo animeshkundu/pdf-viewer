@@ -13,15 +13,32 @@ This is a client-side PDF viewer and editor built with React + TypeScript, inspi
 - Vite for build tooling
 - Vitest for testing
 
+## Critical: AI Agent Protocols
+
+**Before ANY task, you MUST read these files in order:**
+
+1. `docs/agent-instructions/00-core-philosophy.md` - Docs=Code, CEO model, first principles
+2. `docs/agent-instructions/01-research-and-web.md` - Internet research requirements
+3. `docs/agent-instructions/02-testing-and-validation.md` - 90% coverage rule, TDD
+4. `docs/agent-instructions/03-tooling-and-pipelines.md` - Tool creation, CI/CD
+
+**Key Principles:**
+- Write specification in `docs/specs/` BEFORE writing feature code
+- Use web search for current best practices - do NOT hallucinate APIs
+- Run `./scripts/validate.sh` before every commit
+- Update `docs/history/` after completing significant work
+
 ## Before You Start
 
 **ALWAYS review these files first**:
-1. `docs/README.md` - Documentation index
-2. `docs/PRD.md` - Product requirements
-3. `docs/ARCHITECTURE.md` - System architecture
-4. `docs/TECHNICAL_SPEC.md` - Technical details
-5. `docs/ADR/` - Architecture decisions
-6. `docs/DESIGN_SYSTEM.md` - UI/UX guidelines
+1. `docs/agent-instructions/` - Agent protocols (READ FIRST)
+2. `docs/specs/` - Check for existing specifications
+3. `docs/ADR/` - Architecture decisions (do not contradict)
+4. `docs/README.md` - Documentation index
+5. `docs/PRD.md` - Product requirements
+6. `docs/ARCHITECTURE.md` - System architecture
+7. `docs/TECHNICAL_SPEC.md` - Technical details
+8. `docs/DESIGN_SYSTEM.md` - UI/UX guidelines
 
 ## Code Style & Standards
 
